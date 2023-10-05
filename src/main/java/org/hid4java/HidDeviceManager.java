@@ -25,11 +25,19 @@
 
 package org.hid4java;
 
-import org.hid4java.event.HidServicesListenerList;
-import org.hid4java.jna.HidApi;
-import org.hid4java.jna.HidDeviceInfoStructure;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import java.util.*;
+import org.hid4java.event.HidServicesListenerList;
+
 
 /**
  * Manager to provide the following to HID services:
@@ -41,7 +49,18 @@ import java.util.*;
  *
  * @since 0.0.1
  */
-class HidDeviceManager {
+public class HidDeviceManager {
+
+  private static final Logger logger = Logger.getLogger(HidDeviceManager.class.getName());
+  
+  /**
+   * Enables use of the libusb variant of the hidapi native library when running on a Linux platform.
+   * <p>
+   * The default is hidraw which enables Bluetooth devices but requires udev rules.
+   */
+  public static boolean useLibUsbVariant = false;
+
+  private NativeHidDeviceManager nativeManager;
 
   /**
    * The HID services specification providing configuration parameters
@@ -51,7 +70,7 @@ class HidDeviceManager {
   /**
    * The currently attached devices keyed on ID
    */
-  private final Map<String, HidDevice> attachedDevices = Collections.synchronizedMap(new HashMap<String, HidDevice>());
+  private final Map<String, HidDevice> attachedDevices = Collections.synchronizedMap(new HashMap<>());
 
   /**
    * HID services listener list
@@ -64,7 +83,7 @@ class HidDeviceManager {
    * We use a Thread instead of Executor since it may be stopped/paused/restarted frequently
    * and executors are more heavyweight in this regard
    */
-  private Thread scanThread = null;
+  private ExecutorService scanThread = Executors.newSingleThreadExecutor();
 
   /**
    * Constructs a new device manager
@@ -81,7 +100,7 @@ class HidDeviceManager {
 
     // Attempt to initialise and fail fast
     try {
-      HidApi.init();
+      nativeManager = new org.hid4java.macos.MacosHidDeviceManager();
     } catch (Throwable t) {
       // Typically this is a linking issue with the native library
       throw new HidException("Hidapi did not initialise: " + t.getMessage(), t);
@@ -99,7 +118,7 @@ class HidDeviceManager {
    *
    * @throws HidException If something goes wrong (such as Hidapi not initialising correctly)
    */
-  public void start() {
+  public void start() throws IOException {
 
     // Check for previous start
     if (this.isScanning()) {
@@ -127,7 +146,10 @@ class HidDeviceManager {
     for (HidDevice hidDevice: attachedDevices.values()) {
         hidDevice.close();
     }
+  }
 
+  public synchronized NativeHidDevice open(String path) throws IOException {
+    return nativeManager.openByPath(path);
   }
 
   /**
@@ -136,7 +158,7 @@ class HidDeviceManager {
    *
    * Will fire attach/detach events as appropriate.
    */
-  public synchronized void scan() {
+  public synchronized void scan() throws IOException {
 
     List<String> removeList = new ArrayList<>();
 
@@ -146,6 +168,7 @@ class HidDeviceManager {
 
       if (!this.attachedDevices.containsKey(attachedDevice.getId())) {
 
+logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
         // Device has become attached so add it but do not open
         attachedDevices.put(attachedDevice.getId(), attachedDevice);
 
@@ -182,44 +205,40 @@ class HidDeviceManager {
    * @return True if the scan thread is running, false otherwise.
    */
   public boolean isScanning() {
-    return scanThread != null && scanThread.isAlive();
+    return !scanThread.isTerminated();
   }
 
   /**
    * @return A list of all attached HID devices
    */
-  public List<HidDevice> getAttachedHidDevices() {
+  public List<HidDevice> getAttachedHidDevices() throws IOException {
 
     List<HidDevice> hidDeviceList = new ArrayList<>();
 
-    final HidDeviceInfoStructure root;
+    final List<HidDevice.Info> infos;
     try {
       // Use 0,0 to list all attached devices
       // This comes back as a linked list from hidapi
-      root = HidApi.enumerateDevices(0, 0);
+      infos = nativeManager.enumerate(0, 0);
     } catch (Throwable e) {
+logger.log(Level.FINE, "hid_enumerate", e);
       // Could not initialise hidapi (possibly an unknown platform)
       // Trigger a general stop as something serious has happened
       stop();
       // Inform the caller that something serious has gone wrong
-      throw new HidException("Unable to start HidApi: " + e.getMessage());
+      throw new HidException("Unable to start HidDeviceManager: " + e.getMessage());
     }
 
-    if (root != null) {
+    if (!infos.isEmpty()) {
 
-      HidDeviceInfoStructure hidDeviceInfoStructure = root;
-      do {
+      for (HidDevice.Info hidDeviceInfo : infos) {
         // Wrap in HidDevice
         hidDeviceList.add(new HidDevice(
-          hidDeviceInfoStructure,
+          hidDeviceInfo,
           this,
           hidServicesSpecification));
         // Move to the next in the linked list
-        hidDeviceInfoStructure = hidDeviceInfoStructure.next();
-      } while (hidDeviceInfoStructure != null);
-
-      // Dispose of the device list to free memory
-      HidApi.freeEnumeration(root);
+      }
     }
 
     return hidDeviceList;
@@ -240,27 +259,12 @@ class HidDeviceManager {
   }
 
   /**
-   * Indicate that an automatic data read has occurred which may require an event to be fired
-   *
-   * @param hidDevice The device that has received data
-   * @param dataReceived The data received
-   * @since 0.8.0
-   */
-  public void afterDeviceDataRead(HidDevice hidDevice, byte[] dataReceived) {
-
-    if (dataReceived != null && dataReceived.length > 0) {
-      this.listenerList.fireHidDataReceived(hidDevice, dataReceived);
-    }
-
-  }
-
-  /**
    * Stop the scan thread
    */
   private synchronized void stopScanThread() {
 
     if (isScanning()) {
-      scanThread.interrupt();
+      scanThread.shutdown();
     }
 
   }
@@ -275,11 +279,7 @@ class HidDeviceManager {
     }
 
     // Require a new one
-    scanThread = new Thread(scanRunnable);
-    scanThread.setDaemon(true);
-    scanThread.setName("hid4java device scanner");
-    scanThread.start();
-
+    scanThread.submit(scanRunnable);
   }
 
   private synchronized Runnable getScanRunnable() {
@@ -289,58 +289,63 @@ class HidDeviceManager {
 
     switch (hidServicesSpecification.getScanMode()) {
       case NO_SCAN:
-        return new Runnable() {
-          @Override
-          public void run() {
-            // Do nothing
-          }
+        return () -> {
+          // Do nothing
         };
       case SCAN_AT_FIXED_INTERVAL:
-        return new Runnable() {
-          @Override
-          public void run() {
+        return () -> {
 
-            while (true) {
-              try {
-                //noinspection BusyWait
-                Thread.sleep(scanInterval);
-              } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-              }
+          while (true) {
+            try {
+              //noinspection BusyWait
+              Thread.sleep(scanInterval);
+            } catch (final InterruptedException e) {
+              Thread.currentThread().interrupt();
+              break;
+            }
+            try {
               scan();
+            } catch (IOException e) {
+              logger.fine(e.toString());
             }
           }
         };
       case SCAN_AT_FIXED_INTERVAL_WITH_PAUSE_AFTER_WRITE:
-        return new Runnable() {
-          @Override
-          public void run() {
-            // Provide an initial pause
+        return () -> {
+          // Provide an initial pause
+          try {
+            Thread.sleep(pauseInterval);
+          } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+
+          // Switch to continuous running
+          while (true) {
             try {
-              Thread.sleep(pauseInterval);
+              //noinspection BusyWait
+              Thread.sleep(scanInterval);
             } catch (final InterruptedException e) {
               Thread.currentThread().interrupt();
+              break;
             }
-
-            // Switch to continuous running
-            while (true) {
-              try {
-                //noinspection BusyWait
-                Thread.sleep(scanInterval);
-              } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-              }
+            try {
               scan();
+            } catch (IOException e) {
+              logger.fine(e.toString());
             }
           }
         };
       default:
         return null;
     }
-
-
   }
 
+  public String getVersion() {
+    return nativeManager.version();
+  }
+
+  public void shutdown() {
+logger.finest("shutdown");
+    nativeManager.exit();
+  }
 }

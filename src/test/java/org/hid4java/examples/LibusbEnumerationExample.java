@@ -25,8 +25,15 @@
 
 package org.hid4java.examples;
 
-import org.hid4java.*;
-import org.hid4java.jna.HidApi;
+import java.io.IOException;
+
+import org.hid4java.HidDevice;
+import org.hid4java.HidDeviceManager;
+import org.hid4java.HidException;
+import org.hid4java.HidManager;
+import org.hid4java.HidServices;
+import org.hid4java.HidServicesSpecification;
+
 
 /**
  * Demonstrate the USB HID interface with older libusb Linux library variant
@@ -35,14 +42,14 @@ import org.hid4java.jna.HidApi;
  */
 public class LibusbEnumerationExample extends BaseExample {
 
-  public static void main(String[] args) throws HidException {
+  public static void main(String[] args) throws Exception {
 
     LibusbEnumerationExample example = new LibusbEnumerationExample();
     example.executeExample();
 
   }
 
-  private void executeExample() throws HidException {
+  private void executeExample() throws IOException {
 
     printPlatform();
 
@@ -50,7 +57,7 @@ public class LibusbEnumerationExample extends BaseExample {
     HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
 
     // Set the libusb variant (only needed for older Linux platforms)
-    HidApi.useLibUsbVariant = true;
+    HidDeviceManager.useLibUsbVariant = true;
 
     // Get HID services using custom specification
     HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);

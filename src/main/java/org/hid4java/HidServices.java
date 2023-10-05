@@ -25,14 +25,14 @@
 
 package org.hid4java;
 
-import org.hid4java.event.HidServicesListenerList;
-import org.hid4java.jna.HidApi;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.logging.Logger;
+
+import org.hid4java.event.HidServicesListenerList;
 
 /**
  * JNA bridge class to provide the following to USB HID:
@@ -45,6 +45,8 @@ import java.util.jar.Manifest;
  */
 public class HidServices {
 
+  private static final Logger logger = Logger.getLogger(HidServices.class.getName());
+
   /**
    * The HID services listeners for receiving attach/detach events etc
    */
@@ -53,7 +55,7 @@ public class HidServices {
   /**
    * The HID device manager handles scanning operations
    */
-  private final HidDeviceManager hidDeviceManager;
+  private final org.hid4java.HidDeviceManager hidDeviceManager;
 
   /**
    * Jar entry point to allow for version interrogation
@@ -67,18 +69,18 @@ public class HidServices {
   /**
    * Initialise with a default HID specification
    *
-   * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+   * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
    */
-  public HidServices() throws HidException {
+  public HidServices() throws IOException {
     this(new HidServicesSpecification());
   }
 
   /**
    * @param hidServicesSpecification Provides various parameters for configuring HID services
-   * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+   * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
    */
-  public HidServices(HidServicesSpecification hidServicesSpecification) {
-    hidDeviceManager = new HidDeviceManager(listeners, hidServicesSpecification);
+  public HidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
+    hidDeviceManager = new org.hid4java.HidDeviceManager(listeners, hidServicesSpecification);
 
     // Check for automatic start (default behaviour for 0.6.0 and below)
     // which will prevent an attachment event firing if the device is already
@@ -89,24 +91,18 @@ public class HidServices {
 
     if (hidServicesSpecification.isAutoShutdown()) {
       // Ensure we release resources during shutdown
-      Runtime.getRuntime().addShutdownHook(
-        new Thread() {
-          @Override
-          public void run() {
-            shutdown();
-          }
-        });
+      Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
-
   }
 
   /**
-   * Stop all device threads and shut down the {@link HidApi}
+   * Stop all device threads and shut down the {@link NativeHidDevice}
    */
   public void shutdown() {
+logger.finest("shutdown: start");
     stop();
     try {
-      HidApi.exit();
+      hidDeviceManager.shutdown();
     } catch (Throwable e) {
       // Silently fail (user will already have been given an exception)
     }
@@ -119,6 +115,7 @@ public class HidServices {
    * Normally part of an application shutdown
    */
   public void stop() {
+logger.finest("stop: start");
     hidDeviceManager.stop();
     this.listeners.clear();
   }
@@ -126,7 +123,7 @@ public class HidServices {
   /**
    * Start all threads (enumeration, data read etc) as configured
    */
-  public void start() {
+  public void start() throws IOException {
     hidDeviceManager.start();
   }
 
@@ -147,14 +144,14 @@ public class HidServices {
   /**
    * Manually scans for HID device connection changes and triggers listener events as required
    */
-  public void scan() {
+  public void scan() throws IOException {
     this.hidDeviceManager.scan();
   }
 
   /**
    * @return A list of all attached HID devices
    */
-  public List<HidDevice> getAttachedHidDevices() {
+  public List<HidDevice> getAttachedHidDevices() throws IOException {
     return hidDeviceManager.getAttachedHidDevices();
   }
 
@@ -164,7 +161,7 @@ public class HidServices {
    * @param serialNumber The serial number (use null for wildcard)
    * @return The device if attached, null if detached
    */
-  public HidDevice getHidDevice(int vendorId, int productId, String serialNumber) {
+  public HidDevice getHidDevice(int vendorId, int productId, String serialNumber) throws IOException {
 
     List<HidDevice> devices = hidDeviceManager.getAttachedHidDevices();
     for (HidDevice device : devices) {
@@ -211,7 +208,7 @@ public class HidServices {
    *
    * @return The version in major.minor.patch format
    */
-  public static String getNativeVersion() {
-    return HidApi.getVersion();
+  public String getNativeVersion() {
+    return hidDeviceManager.getVersion();
   }
 }

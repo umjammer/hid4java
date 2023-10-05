@@ -25,6 +25,9 @@
 
 package org.hid4java;
 
+import java.io.IOException;
+
+
 /**
  * Caught exception to provide the following to API consumers:
  * <ul>
@@ -33,7 +36,7 @@ package org.hid4java;
  *
  * @since 0.0.1
  */
-public class HidException extends RuntimeException {
+public class HidException extends IOException {
 
   public HidException(String message) {
     super(message);

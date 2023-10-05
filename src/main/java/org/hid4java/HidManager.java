@@ -25,6 +25,9 @@
 
 package org.hid4java;
 
+import java.io.IOException;
+
+
 /**
  * Factory to provide the following to API consumers:
  * <ul>
@@ -45,17 +48,8 @@ public class HidManager {
    *
    * @return A single instance of the HID services using the default specification
    */
-  public static HidServices getHidServices() throws HidException {
-
-    synchronized (servicesLock) {
-      if (null == hidServices) {
-        // Use defaults
-        hidServices = getHidServices(new HidServicesSpecification());
-      }
-    }
-
-    return hidServices;
-
+  public static HidServices getHidServices() throws IOException {
+    return getHidServices(new HidServicesSpecification());
   }
 
   /**
@@ -65,7 +59,7 @@ public class HidManager {
    * @return A single instance of the HID services using specified parameters
    * @since 0.5.0
    */
-  public static HidServices getHidServices(HidServicesSpecification hidServicesSpecification) throws HidException {
+  public static HidServices getHidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
 
     synchronized (servicesLock) {
       if (null == hidServices) {

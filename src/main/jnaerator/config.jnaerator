@@ -1,0 +1,13 @@
+-I /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include
+
+-root vavi.util.pthread.jna
+
+//-parseInOneChunk
+-runtime JNA
+
+//-o "$(DIR)/../java" // overwrite versioned files instead of writing to target/generated-sources/java
+
+//-v
+//-choicesOut "$(DIR)/pthread.choices"
+
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/pthread.h

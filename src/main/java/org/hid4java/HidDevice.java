@@ -25,13 +25,10 @@
 
 package org.hid4java;
 
-import org.hid4java.jna.HidApi;
-import org.hid4java.jna.HidDeviceInfoStructure;
-import org.hid4java.jna.HidDeviceStructure;
-
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.logging.Logger;
+
 
 /**
  * High level wrapper to provide the following to API consumers:
@@ -44,628 +41,455 @@ import java.util.Arrays;
  */
 public class HidDevice {
 
-  private final HidDeviceManager hidDeviceManager;
-  private HidDeviceStructure hidDeviceStructure;
+    private static final Logger logger = Logger.getLogger(HidDevice.class.getName());
+    
+    private final HidDeviceManager manager;
+    private Info info;
+    private NativeHidDevice nativeDevice;
 
-  private final String path;
-  private final int vendorId;
-  private final int productId;
-  private String serialNumber;
-  private final int releaseNumber;
-  private String manufacturer;
-  private String product;
-  private final int usagePage;
-  private final int usage;
-  private final int interfaceNumber;
+    public static class Info {
 
-  private final boolean autoDataRead;
-  private final int dataReadInterval;
-
-  /**
-   * The data read thread
-   * We use a Thread instead of Executor since it may be stopped/paused/restarted frequently
-   * and executors are more heavyweight in this regard
-   */
-  private Thread dataReadThread = null;
-
-  /**
-   * @param infoStructure            The HID device info structure providing details
-   * @param hidDeviceManager         The HID device manager providing access to device enumeration for post IO scanning
-   * @param hidServicesSpecification The HID services specification providing configuration details
-   * @since 0.1.0
-   */
-  public HidDevice(HidDeviceInfoStructure infoStructure, HidDeviceManager hidDeviceManager, HidServicesSpecification hidServicesSpecification) {
-
-    this.hidDeviceManager = hidDeviceManager;
-
-    this.dataReadInterval = hidServicesSpecification.getDataReadInterval();
-    this.autoDataRead = hidServicesSpecification.isAutoDataRead();
-
-    this.hidDeviceStructure = null;
-
-    this.path = infoStructure.path;
-
-    // Note that the low-level HidDeviceInfoStructure is directly written to by
-    // the JNA library and implies an unsigned short which is not available in Java.
-    // The bitmask converts from [-32768, 32767] to [0,65535]
-    // In Java 8 Short.toUnsignedInt() is available.
-    this.vendorId = infoStructure.vendor_id & 0xffff;
-    this.productId = infoStructure.product_id & 0xffff;
-
-    this.releaseNumber = infoStructure.release_number;
-    if (infoStructure.serial_number != null) {
-      this.serialNumber = infoStructure.serial_number.toString();
-    }
-    if (infoStructure.manufacturer_string != null) {
-      this.manufacturer = infoStructure.manufacturer_string.toString();
-    }
-    if (infoStructure.product_string != null) {
-      this.product = infoStructure.product_string.toString();
-    }
-    this.usagePage = infoStructure.usage_page;
-    this.usage = infoStructure.usage;
-    this.interfaceNumber = infoStructure.interface_number;
-  }
-
-  /**
-   * Handles the process of starting the data read thread
-   */
-  private void startDataReadThread() {
-
-    // Check for previous start
-    if (this.isDataRead()) {
-      return;
-    }
-
-    // Perform an immediate data read
-    dataRead();
-
-    // Ensure we have a scan thread available
-    configureDataReadThread(getDataReadRunnable());
-
-  }
-
-  /**
-   * Stop the data read thread
-   */
-  private synchronized void stopDataReadThread() {
-
-    if (isDataRead()) {
-      dataReadThread.interrupt();
-    }
-
-  }
-
-  /**
-   * Configures the data read thread to allow recovery from stop or pause
-   */
-  private synchronized void configureDataReadThread(Runnable dataReadRunnable) {
-
-    if (autoDataRead) {
-      stopDataReadThread();
-    }
-
-    // Require a new one
-    dataReadThread = new Thread(dataReadRunnable);
-    dataReadThread.setDaemon(true);
-    dataReadThread.setName("hid4java data reader");
-    dataReadThread.start();
-
-  }
-
-  private synchronized Runnable getDataReadRunnable() {
-
-    return new Runnable() {
-      @Override
-      public void run() {
-
-        while (true) {
-          try {
-            //noinspection BusyWait
-            Thread.sleep(dataReadInterval);
-          } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            break;
-          }
-          dataRead();
+        public enum hid_bus_type {
+            /** Unknown bus type */
+            HID_API_BUS_UNKNOWN,
+            /**
+             * USB bus
+             *
+             * @see "https://usb.org/hid"
+             */
+            HID_API_BUS_USB,
+            /**
+             * Bluetooth or Bluetooth LE bus
+             *
+             * @see "https://www.bluetooth.com/specifications/specs/human-interface-device-profile-1-1-1/"
+             * @see "https://www.bluetooth.com/specifications/specs/hid-service-1-0/"
+             * @see "https://www.bluetooth.com/specifications/specs/hid-over-gatt-profile-1-0/"
+             */
+            HID_API_BUS_BLUETOOTH,
+            /**
+             * I2C bus
+             *
+             * @see "https://docs.microsoft.com/previous-versions/windows/hardware/design/dn642101(v=vs.85)"
+             */
+            HID_API_BUS_I2C,
+            /**
+             * SPI bus
+             *
+             * @see "https://www.microsoft.com/download/details.aspx?id=103325"
+             */
+            HID_API_BUS_SPI
         }
-      }
-    };
 
-  }
+        /** Platform-specific device path */
+        public String path;
+        /** Device Vendor ID */
+        public int vendorId;
+        /** Device Product ID */
+        public int productId;
+        /** Serial Number */
+        public String serialNumber;
+        /**
+         * Device Release Number in binary-coded decimal,
+         * also known as Device Version Number
+         */
+        public int releaseNumber;
+        /** Manufacturer String */
+        public String manufacturer;
+        /** Product string */
+        public String product;
+        /**
+         * Usage Page for this Device/Interface
+         * (Windows/Mac/hidraw only)
+         */
+        public int usagePage;
+        /**
+         * Usage for this Device/Interface
+         * (Windows/Mac/hidraw only)
+         */
+        public int usage;
+        /**
+         * The USB interface which this logical device
+         * represents.
+         * <p>
+         * Valid only if the device is a USB HID device.
+         * Set to -1 in all other cases.
+         */
+        public int interfaceNumber;
 
-  /**
-   * @return True if the data read thread is running
-   */
-  private boolean isDataRead() {
-    return dataReadThread != null && dataReadThread.isAlive();
-  }
-
-
-  /**
-   * Attempt to read all data from the device input buffer as part
-   * of the automatic data read process
-   *
-   * Will fire attach/detach events as appropriate.
-   */
-  private synchronized void dataRead() {
-
-    byte[] dataRead = readAll(100);
-
-    // Fire the event on a separate thread
-    hidDeviceManager.afterDeviceDataRead(this, dataRead);
-
-  }
-
-  /**
-   * The "path" is well-supported across Windows, Mac and Linux so makes a
-   * better choice for a unique ID
-   *
-   * See #8 for details
-   *
-   * @return A unique device ID made up from vendor ID, product ID and serial number
-   * @since 0.1.0
-   */
-  public String getId() {
-    return path;
-  }
-
-  /**
-   * @return The device path
-   * @since 0.1.0
-   */
-  public String getPath() {
-    return path;
-  }
-
-  /**
-   * @return Int version of vendor ID
-   * @since 0.1.0
-   */
-  public int getVendorId() {
-    return vendorId;
-  }
-
-  /**
-   * @return Int version of product ID
-   * @since 0.1.0
-   */
-  public int getProductId() {
-    return productId;
-  }
-
-  /**
-   * @return The device serial number
-   * @since 0.1.0
-   */
-  public String getSerialNumber() {
-    return serialNumber;
-  }
-
-  /**
-   * @return The release number
-   * @since 0.1.0
-   */
-  public int getReleaseNumber() {
-    return releaseNumber;
-  }
-
-  /**
-   * @return The manufacturer
-   * @since 0.1.0
-   */
-  public String getManufacturer() {
-    return manufacturer;
-  }
-
-  /**
-   * @return The product
-   * @since 0.1.0
-   */
-  public String getProduct() {
-    return product;
-  }
-
-  /**
-   * @return The usage page
-   * @since 0.1.0
-   */
-  public int getUsagePage() {
-    return usagePage;
-  }
-
-  /**
-   * @return The usage information
-   * @since 0.1.0
-   */
-  public int getUsage() {
-    return usage;
-  }
-
-  public int getInterfaceNumber() {
-    return interfaceNumber;
-  }
-
-  /**
-   * Open this device and obtain a device structure
-   *
-   * @return True if the device was successfully opened
-   * @since 0.1.0
-   */
-  public boolean open() {
-    hidDeviceStructure = HidApi.open(path);
-
-    // Configure automatic data read
-    if (autoDataRead) {
-      startDataReadThread();
+        /**
+         * Underlying bus type
+         * Since version 0.13.0, @ref HID_API_VERSION >= HID_API_MAKE_VERSION(0, 13, 0)
+         */
+        public hid_bus_type bus_type;
     }
 
-    return hidDeviceStructure != null;
-  }
+    private final boolean autoDataRead;
+    private final int dataReadInterval;
 
-  /**
-   * @return True if the device structure is present
-   * @since 0.1.0
-   * @deprecated Use isClosed() instead of !isOpen() to improve code clarity
-   */
-  @Deprecated
-  public boolean isOpen() {
-    return !isClosed();
-  }
+    /**
+     * @param info            The HID device info structure providing details
+     * @param deviceManager         The HID device manager providing access to device enumeration for post IO scanning
+     * @param servicesSpecification The HID services specification providing configuration details
+     * @since 0.1.0
+     */
+    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) {
 
-  /**
-   * @return True if the device structure is not present (device closed)
-   * @since 0.8.0
-   */
-  public boolean isClosed() {
-    return hidDeviceStructure == null;
-  }
+        this.manager = deviceManager;
 
-  /**
-   * Close this device freeing the HidApi resources
-   *
-   * @since 0.1.0
-   */
-  public void close() {
-    if (isClosed()) {
-      return;
+        this.dataReadInterval = servicesSpecification.getDataReadInterval();
+        this.autoDataRead = servicesSpecification.isAutoDataRead();
+
+        this.info = info;
+
+        // Note that the low-level HidDeviceInfoStructure is directly written to by
+        // the JNA library and implies an unsigned short which is not available in Java.
+        // The bitmask converts from [-32768, 32767] to [0,65535]
+        // In Java 8 Short.toUnsignedInt() is available.
+        this.info.vendorId = this.info.vendorId & 0xffff;
+        this.info.productId = this.info.productId & 0xffff;
     }
 
-    // Prevent further automatic data read attempts
-    stopDataReadThread();
-
-    // Close the Hidapi reference
-    HidApi.close(hidDeviceStructure);
-
-    // Ensure structure is removed from memory and prevent further interaction
-    hidDeviceStructure = null;
-  }
-
-  /**
-   * Set the device handle to be non-blocking
-   *
-   * In non-blocking mode calls to hid_read() will return immediately with a
-   * value of 0 if there is no data to be read. In blocking mode, hid_read()
-   * will wait (block) until there is data to read before returning
-   *
-   * Non-blocking can be turned on and off at any time
-   *
-   * @param nonBlocking True if non-blocking mode is required
-   * @since 0.1.0
-   */
-  public void setNonBlocking(boolean nonBlocking) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    HidApi.setNonBlocking(hidDeviceStructure, nonBlocking);
-  }
-
-  /**
-   * Read an Input report from a HID device
-   *
-   * Input reports are returned to the host through the INTERRUPT IN endpoint.
-   * The first byte will contain the Report number if the device uses numbered
-   * reports
-   *
-   * @param data The buffer to read into
-   * @return The actual number of bytes read and -1 on error. If no packet was
-   * available to be read and the handle is in non-blocking mode, this
-   * function returns 0.
-   * @since 0.1.0
-   */
-  public int read(byte[] data) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return HidApi.read(hidDeviceStructure, data);
-  }
-
-  /**
-   * Read an Input report from a HID device
-   *
-   * Input reports are returned to the host through the INTERRUPT IN endpoint.
-   * The first byte will contain the Report number if the device uses numbered
-   * reports
-   *
-   * @param amountToRead  the number of bytes to read
-   * @param timeoutMillis The number of milliseconds to wait before giving up
-   * @return a Byte array of the read data
-   * @since 0.1.0
-   */
-  public Byte[] read(int amountToRead, int timeoutMillis) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
+    /**
+     * The "path" is well-supported across Windows, Mac and Linux so makes a
+     * better choice for a unique ID
+     * <p>
+     * See #8 for details
+     *
+     * @return A unique device ID made up from vendor ID, product ID and serial number
+     * @since 0.1.0
+     */
+    public String getId() {
+        return info.path;
     }
 
-    byte[] bytes = new byte[amountToRead];
-    int read = HidApi.read(hidDeviceStructure, bytes, timeoutMillis);
-    Byte[] retData = new Byte[read];
-    for (int i = 0; i < read; i++) {
-      retData[i] = bytes[i];
-    }
-    return retData;
-  }
-
-  /**
-   * Read an Input report from a HID device
-   * Input reports are returned to the host through the INTERRUPT IN endpoint.
-   * The first byte will contain the Report number if the device uses numbered
-   * reports
-   *
-   * @param amountToRead the number of bytes to read.
-   * @return a Byte array of the read data
-   * @since 0.1.0
-   */
-  public Byte[] read(int amountToRead) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
+    /**
+     * @return The device path
+     * @since 0.1.0
+     */
+    public String getPath() {
+        return info.path;
     }
 
-    byte[] bytes = new byte[amountToRead];
-    int read = HidApi.read(hidDeviceStructure, bytes);
-    Byte[] retData = new Byte[read];
-    for (int i = 0; i < read; i++) {
-      retData[i] = bytes[i];
-    }
-    return retData;
-  }
-
-  /**
-   * Read an Input report (64 bytes) from a HID device with a 1000ms timeout.
-   *
-   * Input reports are returned to the host through the INTERRUPT IN endpoint.
-   * The first byte will contain the Report number if the device uses numbered
-   * reports.
-   *
-   * @return A Byte array of the read data
-   * @since 0.1.0
-   */
-  public Byte[] read() {
-    return read(64, 1000);
-  }
-
-  /**
-   * Read an Input report from a HID device with timeout
-   *
-   * @param bytes         The buffer to read into
-   * @param timeoutMillis The number of milliseconds to wait before giving up
-   * @return The actual number of bytes read and -1 on error. If no packet was
-   * available to be read within the timeout period returns 0.
-   * @since 0.1.0
-   */
-  public int read(byte[] bytes, int timeoutMillis) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return HidApi.read(hidDeviceStructure, bytes, timeoutMillis);
-
-  }
-
-  /**
-   * Read an Input report from a HID device with timeout
-   *
-   * @param timeoutMillis The number of milliseconds to wait before giving up
-   * @return A byte[] of the read data
-   * @since 0.8.0
-   */
-  public byte[] readAll(int timeoutMillis) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
+    /**
+     * @return Int version of vendor ID
+     * @since 0.1.0
+     */
+    public int getVendorId() {
+        return info.vendorId;
     }
 
-    // Overall data storage
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    /**
+     * @return Int version of product ID
+     * @since 0.1.0
+     */
+    public int getProductId() {
+        return info.productId;
+    }
 
-    // Prepare to read a single HID packet
-    boolean morePackets = true;
-    while (morePackets) {
-      byte[] packet = new byte[64];
+    /**
+     * @return The device serial number
+     * @since 0.1.0
+     */
+    public String getSerialNumber() {
+        return info.serialNumber;
+    }
 
-      // This method will block while awaiting data
-      int bytesRead = read(packet, timeoutMillis);
+    /**
+     * @return The release number
+     * @since 0.1.0
+     */
+    public int getReleaseNumber() {
+        return info.releaseNumber;
+    }
 
-      if (bytesRead > 0) {
-        try {
-          output.write(packet);
-        } catch (IOException e) {
-          morePackets = false;
+    /**
+     * @return The manufacturer
+     * @since 0.1.0
+     */
+    public String getManufacturer() {
+        return info.manufacturer;
+    }
+
+    /**
+     * @return The product
+     * @since 0.1.0
+     */
+    public String getProduct() {
+        return info.product;
+    }
+
+    /**
+     * @return The usage page
+     * @since 0.1.0
+     */
+    public int getUsagePage() {
+        return info.usagePage;
+    }
+
+    /**
+     * @return The usage information
+     * @since 0.1.0
+     */
+    public int getUsage() {
+        return info.usage;
+    }
+
+    public int getInterfaceNumber() {
+        return info.interfaceNumber;
+    }
+
+    /**
+     * Open this device and obtain a device structure
+     *
+     * @return True if the device was successfully opened
+     * @since 0.1.0
+     */
+    public boolean open() throws IOException {
+logger.finer(getPath() + "(@" + hashCode() + ")");
+        nativeDevice = manager.open(info.path);
+logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+
+        return nativeDevice != null;
+    }
+
+    /**
+     * @return True if the device structure is present
+     * @since 0.1.0
+     * @deprecated Use isClosed() instead of !isOpen() to improve code clarity
+     */
+    @Deprecated
+    public boolean isOpen() {
+        return !isClosed();
+    }
+
+    /**
+     * @return True if the device structure is not present (device closed)
+     * @since 0.8.0
+     */
+    public boolean isClosed() {
+        return nativeDevice == null;
+    }
+
+    /**
+     * Close this device freeing the HidDeviceManager resources
+     *
+     * @since 0.1.0
+     */
+    public void close() {
+logger.finer("isClosed: " + isClosed());
+        if (isClosed()) {
+            return;
         }
-      } else {
-        morePackets = false;
-      }
+
+logger.finer("close native: " + nativeDevice);
+        // Close the Hidapi reference
+        nativeDevice.close();
     }
 
-    return output.toByteArray();
-  }
-
-
-  /**
-   * Get a feature report from a HID device
-   *
-   * Under the covers the HID library will set the first byte of data[] to the
-   * Report ID of the report to be read. Upon return, the first byte will
-   * still contain the Report ID, and the report data will start in data[1]
-   *
-   * This method handles all the wide string and array manipulation for you
-   *
-   * @param data     The buffer to contain the report
-   * @param reportId The report ID (or (byte) 0x00)
-   * @return The number of bytes read plus one for the report ID (which has
-   * been removed from the first byte), or -1 on error.
-   * @since 0.1.0
-   */
-  public int getFeatureReport(byte[] data, byte reportId) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return HidApi.getFeatureReport(hidDeviceStructure, data, reportId);
-  }
-
-  /**
-   * Send a Feature report to the device
-   *
-   * Under the covers, feature reports are sent over the Control endpoint as a
-   * Set_Report transfer. The first byte of data[] must contain the Report ID.
-   * For devices which only support a single report, this must be set to 0x0.
-   * The remaining bytes contain the report data
-   *
-   * Since the Report ID is mandatory, calls to hid_send_feature_report() will
-   * always contain one more byte than the report contains. For example, if a
-   * hid report is 16 bytes long, 17 bytes must be passed to
-   * hid_send_feature_report(): the Report ID (or 0x0, for devices which do
-   * not use numbered reports), followed by the report data (16 bytes). In
-   * this example, the length passed in would be 17
-   *
-   * This method handles all the array manipulation for you
-   *
-   * @param data     The feature report data (will be widened and have the report
-   *                 ID pre-pended)
-   * @param reportId The report ID (or (byte) 0x00)
-   * @return This function returns the actual number of bytes written and -1
-   * on error.
-   * @since 0.1.0
-   */
-  public int sendFeatureReport(byte[] data, byte reportId) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return HidApi.sendFeatureReport(hidDeviceStructure, data, reportId);
-  }
-
-  /**
-   * Get a string from a HID device, based on its string index
-   *
-   * @param index The index
-   * @return The string
-   * @since 0.1.0
-   */
-  public String getIndexedString(int index) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return HidApi.getIndexedString(hidDeviceStructure, index);
-  }
-
-  /**
-   * Write the message to the HID API without zero byte padding.
-   *
-   * Note that the report ID will be prefixed to the HID packet as per HID rules.
-   *
-   * @param message      The message
-   * @param packetLength The packet length
-   * @param reportId     The report ID (will be prefixed to the HID packet)
-   * @return The number of bytes written (including report ID), or -1 if an error occurs
-   * @since 0.1.0
-   */
-  public int write(byte[] message, int packetLength, byte reportId) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
-    }
-    return write(message, packetLength, reportId, false);
-  }
-
-  /**
-   * Write the message to the HID API with optional zero byte padding to packet length.
-   *
-   * Note that the report ID will be prefixed to the HID packet as per HID rules.
-   *
-   * @param message      The message
-   * @param packetLength The packet length
-   * @param reportId     The report ID
-   * @param applyPadding True if the message should be filled with zero bytes to the packet length
-   * @return The number of bytes written (including report ID), or -1 if an error occurs
-   * @since 0.8.0
-   */
-  public int write(byte[] message, int packetLength, byte reportId, boolean applyPadding) {
-    if (isClosed()) {
-      throw new IllegalStateException("Device has not been opened");
+    /**
+     * Set the device handle to be non-blocking
+     * <p>
+     * In non-blocking mode calls to hid_read() will return immediately with a
+     * value of 0 if there is no data to be read. In blocking mode, hid_read()
+     * will wait (block) until there is data to read before returning
+     * <p>
+     * Non-blocking can be turned on and off at any time
+     *
+     * @param nonBlocking True if non-blocking mode is required
+     * @since 0.1.0
+     */
+    public void setNonBlocking(boolean nonBlocking) {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        nativeDevice.setNonblocking(nonBlocking);
     }
 
-    if (applyPadding) {
-      message = Arrays.copyOf(message, packetLength + 1);
+    /**
+     */
+    public void addReportInputListener(InputReportListener l) {
+        nativeDevice.addReportInputListener(l);
     }
 
-    int result = HidApi.write(hidDeviceStructure, message, packetLength, reportId);
-    // Update HID manager
-    hidDeviceManager.afterDeviceWrite();
-    return result;
+    /**
+     * Get a feature report from a HID device
+     * <p>
+     * Under the covers the HID library will set the first byte of data[] to the
+     * Report ID of the report to be read. Upon return, the first byte will
+     * still contain the Report ID, and the report data will start in data[1]
+     * <p>
+     * This method handles all the wide string and array manipulation for you
+     *
+     * @param data     The buffer to contain the report
+     * @param reportId The report ID (or (byte) 0x00)
+     * @return The number of bytes read plus one for the report ID (which has
+     * been removed from the first byte), or -1 on error.
+     * @since 0.1.0
+     */
+    public int getFeatureReport(byte[] data, byte reportId) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return nativeDevice.getFeatureReport(data, -1, reportId);
+    }
 
-  }
+    /**
+     * Send a Feature report to the device
+     * <p>
+     * Under the covers, feature reports are sent over the Control endpoint as a
+     * Set_Report transfer. The first byte of data[] must contain the Report ID.
+     * For devices which only support a single report, this must be set to 0x0.
+     * The remaining bytes contain the report data
+     * <p>
+     * Since the Report ID is mandatory, calls to hid_send_feature_report() will
+     * always contain one more byte than the report contains. For example, if a
+     * hid report is 16 bytes long, 17 bytes must be passed to
+     * hid_send_feature_report(): the Report ID (or 0x0, for devices which do
+     * not use numbered reports), followed by the report data (16 bytes). In
+     * this example, the length passed in would be 17
+     * <p>
+     * This method handles all the array manipulation for you
+     *
+     * @param data     The feature report data (will be widened and have the report
+     *                 ID pre-pended)
+     * @param reportId The report ID (or (byte) 0x00)
+     * @return This function returns the actual number of bytes written and -1
+     * on error.
+     * @since 0.1.0
+     */
+    public int sendFeatureReport(byte[] data, byte reportId) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return nativeDevice.sendFeatureReport(data, data.length, reportId);
+    }
 
-  /**
-   * @return The last error message from HID API
-   * @since 0.1.0
-   */
-  public String getLastErrorMessage() {
-    return HidApi.getLastErrorMessage(hidDeviceStructure);
-  }
+    /**
+     * Get a string from a HID device, based on its string index
+     *
+     * @param index The index
+     * @return The string
+     * @since 0.1.0
+     */
+    public String getIndexedString(int index) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return nativeDevice.getIndexedString(index);
+    }
 
-  /**
-   * @param vendorId     The vendor ID
-   * @param productId    The product ID
-   * @param serialNumber The serial number
-   * @return True if the device matches the given the combination with vendorId, productId being zero acting as a wildcard
-   * @since 0.1.0
-   */
-  public boolean isVidPidSerial(int vendorId, int productId, String serialNumber) {
-    if (serialNumber == null)
-      return (vendorId == 0 || this.vendorId == vendorId)
-        && (productId == 0 || this.productId == productId);
-    else
-      return (vendorId == 0 || this.vendorId == vendorId)
-        && (productId == 0 || this.productId == productId)
-        && (this.serialNumber.equals(serialNumber));
-  }
+    /**
+     * Write the message to the HID API without zero byte padding.
+     * <p>
+     * Note that the report ID will be prefixed to the HID packet as per HID rules.
+     *
+     * @param message      The message
+     * @param packetLength The packet length
+     * @param reportId     The report ID (will be prefixed to the HID packet)
+     * @return The number of bytes written (including report ID), or -1 if an error occurs
+     * @since 0.1.0
+     */
+    public int write(byte[] message, int packetLength, byte reportId) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return write(message, packetLength, reportId, false);
+    }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
+    /**
+     * Write the message to the HID API with optional zero byte padding to packet length.
+     * <p>
+     * Note that the report ID will be prefixed to the HID packet as per HID rules.
+     *
+     * @param message      The message
+     * @param packetLength The packet length
+     * @param reportId     The report ID
+     * @param applyPadding True if the message should be filled with zero bytes to the packet length
+     * @return The number of bytes written (including report ID), or -1 if an error occurs
+     * @since 0.8.0
+     */
+    public int write(byte[] message, int packetLength, byte reportId, boolean applyPadding) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
 
-    HidDevice hidDevice = (HidDevice) o;
+        if (applyPadding) {
+            message = Arrays.copyOf(message, packetLength + 1);
+        }
 
-    return path.equals(hidDevice.path);
+        int result = nativeDevice.write(message, packetLength, reportId);
+        // Update HID manager
+        manager.afterDeviceWrite();
+        return result;
 
-  }
+    }
 
-  @Override
-  public int hashCode() {
-    return path.hashCode();
-  }
+    /**
+     * @param vendorId     The vendor ID
+     * @param productId    The product ID
+     * @param serialNumber The serial number
+     * @return True if the device matches the given the combination with vendorId, productId being zero acting as a wildcard
+     * @since 0.1.0
+     */
+    public boolean isVidPidSerial(int vendorId, int productId, String serialNumber) {
+        if (serialNumber == null)
+            return (vendorId == 0 || this.info.vendorId == vendorId)
+                    && (productId == 0 || this.info.productId == productId);
+        else
+            return (vendorId == 0 || this.info.vendorId == vendorId)
+                    && (productId == 0 || this.info.productId == productId)
+                    && (this.info.serialNumber.equals(serialNumber));
+    }
 
-  @Override
-  public String toString() {
-    return "HidDevice [path=" + path
-      + ", vendorId=0x" + Integer.toHexString(vendorId)
-      + ", productId=0x" + Integer.toHexString(productId)
-      + ", serialNumber=" + serialNumber
-      + ", releaseNumber=0x" + Integer.toHexString(releaseNumber)
-      + ", manufacturer=" + manufacturer
-      + ", product=" + product
-      + ", usagePage=0x" + Integer.toHexString(usagePage)
-      + ", usage=0x" + Integer.toHexString(usage)
-      + ", interfaceNumber=" + interfaceNumber
-      + "]";
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        HidDevice hidDevice = (HidDevice) o;
+
+        return getPath().equals(hidDevice.getPath());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return info.path.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return "HidDevice [path=" + info.path
+                + ", vendorId=0x" + Integer.toHexString(info.vendorId)
+                + ", productId=0x" + Integer.toHexString(info.productId)
+                + ", serialNumber=" + info.serialNumber
+                + ", releaseNumber=0x" + Integer.toHexString(info.releaseNumber)
+                + ", manufacturer=" + info.manufacturer
+                + ", product=" + info.product
+                + ", usagePage=0x" + Integer.toHexString(info.usagePage)
+                + ", usage=0x" + Integer.toHexString(info.usage)
+                + ", interfaceNumber=" + info.interfaceNumber
+                + "]";
+    }
+
+    /**
+     * @param buffer  The buffer to serialise for traffic
+     * @param isWrite True if writing (from host to device)
+     */
+    public static String logTraffic(byte[] buffer, boolean isWrite) {
+        StringBuilder sb = new StringBuilder();
+        if (buffer != null && buffer.length > 0) {
+            if (isWrite) {
+                sb.append("> ");
+            } else {
+                sb.append("< ");
+            }
+            sb.append(String.format("[%02x]:", buffer.length));
+            for (byte b : buffer) {
+                sb.append(String.format(" %02x", b));
+            }
+            sb.append('\n');
+        }
+        return sb.toString();
+    }
 }

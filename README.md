@@ -1,8 +1,25 @@
-# Project status
+[![Release](https://jitpack.io/v/umjammer/hid4java.svg)](https://jitpack.io/#umjammer/hid4java)
+[![Java CI](https://github.com/umjammer/hid4java/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/hid4java/actions/workflows/maven.yml)
+[![CodeQL](https://github.com/umjammer/hid4java/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/hid4java/actions/workflows/codeql-analysis.yml)
+![Java](https://img.shields.io/badge/Java-17-b07219)
 
-[![Build Status](https://travis-ci.org/gary-rowe/hid4java.png?branch=master)](https://travis-ci.org/gary-rowe/hid4java) [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.hid4java/hid4java/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.hid4java/hid4java) [![Javadocs](http://www.javadoc.io/badge/org.hid4java/hid4java.svg)](http://www.javadoc.io/doc/org.hid4java/hid4java)
+# hid4java
 
-# 🌟 Summary 
+## Install
+
+ * [maven](https://jitpack.io/#umjammer/hid4java)
+
+## TODO
+
+ * ~~sigabrt~~ ... `-Djbr.catch.SIGABRT=true` (maybe only for jetbrain's jvm)
+ * ~~npe on close~~
+
+## LESSON
+
+ * `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type should be `Pointer`
+---
+
+## Original
 
 The `hid4java` project supports USB HID devices through a common API which is provided here under the MIT license. The API is very simple but provides great flexibility such as support for feature reports and blocking reads with timeouts. Attach/detach events are provided to allow applications to respond instantly to device availability.
 
@@ -15,43 +32,16 @@ Remember to [check the Wiki first](https://github.com/gary-rowe/hid4java/wiki/Ho
 
 ## Technologies
 
-* [hidapi](https://github.com/libusb/hidapi) - Native USB HID library for multiple platforms
+* ~~[hidapi](https://github.com/libusb/hidapi) - Native USB HID library for multiple platforms~~
 * [JNA](https://github.com/twall/jna) - to remove the need for Java Native Interface (JNI) and greatly simplify the project
-* [dockcross](https://github.com/dockcross/dockcross) - Cross-compilation environments for multiple platforms to create hidapi libraries
-* Java 7+ - to remove dependencies on JVMs that have reached end of life
+* ~~[dockcross](https://github.com/dockcross/dockcross) - Cross-compilation environments for multiple platforms to create hidapi libraries~~
+* Java 17+ - to remove dependencies on JVMs that have reached end of life
 
-## Maven dependency
+## Install
 
-```xml
+* https://jitpack.io/#umjammer/hid4java
 
-<dependencies>
-
-  <!-- hid4java for cross-platform HID USB -->
-  <dependency>
-    <groupId>org.hid4java</groupId>
-    <artifactId>hid4java</artifactId>
-    <version>0.7.0</version>
-  </dependency>
-
-</dependencies>
-
-```
-
-## Gradle dependency
-
-```gradle
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation('org.hid4java:hid4java')
-}
-
-```
-
-## 🚀 Code example
+## Code example
 
 Taken from [UsbHidEnumerationExample](https://github.com/gary-rowe/hid4java/blob/develop/src/test/java/org/hid4java/examples/UsbHidEnumerationExample.java) which
 provides more details. 
@@ -77,24 +67,7 @@ for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
     
 ```
 
-# ⚙ Local build
-
-If you're unfamiliar with Maven and git the wiki provides [an easy guide to creating a development environment](https://github.com/gary-rowe/hid4java/wiki/How-to-set-up-a-build-environment-from-scratch).
-
-The project uses the standard Maven build process and can be used without having external hardware attached. Just do the usual
-
-```shell
-cd <workspace>
-git clone https://github.com/gary-rowe/hid4java.git
-cd hid4java
-
-# Maven build
-mvn clean install
-```
-
-and you're good to go. 
-
-# 🤔 More information
+## More information
 
 Much of the information previously in this README has been migrated to the [project Wiki](https://github.com/gary-rowe/hid4java/wiki/Home) as it was getting rather long. Here are some useful jumping off points that should help:
 
@@ -103,7 +76,7 @@ Much of the information previously in this README has been migrated to the [proj
 * [Examples](https://github.com/gary-rowe/hid4java/wiki/Examples) - Using the examples to kickstart your own project
 * [Troubleshooting](https://github.com/gary-rowe/hid4java/wiki/Troubleshooting) - A comprehensive troubleshooting guide
 
-# 📕 Closing notes
+## Closing notes
 
 All trademarks and copyrights are acknowledged.
 

@@ -25,11 +25,16 @@
 
 package org.hid4java.examples;
 
-import org.hid4java.*;
-import org.hid4java.event.HidServicesEvent;
-import org.hid4java.jna.HidApi;
-
+import java.io.IOException;
 import java.security.SecureRandom;
+
+import org.hid4java.HidDevice;
+import org.hid4java.HidException;
+import org.hid4java.HidManager;
+import org.hid4java.HidServices;
+import org.hid4java.HidServicesSpecification;
+import org.hid4java.event.HidServicesEvent;
+import vavi.util.Debug;
 
 /*
  * Demonstrate the USB HID interface using a FIDO2 USB device
@@ -129,19 +134,16 @@ public class Fido2AuthenticationExample extends BaseExample {
   private byte[] nonce = new byte[8];
   private byte[] fidoChannel = new byte[4];
 
-  public static void main(String[] args) throws HidException {
+  public static void main(String[] args) throws IOException {
 
     Fido2AuthenticationExample example = new Fido2AuthenticationExample();
     example.executeExample();
 
   }
 
-  private void executeExample() throws HidException {
+  private void executeExample() throws IOException {
 
     printPlatform();
-
-    // Demonstrate low level traffic logging
-    HidApi.logTraffic = true;
 
     // Configure to use custom specification
     HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
@@ -173,7 +175,7 @@ public class Fido2AuthenticationExample extends BaseExample {
     }
 
     if (fidoDevice == null) {
-      // Shut down and rely on auto-shutdown hook to clear HidApi resources
+      // Shut down and rely on auto-shutdown hook to clear HidDeviceManager resources
       System.out.println(ANSI_YELLOW + "No FIDO2 devices attached." + ANSI_RESET);
     } else {
       if (handleInitialise(fidoDevice)) {
@@ -200,7 +202,7 @@ public class Fido2AuthenticationExample extends BaseExample {
    * @param hidDevice The device to use
    * @return True if the device is now initialised for use
    */
-  private boolean handleInitialise(HidDevice hidDevice) {
+  private boolean handleInitialise(HidDevice hidDevice) throws IOException {
 
     // Ensure device is open
     if (hidDevice.isClosed()) {
@@ -223,7 +225,7 @@ public class Fido2AuthenticationExample extends BaseExample {
     System.out.println(ANSI_GREEN + "Sending CTAPHID_INIT..." + ANSI_RESET);
     int bytesWritten = hidDevice.write(initialiseRequest, CTAP_MAX_REPORT_LEN, (byte) 0x00, true);
     if (bytesWritten < 0) {
-      System.out.println(ANSI_RED + hidDevice.getLastErrorMessage() + ANSI_RESET);
+Debug.println(ANSI_RED + "error" + ANSI_RESET);
       return false;
     }
 

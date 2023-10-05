@@ -4,21 +4,18 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>develop-SNAPSHOT</version>
+  <version>0.14.1v-SNAPSHOT</version>
 
   <name>hid4java</name>
   <description>A cross-platform Java Native Access (JNA) wrapper for the libusb/hidapi library</description>
-
-  <url>https://github.com/gary-rowe/hid4java</url>
+  <url>https://github.com/umjammer/hid4java</url>
   <inceptionYear>2014</inceptionYear>
-
   <developers>
     <developer>
       <name>Gary Rowe</name>
       <email>g.rowe@froot.co.uk</email>
     </developer>
   </developers>
-
   <licenses>
     <license>
       <name>MIT</name>
@@ -27,94 +24,54 @@
       <comments>All source code is under the MIT license.</comments>
     </license>
   </licenses>
-
   <issueManagement>
     <system>GitHub</system>
-    <url>https://github.com/gary-rowe/hid4java/issues</url>
+    <url>https://github.com/umjammer/hid4java/issues</url>
   </issueManagement>
+  <scm>
+    <connection>scm:git:git@github.com:umjammer/hid4java.git</connection>
+    <developerConnection>scm:git:git@github.com:umjammer/hid4java.git</developerConnection>
+    <url>git@github.com:umjammer/hid4java.git</url>
+  </scm>
 
   <distributionManagement>
-    <snapshotRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </snapshotRepository>
     <repository>
       <id>sonatype-nexus-staging</id>
       <name>Nexus Release Repository</name>
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
-    <downloadUrl>https://oss.sonatype.org/content/groups/public/org/hid4java</downloadUrl>
   </distributionManagement>
-
-  <scm>
-    <connection>scm:git:git@github.com:gary-rowe/hid4java.git</connection>
-    <developerConnection>scm:git:git@github.com:gary-rowe/hid4java.git</developerConnection>
-    <url>git@github.com:gary-rowe/hid4java.git</url>
-  </scm>
-
-  <properties>
-    <!-- Ensure source is under UTF-8 -->
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Support basic language features only -->
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <!-- Target the oldest long term support at time of compilation -->
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-
-  <profiles>
-
-    <!-- To activate this use 'mvn release:prepare release:perform' -->
-    <profile>
-      <id>release-sign-artifacts</id>
-      <activation>
-        <property>
-          <name>performRelease</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-  </profiles>
 
   <build>
     <plugins>
 
-      <!-- Filter out functional tests by Maven (an IDE will run all tests including functional) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <release>17</release>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.16</version>
+        <version>3.0.0</version>
         <configuration>
           <excludes>
             <exclude>**/*FunctionalTest.java</exclude>
           </excludes>
+          <argLine>
+            -Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties
+          </argLine>
         </configuration>
       </plugin>
 
-      <!-- Generates a source code JAR during package -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
+        <version>3.2.1</version>
         <executions>
           <execution>
             <id>attach-sources</id>
@@ -125,13 +82,12 @@
         </executions>
       </plugin>
 
-      <!-- Javadocs -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.5.0</version>
         <configuration>
-          <source>7</source>
+          <source>17</source>
         </configuration>
         <executions>
           <execution>
@@ -143,11 +99,10 @@
         </executions>
       </plugin>
 
-      <!-- For deploying to Maven Central -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.5.3</version>
+        <version>3.0.1</version>
         <configuration>
           <autoVersionSubmodules>true</autoVersionSubmodules>
           <mavenExecutorId>forked-path</mavenExecutorId>
@@ -158,7 +113,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.6</version>
+        <version>3.3.0</version>
         <configuration>
           <archive>
             <manifest>
@@ -171,22 +126,74 @@
     </plugins>
   </build>
 
+  <repositories>
+    <repository>
+      <id>jitpack.io</id>
+      <url>https://jitpack.io</url>
+    </repository>
+  </repositories>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>5.9.3</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
-    <!-- Java Native Access (JNA) -->
     <dependency>
-      <groupId>net.java.dev.jna</groupId>
-      <artifactId>jna</artifactId>
-      <version>5.12.1</version>
+      <groupId>net.java.jinput</groupId>
+      <artifactId>osx-plugin</artifactId>
+      <version>2.0.11v-SNAPSHOT</version>
     </dependency>
 
-    <!-- JUnit -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>5.9.0</version>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.platform</groupId>
+      <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>
 
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.9</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
+  <profiles>
+    <profile>
+      <!-- mvn -P jnaerator jnaerator:generate -->
+      <id>jnaerator</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.nativelibs4java</groupId>
+            <artifactId>maven-jnaerator-plugin</artifactId>
+            <version>0.12</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <javaOutputDirectory>${project.build.testSourceDirectory}</javaOutputDirectory>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

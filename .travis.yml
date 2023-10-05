@@ -1,5 +1,0 @@
-language: java
-
-jdk:
-  # Test on Open JDK 11 on Travis due to EOL issues
-  - openjdk11

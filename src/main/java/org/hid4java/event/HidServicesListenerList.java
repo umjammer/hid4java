@@ -25,15 +25,15 @@
 
 package org.hid4java.event;
 
-import org.hid4java.HidDevice;
-import org.hid4java.HidServicesListener;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+
+import org.hid4java.HidDevice;
+import org.hid4java.HidServicesListener;
+
 
 /**
  * HID services listener list
@@ -42,159 +42,128 @@ import java.util.concurrent.ThreadFactory;
  */
 public class HidServicesListenerList {
 
-  /**
-   * The list with registered listeners
-   */
-  private final List<HidServicesListener> listeners = Collections.synchronizedList(new ArrayList<HidServicesListener>());
+    /**
+     * The list with registered listeners
+     */
+    private final List<HidServicesListener> listeners = Collections.synchronizedList(new ArrayList<HidServicesListener>());
 
-  private final ExecutorService executorService = Executors.newFixedThreadPool(
-    3, new ThreadFactory() {
-      @Override
-      public Thread newThread(Runnable runnable) {
-        Thread thread = Executors.defaultThreadFactory().newThread(runnable);
-        thread.setName("hid4java event worker");
-        thread.setDaemon(true);
-        return thread;
-      }
-    });
+    private final ExecutorService executorService = Executors.newFixedThreadPool(
+            3, runnable -> {
+                Thread thread = Executors.defaultThreadFactory().newThread(runnable);
+                thread.setName("hid4java event worker");
+                thread.setDaemon(true);
+                return thread;
+            });
 
-  /**
-   * @param listener The listener to add
-   */
-  public final void add(final HidServicesListener listener) {
-    if (this.listeners.contains(listener)) {
-      return;
+    /**
+     * @param listener The listener to add
+     */
+    public final void add(final HidServicesListener listener) {
+        if (this.listeners.contains(listener)) {
+            return;
+        }
+        this.listeners.add(listener);
     }
-    this.listeners.add(listener);
-  }
 
-  /**
-   * @param listener The listener to remove
-   */
-  public final void remove(final HidServicesListener listener) {
-    this.listeners.remove(listener);
-  }
+    /**
+     * @param listener The listener to remove
+     */
+    public final void remove(final HidServicesListener listener) {
+        this.listeners.remove(listener);
+    }
 
-  /**
-   * Removes all listeners
-   */
-  public final void clear() {
-    this.listeners.clear();
-  }
+    /**
+     * Removes all listeners
+     */
+    public final void clear() {
+        this.listeners.clear();
+    }
 
-  /**
-   * @return The listeners list
-   */
-  protected final List<HidServicesListener> getListeners() {
-    return this.listeners;
-  }
+    /**
+     * @return The listeners list
+     */
+    protected final List<HidServicesListener> getListeners() {
+        return this.listeners;
+    }
 
-  /**
-   * Returns an array with the currently registered listeners.
-   * The returned array is detached from the internal list of registered listeners.
-   *
-   * @return Array with registered listeners.
-   */
-  public HidServicesListener[] toArray() {
-    return getListeners().toArray(new HidServicesListener[0]);
-  }
+    /**
+     * Returns an array with the currently registered listeners.
+     * The returned array is detached from the internal list of registered listeners.
+     *
+     * @return Array with registered listeners.
+     */
+    public HidServicesListener[] toArray() {
+        return getListeners().toArray(new HidServicesListener[0]);
+    }
 
-  /**
-   * Fire the HID device attached event
-   *
-   * @param hidDevice The device that was attached
-   */
-  public void fireHidDeviceAttached(final HidDevice hidDevice) {
+    /**
+     * Fire the HID device attached event
+     *
+     * @param hidDevice The device that was attached
+     */
+    public void fireHidDeviceAttached(final HidDevice hidDevice) {
 
-    // Broadcast on a different thread
-    executorService.submit(
-      new Runnable() {
-        @Override
-        public void run() {
+        // Broadcast on a different thread
+        executorService.submit(() -> {
+            HidServicesEvent event = new HidServicesEvent(hidDevice);
 
-          HidServicesEvent event = new HidServicesEvent(hidDevice);
+            for (HidServicesListener listener : toArray()) {
+                listener.hidDeviceAttached(event);
+            }
+        });
+    }
 
-          for (final HidServicesListener listener : toArray()) {
-            listener.hidDeviceAttached(event);
-          }
+    /**
+     * Fire the HID device detached event
+     *
+     * @param hidDevice The device that was detached
+     */
+    public void fireHidDeviceDetached(final HidDevice hidDevice) {
 
-        }
-      });
+        // Broadcast on a different thread
+        executorService.submit(() -> {
 
-  }
+            HidServicesEvent event = new HidServicesEvent(hidDevice);
 
-  /**
-   * Fire the HID device detached event
-   *
-   * @param hidDevice The device that was detached
-   */
-  public void fireHidDeviceDetached(final HidDevice hidDevice) {
+            for (HidServicesListener listener : toArray()) {
+                listener.hidDeviceDetached(event);
+            }
+        });
+    }
 
-    // Broadcast on a different thread
-    executorService.submit(
-      new Runnable() {
-        @Override
-        public void run() {
+    /**
+     * Fire the HID failure event
+     *
+     * @param hidDevice The device that caused the error if known
+     */
+    public void fireHidFailure(final HidDevice hidDevice) {
 
-          HidServicesEvent event = new HidServicesEvent(hidDevice);
+        // Broadcast on a different thread
+        executorService.submit(() -> {
+            HidServicesEvent event = new HidServicesEvent(hidDevice);
 
-          for (final HidServicesListener listener : toArray()) {
-            listener.hidDeviceDetached(event);
-          }
+            for (HidServicesListener listener : toArray()) {
+                listener.hidFailure(event);
+            }
+        });
+    }
 
-        }
-      });
+    /**
+     * Fire the HID data received event
+     *
+     * @param hidDevice    The device that triggered the data input
+     * @param dataReceived The buffer with the data received
+     */
+    public void fireHidDataReceived(final HidDevice hidDevice, final byte[] dataReceived) {
 
-  }
+        // Broadcast on a different thread
+        executorService.submit(() -> {
+            HidServicesEvent event = new HidServicesEvent(hidDevice, dataReceived);
 
-  /**
-   * Fire the HID failure event
-   *
-   * @param hidDevice The device that caused the error if known
-   */
-  public void fireHidFailure(final HidDevice hidDevice) {
-
-    // Broadcast on a different thread
-    executorService.submit(
-      new Runnable() {
-        @Override
-        public void run() {
-
-          HidServicesEvent event = new HidServicesEvent(hidDevice);
-
-          for (final HidServicesListener listener : toArray()) {
-            listener.hidFailure(event);
-          }
-
-        }
-      });
-
-  }
-
-  /**
-   * Fire the HID data received event
-   *
-   * @param hidDevice The device that triggered the data input
-   * @param dataReceived The buffer with the data received
-   */
-  public void fireHidDataReceived(final HidDevice hidDevice, final byte[] dataReceived) {
-
-    // Broadcast on a different thread
-    executorService.submit(
-      new Runnable() {
-        @Override
-        public void run() {
-
-          HidServicesEvent event = new HidServicesEvent(hidDevice, dataReceived);
-
-          for (final HidServicesListener listener : toArray()) {
-            listener.hidDataReceived(event);
-          }
-
-        }
-      });
-
-  }
-
+            for (final HidServicesListener listener : toArray()) {
+                listener.hidDataReceived(event);
+            }
+        });
+    }
 }
 
