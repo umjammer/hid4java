@@ -38,37 +38,37 @@ import java.io.IOException;
  */
 public class HidManager {
 
-  private static final Object servicesLock = new Object();
+    private static final Object servicesLock = new Object();
 
-  private static HidServices hidServices = null;
+    private static HidServices hidServices = null;
 
-  /**
-   * Simple service provider providing generally safe defaults. If you find you are experiencing problems, particularly
-   * with constrained devices, consider exploring the {@link HidServicesSpecification} options.
-   *
-   * @return A single instance of the HID services using the default specification
-   */
-  public static HidServices getHidServices() throws IOException {
-    return getHidServices(new HidServicesSpecification());
-  }
-
-  /**
-   * Fully configurable service provider
-   *
-   * @param hidServicesSpecification Provides various parameters for configuring HID services
-   * @return A single instance of the HID services using specified parameters
-   * @since 0.5.0
-   */
-  public static HidServices getHidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
-
-    synchronized (servicesLock) {
-      if (null == hidServices) {
-        hidServices = new HidServices(hidServicesSpecification);
-      }
+    /**
+     * Simple service provider providing generally safe defaults. If you find you are experiencing problems, particularly
+     * with constrained devices, consider exploring the {@link HidServicesSpecification} options.
+     *
+     * @return A single instance of the HID services using the default specification
+     */
+    public static HidServices getHidServices() throws IOException {
+        return getHidServices(new HidServicesSpecification());
     }
 
-    return hidServices;
+    /**
+     * Fully configurable service provider
+     *
+     * @param hidServicesSpecification Provides various parameters for configuring HID services
+     * @return A single instance of the HID services using specified parameters
+     * @since 0.5.0
+     */
+    public static HidServices getHidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
 
-  }
+        synchronized (servicesLock) {
+            if (null == hidServices) {
+                hidServices = new HidServices(hidServicesSpecification);
+            }
+        }
+
+        return hidServices;
+
+    }
 
 }

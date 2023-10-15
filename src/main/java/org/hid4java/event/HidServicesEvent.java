@@ -25,9 +25,9 @@
 
 package org.hid4java.event;
 
-import org.hid4java.HidDevice;
-
 import java.util.Arrays;
+
+import org.hid4java.HidDevice;
 
 
 /**
@@ -40,45 +40,45 @@ import java.util.Arrays;
  */
 public class HidServicesEvent {
 
-  private final HidDevice hidDevice;
-  private final byte[] dataReceived;
+    private final HidDevice hidDevice;
+    private final byte[] dataReceived;
 
-  /**
-   * @param device The HidDevice involved in the event
-   */
-  public HidServicesEvent(HidDevice device) {
-    hidDevice = device;
-    dataReceived = null;
-  }
+    /**
+     * @param device The HidDevice involved in the event
+     */
+    public HidServicesEvent(HidDevice device) {
+        hidDevice = device;
+        dataReceived = null;
+    }
 
-  /**
-   * @param device The HidDevice involved in the event
-   * @param dataReceived The contents of all data read
-   * @since 0.8.0
-   */
-  public HidServicesEvent(HidDevice device, byte[] dataReceived) {
-    hidDevice = device;
-    this.dataReceived = Arrays.copyOf(dataReceived, dataReceived.length);
-  }
+    /**
+     * @param device       The HidDevice involved in the event
+     * @param dataReceived The contents of all data read
+     * @since 0.8.0
+     */
+    public HidServicesEvent(HidDevice device, byte[] dataReceived) {
+        hidDevice = device;
+        this.dataReceived = Arrays.copyOf(dataReceived, dataReceived.length);
+    }
 
-  /**
-   * @return The associated HidDevice
-   */
-  public HidDevice getHidDevice() {
-    return hidDevice;
-  }
+    /**
+     * @return The associated HidDevice
+     */
+    public HidDevice getHidDevice() {
+        return hidDevice;
+    }
 
-  /**
-   * @return The data received (might be multiple packets of data)
-   */
-  public byte[] getDataReceived() {
-    return dataReceived;
-  }
+    /**
+     * @return The data received (might be multiple packets of data)
+     */
+    public byte[] getDataReceived() {
+        return dataReceived;
+    }
 
-  @Override
-  public String toString() {
-    return "HidServicesEvent{" +
-      "hidDevice=" + hidDevice +
-      '}';
-  }
+    @Override
+    public String toString() {
+        return "HidServicesEvent{" +
+                "hidDevice=" + hidDevice +
+                '}';
+    }
 }

@@ -45,10 +45,10 @@ class IOHIDDevice {
 
     private static final Logger logger = Logger.getLogger(IOHIDDevice.class.getName());
 
-    /** */
+    /**  */
     Pointer/*IOHIDDeviceRef*/ device;
 
-    /** */
+    /**  */
     public IOHIDDevice(Pointer/*IOHIDDeviceRef*/ device) {
         this.device = device;
     }
@@ -61,7 +61,7 @@ class IOHIDDevice {
 //logger.fine("prop: " + prop.getString());
         CFType ret = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, prop);
         if (ret == null) {
-logger.finer("no prop value: " + prop.getString());
+            logger.finer("no prop value: " + prop.getString());
             return -1;
         }
 
@@ -90,12 +90,12 @@ logger.finer("no prop value: " + prop.getString());
 
             return used_buf_len.getValue().intValue();
         } else {
-logger.fine("not string: " + prop.getString());
+            logger.fine("not string: " + prop.getString());
             return -1;
         }
     }
 
-    /** */
+    /**  */
     private static byte[] dup_wcs(byte[] s, int len) {
         if (len == -1) len = 0;
         byte[] ret = new byte[len];
@@ -103,13 +103,13 @@ logger.fine("not string: " + prop.getString());
         return ret;
     }
 
-    /** */
+    /**  */
     public String get_string_property(String key, byte[] buf, int len) {
         int l = get_string_property(CFLib.INSTANCE.__CFStringMakeConstantString(key), buf, len);
         return new String(dup_wcs(buf, l));
     }
 
-    /** */
+    /**  */
     private boolean try_get_ioregistry_int_property(Pointer/*io_service_t*/ service, CFString property, IntByReference out_val) {
         boolean result = false;
         CFType ref = IOKitLib.INSTANCE.IORegistryEntryCreateCFProperty(service, property, CFAllocator.kCFAllocatorDefault, 0);
@@ -123,7 +123,7 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /** */
+    /**  */
     private int read_usb_interface_from_hid_service_parent(Pointer/*io_service_t*/ hid_service) {
         int result = -1;
         boolean success;
@@ -163,7 +163,7 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /** */
+    /**  */
     private boolean try_get_int_property(CFString key, IntByReference out_val) {
         boolean result = false;
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
@@ -175,7 +175,7 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /** */
+    /**  */
     private HidDevice.Info create_device_info_with_usage(int usage_page, int usage) {
         int dev_vid;
         int dev_pid;
@@ -271,7 +271,7 @@ logger.fine("not string: " + prop.getString());
         return cur_info;
     }
 
-    /** */
+    /**  */
     private CFArray get_array_property(CFString key) {
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
         if (ref != null && CFLib.INSTANCE.CFGetTypeID(ref).equals(CFLib.INSTANCE.CFArrayGetTypeID())) {
@@ -281,12 +281,12 @@ logger.fine("not string: " + prop.getString());
         }
     }
 
-    /** */
+    /**  */
     private CFArray get_usage_pairs() {
         return get_array_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDDeviceUsagePairsKey));
     }
 
-    /** */
+    /**  */
     public List<HidDevice.Info> create_device_info() {
         int primary_usage_page = get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDPrimaryUsagePageKey));
         int primary_usage = get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDPrimaryUsageKey));
@@ -320,7 +320,7 @@ logger.fine("not string: " + prop.getString());
                 int usage_page = usage_pageP.getValue();
                 int usage = usageP.getValue();
                 if (usage_page == primary_usage_page && usage == primary_usage) {
-logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
+                    logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
                     continue; // Already added.
                 }
 
@@ -329,11 +329,11 @@ logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
             }
         }
 
-logger.finer("infos: " + deviceInfos.size());
+        logger.finer("infos: " + deviceInfos.size());
         return deviceInfos;
     }
 
-    /** */
+    /**  */
     private int get_int_property(CFString key) {
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
         if (ref != null) {
@@ -346,7 +346,7 @@ logger.finer("infos: " + deviceInfos.size());
         return 0;
     }
 
-    /** */
+    /**  */
     int get_int_property(String key) {
         return get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(key));
     }

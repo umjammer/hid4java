@@ -78,7 +78,7 @@ public interface NativeHidDevice {
     /**
      * Get a string from a HID device, based on its string index.
      *
-     * @param idx    The index of the string to get
+     * @param idx The index of the string to get
      * @return 0 on success, -1 on failure
      */
     String getIndexedString(int idx) throws IOException;

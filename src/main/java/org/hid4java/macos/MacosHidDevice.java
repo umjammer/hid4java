@@ -59,7 +59,7 @@ import static vavix.rococoa.iokit.IOKitLib.kIOReturnSuccess;
 public class MacosHidDevice implements NativeHidDevice {
 
     private static final Logger logger = Logger.getLogger(MacosHidDevice.class.getName());
-    
+
     /**
      * Default length for wide string buffer
      */
@@ -115,7 +115,7 @@ public class MacosHidDevice implements NativeHidDevice {
 
     @Override
     public void close() {
-logger.fine("here20.0:");
+        logger.fine("here20.0:");
 
         // Disconnect the report callback before close.
         // See comment below.
@@ -128,7 +128,7 @@ logger.fine("here20.0:");
             IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.device_handle.device, null, object_context);
             IOKitLib.INSTANCE.IOHIDDeviceUnscheduleFromRunLoop(this.device_handle.device, this.run_loop, this.run_loop_mode);
             IOKitLib.INSTANCE.IOHIDDeviceScheduleWithRunLoop(this.device_handle.device, CFLib.INSTANCE.CFRunLoopGetMain(), kCFRunLoopDefaultMode);
-logger.finest("here20.1: removal callback null, unschedule run loop");
+            logger.finest("here20.1: removal callback null, unschedule run loop");
         }
 
         // Cause read_thread() to stop.
@@ -137,17 +137,21 @@ logger.finest("here20.1: removal callback null, unschedule run loop");
         // Wake up the run thread's event loop so that the thread can exit.
         CFLib.INSTANCE.CFRunLoopSourceSignal(this.source);
         CFLib.INSTANCE.CFRunLoopWakeUp(this.run_loop);
-logger.finest("here20.2: wake up run loop: @" + this.run_loop.hashCode());
+        logger.finest("here20.2: wake up run loop: @" + this.run_loop.hashCode());
 
         // Notify the read thread that it can shut down now.
-logger.finest("here20.3: " + Thread.currentThread() + ", " + this.thread);
+        logger.finest("here20.3: " + Thread.currentThread() + ", " + this.thread);
         if (Thread.currentThread() != this.thread) {
-logger.finest("here20.4: notify shutdown_barrier -1");
+            logger.finest("here20.4: notify shutdown_barrier -1");
             this.shutdown_barrier.waitAndSync();
 
-        // Wait for read_thread() to end.
-logger.finest("here20.5: join...");
-            try { this.thread.join(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            // Wait for read_thread() to end.
+            logger.finest("here20.5: join...");
+            try {
+                this.thread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
 
         // Close the OS handle to the device, but only if it's not
@@ -161,17 +165,17 @@ logger.finest("here20.5: join...");
 
         if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
             IOKitLib.INSTANCE.IOHIDDeviceClose(this.device_handle.device, this.open_options);
-logger.finest("here20.6: native device close: @" + this.device_handle.device.hashCode());
+            logger.finest("here20.6: native device close: @" + this.device_handle.device.hashCode());
         }
 
         CFLib.INSTANCE.CFRelease(this.device_handle.device);
-logger.finest("here20.7: native device release");
+        logger.finest("here20.7: native device release");
 
         closer.accept(this);
-logger.finest("here20.8: close done");
+        logger.finest("here20.8: close done");
     }
 
-    /** */
+    /**  */
     private int set_report(int/*IOHIDReportType*/ type, byte[] data, int length) throws HidException {
         int dataP = 0; // data
         int length_to_send = length;
@@ -186,7 +190,7 @@ logger.finest("here20.8: close done");
 
         if (report_id == 0x0) {
             // Not using numbered Reports.
-		    // Don't send the report number.
+            // Don't send the report number.
             dataP = 1;
             length_to_send = length - 1;
         }
@@ -210,7 +214,7 @@ logger.finest("here20.8: close done");
         return length;
     }
 
-    /** */
+    /**  */
     private int get_report(int/*IOHIDReportType*/ type, byte[] data, int length) throws HidException {
         int dataP = 0;
         int report_length = length;
@@ -334,7 +338,7 @@ logger.finest("here20.8: close done");
         return info.get(0).product;
     }
 
-    /** */
+    /**  */
     private List<HidDevice.Info> hid_get_device_info() {
         if (this.device_info == null) {
             this.device_info = this.device_handle.create_device_info();

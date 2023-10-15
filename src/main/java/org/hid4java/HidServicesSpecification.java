@@ -35,101 +35,98 @@ package org.hid4java;
  */
 public class HidServicesSpecification {
 
-  private ScanMode scanMode = ScanMode.SCAN_AT_FIXED_INTERVAL;
-  private boolean autoShutdown = true;
-  private int scanInterval = 500;
-  private int pauseInterval = 5000;
-  private boolean autoStart = true;
-  private boolean autoDataRead = false;
-  private int dataReadInterval = 500;
+    private ScanMode scanMode = ScanMode.SCAN_AT_FIXED_INTERVAL;
+    private boolean autoShutdown = true;
+    private int scanInterval = 500;
+    private int pauseInterval = 5000;
+    private boolean autoStart = true;
+    private boolean autoDataRead = false;
+    private int dataReadInterval = 500;
 
-  public ScanMode getScanMode() {
-    return scanMode;
-  }
-
-  /**
-   * @param scanMode The scan mode to use to facilitate attach/detach events
-   */
-  public void setScanMode(ScanMode scanMode) {
-    this.scanMode = scanMode;
-  }
-
-  public int getScanInterval() {
-    return scanInterval;
-  }
-
-  /**
-   * @param scanInterval The interval in milliseconds between device enumeration scans
-   */
-  public void setScanInterval(int scanInterval) {
-    // Verify parameters
-    if (scanInterval < 0) {
-      throw new IllegalArgumentException("'scanInterval' must be greater than or equal to zero.");
+    public ScanMode getScanMode() {
+        return scanMode;
     }
-    this.scanInterval = scanInterval;
-  }
 
-  public int getPauseInterval() {
-    return pauseInterval;
-  }
-
-  /**
-   * @param pauseInterval The interval in milliseconds where device enumeration is paused (if scan mode supports pausing)
-   *
-   */
-  public void setPauseInterval(int pauseInterval) {
-    if (pauseInterval < 0) {
-      throw new IllegalArgumentException("'pauseInterval' must be greater than or equal to zero.");
+    /**
+     * @param scanMode The scan mode to use to facilitate attach/detach events
+     */
+    public void setScanMode(ScanMode scanMode) {
+        this.scanMode = scanMode;
     }
-    this.pauseInterval = pauseInterval;
-  }
 
-  public boolean isAutoShutdown() {
+    public int getScanInterval() {
+        return scanInterval;
+    }
 
-    return autoShutdown;
-  }
+    /**
+     * @param scanInterval The interval in milliseconds between device enumeration scans
+     */
+    public void setScanInterval(int scanInterval) {
+        // Verify parameters
+        if (scanInterval < 0) {
+            throw new IllegalArgumentException("'scanInterval' must be greater than or equal to zero.");
+        }
+        this.scanInterval = scanInterval;
+    }
 
-  /**
-   * @param autoShutdown True if a shutdown hook should be set to close the API automatically (recommended)
-   *
-   */
-  public void setAutoShutdown(boolean autoShutdown) {
-    this.autoShutdown = autoShutdown;
-  }
+    public int getPauseInterval() {
+        return pauseInterval;
+    }
+
+    /**
+     * @param pauseInterval The interval in milliseconds where device enumeration is paused (if scan mode supports pausing)
+     */
+    public void setPauseInterval(int pauseInterval) {
+        if (pauseInterval < 0) {
+            throw new IllegalArgumentException("'pauseInterval' must be greater than or equal to zero.");
+        }
+        this.pauseInterval = pauseInterval;
+    }
+
+    public boolean isAutoShutdown() {
+
+        return autoShutdown;
+    }
+
+    /**
+     * @param autoShutdown True if a shutdown hook should be set to close the API automatically (recommended)
+     */
+    public void setAutoShutdown(boolean autoShutdown) {
+        this.autoShutdown = autoShutdown;
+    }
 
 
-  public boolean isAutoStart() {
-    return autoStart;
-  }
+    public boolean isAutoStart() {
+        return autoStart;
+    }
 
-  /**
-   * @param autoStart True if the HidServices should start before any listeners are registered (default is backwards compatible to 0.6.0 and below)
-   */
-  public void setAutoStart(boolean autoStart) {
-    this.autoStart = autoStart;
-  }
+    /**
+     * @param autoStart True if the HidServices should start before any listeners are registered (default is backwards compatible to 0.6.0 and below)
+     */
+    public void setAutoStart(boolean autoStart) {
+        this.autoStart = autoStart;
+    }
 
-  public boolean isAutoDataRead() {
-    return autoDataRead;
-  }
+    public boolean isAutoDataRead() {
+        return autoDataRead;
+    }
 
-  /**
-   * @param autoDataRead True if device input buffer should be automatically checked and read
-   * @since 0.8.0
-   */
-  public void setAutoDataRead(boolean autoDataRead) {
-    this.autoDataRead = autoDataRead;
-  }
+    /**
+     * @param autoDataRead True if device input buffer should be automatically checked and read
+     * @since 0.8.0
+     */
+    public void setAutoDataRead(boolean autoDataRead) {
+        this.autoDataRead = autoDataRead;
+    }
 
-  public int getDataReadInterval() {
-    return dataReadInterval;
-  }
+    public int getDataReadInterval() {
+        return dataReadInterval;
+    }
 
-  /**
-   *
-   * @param dataReadInterval The interval in milliseconds between attempts to read device input buffer
-   */
-  public void setDataReadInterval(int dataReadInterval) {
-    this.dataReadInterval = dataReadInterval;
-  }
+    /**
+     * @param dataReadInterval The interval in milliseconds between attempts to read device input buffer
+     */
+    public void setDataReadInterval(int dataReadInterval) {
+        this.dataReadInterval = dataReadInterval;
+    }
 }

@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 
 import org.hid4java.event.HidServicesListenerList;
 
+
 /**
  * JNA bridge class to provide the following to USB HID:
  * <ul>
@@ -45,170 +46,170 @@ import org.hid4java.event.HidServicesListenerList;
  */
 public class HidServices {
 
-  private static final Logger logger = Logger.getLogger(HidServices.class.getName());
+    private static final Logger logger = Logger.getLogger(HidServices.class.getName());
 
-  /**
-   * The HID services listeners for receiving attach/detach events etc
-   */
-  private final HidServicesListenerList listeners = new HidServicesListenerList();
+    /**
+     * The HID services listeners for receiving attach/detach events etc
+     */
+    private final HidServicesListenerList listeners = new HidServicesListenerList();
 
-  /**
-   * The HID device manager handles scanning operations
-   */
-  private final org.hid4java.HidDeviceManager hidDeviceManager;
+    /**
+     * The HID device manager handles scanning operations
+     */
+    private final org.hid4java.HidDeviceManager hidDeviceManager;
 
-  /**
-   * Jar entry point to allow for version interrogation
-   *
-   * @param args Nothing required
-   */
-  public static void main(String[] args) {
-    System.out.println("Version: " + getVersion());
-  }
-
-  /**
-   * Initialise with a default HID specification
-   *
-   * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
-   */
-  public HidServices() throws IOException {
-    this(new HidServicesSpecification());
-  }
-
-  /**
-   * @param hidServicesSpecification Provides various parameters for configuring HID services
-   * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
-   */
-  public HidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
-    hidDeviceManager = new org.hid4java.HidDeviceManager(listeners, hidServicesSpecification);
-
-    // Check for automatic start (default behaviour for 0.6.0 and below)
-    // which will prevent an attachment event firing if the device is already
-    // attached since listeners will not have been registered at this point
-    if (hidServicesSpecification.isAutoStart()) {
-      hidDeviceManager.start();
+    /**
+     * Jar entry point to allow for version interrogation
+     *
+     * @param args Nothing required
+     */
+    public static void main(String[] args) {
+        System.out.println("Version: " + getVersion());
     }
 
-    if (hidServicesSpecification.isAutoShutdown()) {
-      // Ensure we release resources during shutdown
-      Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
-    }
-  }
-
-  /**
-   * Stop all device threads and shut down the {@link NativeHidDevice}
-   */
-  public void shutdown() {
-logger.finest("shutdown: start");
-    stop();
-    try {
-      hidDeviceManager.shutdown();
-    } catch (Throwable e) {
-      // Silently fail (user will already have been given an exception)
-    }
-  }
-
-  /**
-   * Stop all threads (enumeration, data read etc), close all devices
-   * and clear all listeners
-   *
-   * Normally part of an application shutdown
-   */
-  public void stop() {
-logger.finest("stop: start");
-    hidDeviceManager.stop();
-    this.listeners.clear();
-  }
-
-  /**
-   * Start all threads (enumeration, data read etc) as configured
-   */
-  public void start() throws IOException {
-    hidDeviceManager.start();
-  }
-
-  /**
-   * @param listener The listener to add
-   */
-  public void addHidServicesListener(final HidServicesListener listener) {
-    this.listeners.add(listener);
-  }
-
-  /**
-   * @param listener The listener to remove
-   */
-  public void removeHidServicesListener(final HidServicesListener listener) {
-    this.listeners.remove(listener);
-  }
-
-  /**
-   * Manually scans for HID device connection changes and triggers listener events as required
-   */
-  public void scan() throws IOException {
-    this.hidDeviceManager.scan();
-  }
-
-  /**
-   * @return A list of all attached HID devices
-   */
-  public List<HidDevice> getAttachedHidDevices() throws IOException {
-    return hidDeviceManager.getAttachedHidDevices();
-  }
-
-  /**
-   * @param vendorId     The vendor ID
-   * @param productId    The product ID
-   * @param serialNumber The serial number (use null for wildcard)
-   * @return The device if attached, null if detached
-   */
-  public HidDevice getHidDevice(int vendorId, int productId, String serialNumber) throws IOException {
-
-    List<HidDevice> devices = hidDeviceManager.getAttachedHidDevices();
-    for (HidDevice device : devices) {
-      if (device.isVidPidSerial(vendorId, productId, serialNumber)) {
-        device.open();
-        return device;
-      }
+    /**
+     * Initialise with a default HID specification
+     *
+     * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     */
+    public HidServices() throws IOException {
+        this(new HidServicesSpecification());
     }
 
-    return null;
-  }
+    /**
+     * @param hidServicesSpecification Provides various parameters for configuring HID services
+     * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     */
+    public HidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
+        hidDeviceManager = new org.hid4java.HidDeviceManager(listeners, hidServicesSpecification);
 
-  /**
-   * @return The current library version from the manifest or 0.0.x if an error occurs
-   */
-  public static String getVersion() {
+        // Check for automatic start (default behaviour for 0.6.0 and below)
+        // which will prevent an attachment event firing if the device is already
+        // attached since listeners will not have been registered at this point
+        if (hidServicesSpecification.isAutoStart()) {
+            hidDeviceManager.start();
+        }
 
-    Class<HidServices> clazz = HidServices.class;
-    String className = clazz.getSimpleName() + ".class";
-    String classPath = clazz.getResource(className).toString();
-    if (!classPath.startsWith("jar")) {
-      // Class not from JAR
-      return "0.0.1";
+        if (hidServicesSpecification.isAutoShutdown()) {
+            // Ensure we release resources during shutdown
+            Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        }
     }
-    String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) +
-      "/META-INF/MANIFEST.MF";
-    Manifest manifest;
-    try {
-      manifest = new Manifest(new URL(manifestPath).openStream());
-    } catch (IOException e) {
-      return "0.0.2";
-    }
-    Attributes attr = manifest.getMainAttributes();
-    String value = attr.getValue("Implementation-Version");
-    if (null == value) {
-      return "0.0.3";
-    } else {
-      return value;
-    }
-  }
 
-  /**
-   * Returns the full version of the underlying hidapi library
-   *
-   * @return The version in major.minor.patch format
-   */
-  public String getNativeVersion() {
-    return hidDeviceManager.getVersion();
-  }
+    /**
+     * Stop all device threads and shut down the {@link NativeHidDevice}
+     */
+    public void shutdown() {
+        logger.finest("shutdown: start");
+        stop();
+        try {
+            hidDeviceManager.shutdown();
+        } catch (Throwable e) {
+            // Silently fail (user will already have been given an exception)
+        }
+    }
+
+    /**
+     * Stop all threads (enumeration, data read etc), close all devices
+     * and clear all listeners
+     * <p>
+     * Normally part of an application shutdown
+     */
+    public void stop() {
+        logger.finest("stop: start");
+        hidDeviceManager.stop();
+        this.listeners.clear();
+    }
+
+    /**
+     * Start all threads (enumeration, data read etc) as configured
+     */
+    public void start() throws IOException {
+        hidDeviceManager.start();
+    }
+
+    /**
+     * @param listener The listener to add
+     */
+    public void addHidServicesListener(final HidServicesListener listener) {
+        this.listeners.add(listener);
+    }
+
+    /**
+     * @param listener The listener to remove
+     */
+    public void removeHidServicesListener(final HidServicesListener listener) {
+        this.listeners.remove(listener);
+    }
+
+    /**
+     * Manually scans for HID device connection changes and triggers listener events as required
+     */
+    public void scan() throws IOException {
+        this.hidDeviceManager.scan();
+    }
+
+    /**
+     * @return A list of all attached HID devices
+     */
+    public List<HidDevice> getAttachedHidDevices() throws IOException {
+        return hidDeviceManager.getAttachedHidDevices();
+    }
+
+    /**
+     * @param vendorId     The vendor ID
+     * @param productId    The product ID
+     * @param serialNumber The serial number (use null for wildcard)
+     * @return The device if attached, null if detached
+     */
+    public HidDevice getHidDevice(int vendorId, int productId, String serialNumber) throws IOException {
+
+        List<HidDevice> devices = hidDeviceManager.getAttachedHidDevices();
+        for (HidDevice device : devices) {
+            if (device.isVidPidSerial(vendorId, productId, serialNumber)) {
+                device.open();
+                return device;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @return The current library version from the manifest or 0.0.x if an error occurs
+     */
+    public static String getVersion() {
+
+        Class<HidServices> clazz = HidServices.class;
+        String className = clazz.getSimpleName() + ".class";
+        String classPath = clazz.getResource(className).toString();
+        if (!classPath.startsWith("jar")) {
+            // Class not from JAR
+            return "0.0.1";
+        }
+        String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) +
+                "/META-INF/MANIFEST.MF";
+        Manifest manifest;
+        try {
+            manifest = new Manifest(new URL(manifestPath).openStream());
+        } catch (IOException e) {
+            return "0.0.2";
+        }
+        Attributes attr = manifest.getMainAttributes();
+        String value = attr.getValue("Implementation-Version");
+        if (null == value) {
+            return "0.0.3";
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * Returns the full version of the underlying hidapi library
+     *
+     * @return The version in major.minor.patch format
+     */
+    public String getNativeVersion() {
+        return hidDeviceManager.getVersion();
+    }
 }

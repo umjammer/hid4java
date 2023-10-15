@@ -42,7 +42,7 @@ import java.util.logging.Logger;
 public class HidDevice {
 
     private static final Logger logger = Logger.getLogger(HidDevice.class.getName());
-    
+
     private final HidDeviceManager manager;
     private Info info;
     private NativeHidDevice nativeDevice;
@@ -127,7 +127,7 @@ public class HidDevice {
     private final int dataReadInterval;
 
     /**
-     * @param info            The HID device info structure providing details
+     * @param info                  The HID device info structure providing details
      * @param deviceManager         The HID device manager providing access to device enumeration for post IO scanning
      * @param servicesSpecification The HID services specification providing configuration details
      * @since 0.1.0
@@ -245,9 +245,9 @@ public class HidDevice {
      * @since 0.1.0
      */
     public boolean open() throws IOException {
-logger.finer(getPath() + "(@" + hashCode() + ")");
+        logger.finer(getPath() + "(@" + hashCode() + ")");
         nativeDevice = manager.open(info.path);
-logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+        logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
 
         return nativeDevice != null;
     }
@@ -276,12 +276,12 @@ logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      * @since 0.1.0
      */
     public void close() {
-logger.finer("isClosed: " + isClosed());
+        logger.finer("isClosed: " + isClosed());
         if (isClosed()) {
             return;
         }
 
-logger.finer("close native: " + nativeDevice);
+        logger.finer("close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
     }
@@ -306,6 +306,7 @@ logger.finer("close native: " + nativeDevice);
     }
 
     /**
+     *
      */
     public void addReportInputListener(InputReportListener l) {
         nativeDevice.addReportInputListener(l);

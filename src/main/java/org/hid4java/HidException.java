@@ -38,11 +38,11 @@ import java.io.IOException;
  */
 public class HidException extends IOException {
 
-  public HidException(String message) {
-    super(message);
-  }
+    public HidException(String message) {
+        super(message);
+    }
 
-  public HidException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    public HidException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }
