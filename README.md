@@ -5,6 +5,8 @@
 
 # hid4java
 
+ by jna directory instead of hidapi
+
 ## Install
 
  * [maven](https://jitpack.io/#umjammer/hid4java)
@@ -13,6 +15,7 @@
 
  * ~~sigabrt~~ ... `-Djbr.catch.SIGABRT=true` (maybe only for jetbrain's jvm)
  * ~~npe on close~~
+ * windows/linux
 
 ## LESSON
 

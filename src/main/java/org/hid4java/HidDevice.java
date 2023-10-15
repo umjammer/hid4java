@@ -245,9 +245,9 @@ public class HidDevice {
      * @since 0.1.0
      */
     public boolean open() throws IOException {
-        logger.finer(getPath() + "(@" + hashCode() + ")");
-        nativeDevice = manager.open(info.path);
-        logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+logger.finer(getPath() + "(@" + hashCode() + ")");
+        nativeDevice = manager.open(info);
+logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
 
         return nativeDevice != null;
     }
@@ -276,33 +276,14 @@ public class HidDevice {
      * @since 0.1.0
      */
     public void close() {
-        logger.finer("isClosed: " + isClosed());
+logger.finer("isClosed: " + isClosed());
         if (isClosed()) {
             return;
         }
 
-        logger.finer("close native: " + nativeDevice);
+logger.finer("close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
-    }
-
-    /**
-     * Set the device handle to be non-blocking
-     * <p>
-     * In non-blocking mode calls to hid_read() will return immediately with a
-     * value of 0 if there is no data to be read. In blocking mode, hid_read()
-     * will wait (block) until there is data to read before returning
-     * <p>
-     * Non-blocking can be turned on and off at any time
-     *
-     * @param nonBlocking True if non-blocking mode is required
-     * @since 0.1.0
-     */
-    public void setNonBlocking(boolean nonBlocking) {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        nativeDevice.setNonblocking(nonBlocking);
     }
 
     /**
@@ -376,7 +357,8 @@ public class HidDevice {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.getIndexedString(index);
+        // TODO for windows/linux
+        throw new UnsupportedOperationException("hid_get_indexed_string: not available on this platform");
     }
 
     /**

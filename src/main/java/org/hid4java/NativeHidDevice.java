@@ -74,40 +74,4 @@ public interface NativeHidDevice {
      * @return The actual number of bytes written, -1 on error
      */
     int sendFeatureReport(byte[] data, int length, byte reportId) throws IOException;
-
-    /**
-     * Get a string from a HID device, based on its string index.
-     *
-     * @param idx The index of the string to get
-     * @return 0 on success, -1 on failure
-     */
-    String getIndexedString(int idx) throws IOException;
-
-    /**
-     * Get the manufacturer string from a HID device
-     */
-    String getManufacturerString() throws IOException;
-
-    /**
-     * Get the product number string from a HID device
-     */
-    String getProductString() throws IOException;
-
-    /**
-     * Get the serial number string from a HID device
-     */
-    String getSerialNumberString() throws IOException;
-
-    /**
-     * Set the device handle to be non-blocking.
-     * <p>
-     * In non-blocking mode calls to hid_read() will return immediately with a value of 0 if there is no data to be read.
-     * <p>
-     * In blocking mode, hid_read() will wait (block) until there is data to read before returning.
-     * <p>
-     * Nonblocking can be turned on and off at any time.
-     *
-     * @param nonblock disables or enables non-blocking
-     */
-    void setNonblocking(boolean nonblock);
 }

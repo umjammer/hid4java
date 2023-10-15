@@ -61,7 +61,7 @@ class IOHIDDevice {
 //logger.fine("prop: " + prop.getString());
         CFType ret = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, prop);
         if (ret == null) {
-            logger.finer("no prop value: " + prop.getString());
+logger.finer("no prop value: " + prop.getString());
             return -1;
         }
 
@@ -72,25 +72,25 @@ class IOHIDDevice {
         if (CFLib.INSTANCE.CFGetTypeID(str).equals(CFLib.INSTANCE.CFStringGetTypeID())) {
             int str_len = CFLib.INSTANCE.CFStringGetLength(str).intValue();
             CFRange.ByValue range = new CFRange.ByValue();
-            NativeLongByReference used_buf_len = new NativeLongByReference();
-            int chars_copied;
+            NativeLongByReference usedBufferLength = new NativeLongByReference();
+            int charsCopied;
 
             len--;
 
             range.location = new NativeLong(0);
             range.length = new NativeLong(Math.min(str_len, len));
-            chars_copied = CFLib.INSTANCE.CFStringGetBytes(str,
+            charsCopied = CFLib.INSTANCE.CFStringGetBytes(str,
                     range,
                     CFLib.kCFStringEncodingUTF8,
                     (byte) '?',
                     false,
                     buf,
                     CFIndex.of(len * Short.BYTES),
-                    used_buf_len).intValue();
+                    usedBufferLength).intValue();
 
-            return used_buf_len.getValue().intValue();
+            return usedBufferLength.getValue().intValue();
         } else {
-            logger.fine("not string: " + prop.getString());
+logger.fine("not string: " + prop.getString());
             return -1;
         }
     }
@@ -124,11 +124,11 @@ class IOHIDDevice {
     }
 
     /**  */
-    private int read_usb_interface_from_hid_service_parent(Pointer/*io_service_t*/ hid_service) {
+    private int read_usb_interface_from_hid_service_parent(Pointer /* io_service_t */ hid_service) {
         int result = -1;
         boolean success;
-        PointerByReference/*io_registry_entry_t*/ current = new PointerByReference(IOKitLib.IO_OBJECT_NULL);
-        int /*kern_return_t*/ res;
+        PointerByReference /* io_registry_entry_t */ current = new PointerByReference(IOKitLib.IO_OBJECT_NULL);
+        int /* kern_return_t */ res;
         int parent_number = 0;
 
         res = IOKitLib.INSTANCE.IORegistryEntryGetParentEntry(hid_service, ByteBuffer.wrap(IOKitLib.kIOServicePlane.getBytes()), current);
@@ -137,7 +137,7 @@ class IOHIDDevice {
                  * With the default driver - the parent-of-interest supposed to be the first one,
                  * but lets assume some custom drivers or so, with deeper tree. */
                 && parent_number < 3) {
-            PointerByReference/*io_registry_entry_t*/ parent = new PointerByReference(IOKitLib.IO_OBJECT_NULL);
+            PointerByReference /* io_registry_entry_t */ parent = new PointerByReference(IOKitLib.IO_OBJECT_NULL);
             IntByReference interface_number = new IntByReference();
             parent_number++;
 
@@ -184,8 +184,8 @@ class IOHIDDevice {
         CFType transport_prop;
 
         HidDevice.Info cur_info;
-        Pointer/*io_service_t*/ hid_service;
-        int/*kern_return_t*/ res;
+        Pointer /* io_service_t */ hid_service;
+        int /* kern_return_t */ res;
         LongByReference entry_id = new LongByReference();
 
         cur_info = new HidDevice.Info();
@@ -208,13 +208,13 @@ class IOHIDDevice {
         if (res == IOKitLib.KERN_SUCCESS) {
             // max value of entry_id(uint64_t) is 18446744073709551615 which is 20 characters long,
             // so for (max) "path" string 'DevSrvsID:18446744073709551615' we would need
-            // 9+1+20+1=31 bytes buffer, but allocate 32 for simple alignment */
+            // 9+1+20+1=31 bytes buffer, but allocate 32 for simple alignment
             int path_len = 32;
             cur_info.path = String.format("DevSrvsID:%d", entry_id.getValue());
         }
 
         if (cur_info.path == null) {
-            /* for whatever reason, trying to keep it a non-null string */
+            // for whatever reason, trying to keep it a non-null string
             cur_info.path = "";
         }
 
@@ -320,7 +320,7 @@ class IOHIDDevice {
                 int usage_page = usage_pageP.getValue();
                 int usage = usageP.getValue();
                 if (usage_page == primary_usage_page && usage == primary_usage) {
-                    logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
+logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
                     continue; // Already added.
                 }
 
@@ -329,7 +329,7 @@ class IOHIDDevice {
             }
         }
 
-        logger.finer("infos: " + deviceInfos.size());
+logger.finer("infos: " + deviceInfos.size());
         return deviceInfos;
     }
 

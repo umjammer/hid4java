@@ -67,5 +67,4 @@ public interface HidServicesListener extends EventListener {
      * @param event The event
      */
     void hidDataReceived(HidServicesEvent event);
-
 }

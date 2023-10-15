@@ -200,13 +200,4 @@ public class HidServices {
         String value = attr.getValue("Implementation-Version");
         return Objects.requireNonNullElse(value, "0.0.3");
     }
-
-    /**
-     * Returns the full version of the underlying hidapi library
-     *
-     * @return The version in major.minor.patch format
-     */
-    public String getNativeVersion() {
-        return hidDeviceManager.getVersion();
-    }
 }

@@ -58,15 +58,8 @@ public interface NativeHidDeviceManager {
      * <p>
      * The path name be determined by calling hid_enumerate(), or a platform-specific path name can be used (eg: "/dev/hidraw0" on Linux).
      *
-     * @param path The path name
+     * @param info The path name
      * @return The pointer if successful or null
      */
-    NativeHidDevice openByPath(String path) throws IOException;
-
-    /**
-     * Get version of hidapi library
-     *
-     * @return Version in major.minor.patch format
-     */
-    String version();
+    NativeHidDevice open(HidDevice.Info info) throws IOException;
 }

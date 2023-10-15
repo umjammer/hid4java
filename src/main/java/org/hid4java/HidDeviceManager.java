@@ -104,7 +104,6 @@ public class HidDeviceManager {
             // Typically this is a linking issue with the native library
             throw new HidException("Hidapi did not initialise: " + t.getMessage(), t);
         }
-
     }
 
     /**
@@ -129,7 +128,6 @@ public class HidDeviceManager {
 
         // Ensure we have a scan thread available
         configureScanThread(getScanRunnable());
-
     }
 
     /**
@@ -147,8 +145,8 @@ public class HidDeviceManager {
         }
     }
 
-    public synchronized NativeHidDevice open(String path) throws IOException {
-        return nativeManager.openByPath(path);
+    public synchronized NativeHidDevice open(HidDevice.Info info) throws IOException {
+        return nativeManager.open(info);
     }
 
     /**
@@ -167,13 +165,12 @@ public class HidDeviceManager {
 
             if (!this.attachedDevices.containsKey(attachedDevice.getId())) {
 
-                logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
+logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
                 // Device has become attached so add it but do not open
                 attachedDevices.put(attachedDevice.getId(), attachedDevice);
 
                 // Fire the event on a separate thread
                 listenerList.fireHidDeviceAttached(attachedDevice);
-
             }
         }
 
@@ -189,7 +186,6 @@ public class HidDeviceManager {
 
                 // Fire the event on a separate thread
                 listenerList.fireHidDeviceDetached(this.attachedDevices.get(deviceId));
-
             }
         }
 
@@ -197,7 +193,6 @@ public class HidDeviceManager {
             // Update the attached devices map
             removeList.forEach(this.attachedDevices.keySet()::remove);
         }
-
     }
 
     /**
@@ -252,9 +247,7 @@ public class HidDeviceManager {
             stopScanThread();
             // Ensure we have a new scan executor service available
             configureScanThread(getScanRunnable());
-
         }
-
     }
 
     /**
@@ -265,7 +258,6 @@ public class HidDeviceManager {
         if (isScanning()) {
             scanThread.shutdown();
         }
-
     }
 
     /**
@@ -339,12 +331,8 @@ public class HidDeviceManager {
         }
     }
 
-    public String getVersion() {
-        return nativeManager.version();
-    }
-
     public void shutdown() {
-        logger.finest("shutdown");
+logger.finest("shutdown");
         nativeManager.exit();
     }
 }
