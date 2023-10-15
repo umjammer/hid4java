@@ -20,48 +20,48 @@ import java.nio.LongBuffer;
  * For help, please visit <a href="http://nativelibs4java.googlecode.com/">NativeLibs4Java</a> , <a href="http://rococoa.dev.java.net/">Rococoa</a>, or <a href="http://jna.dev.java.net/">JNA</a>.
  */
 public interface PthreadLibrary extends Library {
-	public static final String JNA_LIBRARY_NAME = "pthread";
-	public static final NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(PthreadLibrary.JNA_LIBRARY_NAME);
-	public static final PthreadLibrary INSTANCE = (PthreadLibrary)Native.loadLibrary(PthreadLibrary.JNA_LIBRARY_NAME, PthreadLibrary.class);
+	String JNA_LIBRARY_NAME = "pthread";
+	NativeLibrary JNA_NATIVE_LIB = NativeLibrary.getInstance(PthreadLibrary.JNA_LIBRARY_NAME);
+	PthreadLibrary INSTANCE = Native.load(PthreadLibrary.JNA_LIBRARY_NAME, PthreadLibrary.class);
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_MUTEX_SIG_init = (int)0x32AAABA7;
+	int _PTHREAD_MUTEX_SIG_init = 0x32AAABA7;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_ERRORCHECK_MUTEX_SIG_init = (int)0x32AAABA1;
+	int _PTHREAD_ERRORCHECK_MUTEX_SIG_init = 0x32AAABA1;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_RECURSIVE_MUTEX_SIG_init = (int)0x32AAABA2;
+	int _PTHREAD_RECURSIVE_MUTEX_SIG_init = 0x32AAABA2;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_FIRSTFIT_MUTEX_SIG_init = (int)0x32AAABA3;
+	int _PTHREAD_FIRSTFIT_MUTEX_SIG_init = 0x32AAABA3;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_COND_SIG_init = (int)0x3CB0B1BB;
+	int _PTHREAD_COND_SIG_init = 0x3CB0B1BB;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_ONCE_SIG_init = (int)0x30B1BCBA;
+	int _PTHREAD_ONCE_SIG_init = 0x30B1BCBA;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int _PTHREAD_RWLOCK_SIG_init = (int)0x2DA8B3B4;
+	int _PTHREAD_RWLOCK_SIG_init = 0x2DA8B3B4;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int SCHED_OTHER = (int)1;
+	int SCHED_OTHER = 1;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int SCHED_FIFO = (int)4;
+	int SCHED_FIFO = 4;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int SCHED_RR = (int)2;
+	int SCHED_RR = 2;
 	/** <i>native declaration : pthread/pthread_impl.h</i> */
-	public static final int __SCHED_PARAM_SIZE__ = (int)4;
+	int __SCHED_PARAM_SIZE__ = 4;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CREATE_JOINABLE = (int)1;
+	int PTHREAD_CREATE_JOINABLE = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CREATE_DETACHED = (int)2;
+	int PTHREAD_CREATE_DETACHED = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_INHERIT_SCHED = (int)1;
+	int PTHREAD_INHERIT_SCHED = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_EXPLICIT_SCHED = (int)2;
+	int PTHREAD_EXPLICIT_SCHED = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CANCEL_ENABLE = (int)0x01;
+	int PTHREAD_CANCEL_ENABLE = 0x01;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CANCEL_DISABLE = (int)0x00;
+	int PTHREAD_CANCEL_DISABLE = 0x00;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CANCEL_DEFERRED = (int)0x02;
+	int PTHREAD_CANCEL_DEFERRED = 0x02;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_CANCEL_ASYNCHRONOUS = (int)0x00;
-	/**
+	int PTHREAD_CANCEL_ASYNCHRONOUS = 0x00;
+	/*
 	 * define<br>
 	 * Conversion Error : ((void*)1)<br>
 	 * SKIPPED:<br>
@@ -69,53 +69,53 @@ public interface PthreadLibrary extends Library {
 	 * ((void*)1)
 	 */
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_SCOPE_SYSTEM = (int)1;
+	int PTHREAD_SCOPE_SYSTEM = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_SCOPE_PROCESS = (int)2;
+	int PTHREAD_SCOPE_PROCESS = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_PROCESS_SHARED = (int)1;
+	int PTHREAD_PROCESS_SHARED = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_PROCESS_PRIVATE = (int)2;
+	int PTHREAD_PROCESS_PRIVATE = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_PRIO_NONE = (int)0;
+	int PTHREAD_PRIO_NONE = 0;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_PRIO_INHERIT = (int)1;
+	int PTHREAD_PRIO_INHERIT = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_PRIO_PROTECT = (int)2;
+	int PTHREAD_PRIO_PROTECT = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_NORMAL = (int)0;
+	int PTHREAD_MUTEX_NORMAL = 0;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_ERRORCHECK = (int)1;
+	int PTHREAD_MUTEX_ERRORCHECK = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_RECURSIVE = (int)2;
+	int PTHREAD_MUTEX_RECURSIVE = 2;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_DEFAULT = (int)0;
+	int PTHREAD_MUTEX_DEFAULT = 0;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_POLICY_FAIRSHARE_NP = (int)1;
+	int PTHREAD_MUTEX_POLICY_FAIRSHARE_NP = 1;
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public static final int PTHREAD_MUTEX_POLICY_FIRSTFIT_NP = (int)3;
-	/**
+	int PTHREAD_MUTEX_POLICY_FIRSTFIT_NP = 3;
+	/*
 	 * define<br>
 	 * Conversion Error : { 0x2DA8B3B4, { 0 } }<br>
 	 * SKIPPED:<br>
 	 * <i>native declaration : pthread/pthread.h:0</i><br>
 	 * { 0x2DA8B3B4, { 0 } }
 	 */
-	/**
+	/*
 	 * define<br>
 	 * Conversion Error : { 0x32AAABA7, { 0 } }<br>
 	 * SKIPPED:<br>
 	 * <i>native declaration : pthread/pthread.h:0</i><br>
 	 * { 0x32AAABA7, { 0 } }
 	 */
-	/**
+	/*
 	 * define<br>
 	 * Conversion Error : { 0x3CB0B1BB, { 0 } }<br>
 	 * SKIPPED:<br>
 	 * <i>native declaration : pthread/pthread.h:0</i><br>
 	 * { 0x3CB0B1BB, { 0 } }
 	 */
-	/**
+	/*
 	 * define<br>
 	 * Conversion Error : { 0x30B1BCBA, { 0 } }<br>
 	 * SKIPPED:<br>
@@ -123,38 +123,46 @@ public interface PthreadLibrary extends Library {
 	 * { 0x30B1BCBA, { 0 } }
 	 */
 	/** <i>native declaration : pthread/pthread.h</i> */
-	public interface pthread_jit_write_callback_t extends Callback {
+    interface pthread_jit_write_callback_t extends Callback {
 		int apply(Pointer ctx);
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_atfork_arg1_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_atfork_arg1_callback extends Callback {
 		void apply();
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_atfork_arg2_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_atfork_arg2_callback extends Callback {
 		void apply();
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_atfork_arg3_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_atfork_arg3_callback extends Callback {
 		void apply();
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_create_arg1_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_create_arg1_callback extends Callback {
 		Pointer apply(Pointer voidPtr1);
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_key_create_arg1_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_key_create_arg1_callback extends Callback {
 		void apply(Pointer voidPtr1);
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_once_arg1_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_once_arg1_callback extends Callback {
 		void apply();
-	};
-	/** <i>native declaration : pthread/pthread.h:0</i> */
-	public interface pthread_create_suspended_np_arg1_callback extends Callback {
+	}
+
+    /** <i>native declaration : pthread/pthread.h:0</i> */
+    interface pthread_create_suspended_np_arg1_callback extends Callback {
 		Pointer apply(Pointer voidPtr1);
-	};
-	/**
+	}
+
+    /**
 	 * Original signature : <code>int sched_yield()</code><br>
 	 * <i>native declaration : pthread/sched.h:39</i>
 	 */
@@ -494,7 +502,7 @@ public interface PthreadLibrary extends Library {
 	 * ends the QOS class override started by that call and deallocates all<br>
 	 * associated resources as well as the override object itself.<br>
 	 * The thread starting and the thread ending a QOS class override need not be<br>
-	 * identical. If the thread ending the override is the the target thread of the<br>
+	 * identical. If the thread ending the override is the target thread of the<br>
 	 * override itself, it should take care to elevate its requested QOS class<br>
 	 * appropriately with pthread_set_qos_class_self_np() before ending the<br>
 	 * override.<br>
@@ -517,7 +525,7 @@ public interface PthreadLibrary extends Library {
 	 * ends the QOS class override started by that call and deallocates all<br>
 	 * associated resources as well as the override object itself.<br>
 	 * The thread starting and the thread ending a QOS class override need not be<br>
-	 * identical. If the thread ending the override is the the target thread of the<br>
+	 * identical. If the thread ending the override is the target thread of the<br>
 	 * override itself, it should take care to elevate its requested QOS class<br>
 	 * appropriately with pthread_set_qos_class_self_np() before ending the<br>
 	 * override.<br>
@@ -1690,92 +1698,102 @@ public interface PthreadLibrary extends Library {
 	 * <i>native declaration : pthread/pthread.h:645</i>
 	 */
 	int pthread_cpu_number_np(NativeLongByReference cpu_number_out);
-	public static class pthread_mutex_t extends PointerType {
+	class pthread_mutex_t extends PointerType {
 		public pthread_mutex_t(Pointer address) {
 			super(address);
 		}
 		public pthread_mutex_t() {
 			super();
 		}
-	};
-	public static class pthread_condattr_t extends PointerType {
+	}
+
+    class pthread_condattr_t extends PointerType {
 		public pthread_condattr_t(Pointer address) {
 			super(address);
 		}
 		public pthread_condattr_t() {
 			super();
 		}
-	};
-	public static class timespec extends PointerType {
+	}
+
+    class timespec extends PointerType {
 		public timespec(Pointer address) {
 			super(address);
 		}
 		public timespec() {
 			super();
 		}
-	};
-	public static class pthread_mutexattr_t extends PointerType {
+	}
+
+    class pthread_mutexattr_t extends PointerType {
 		public pthread_mutexattr_t(Pointer address) {
 			super(address);
 		}
 		public pthread_mutexattr_t() {
 			super();
 		}
-	};
-	public static class pthread_once_t extends PointerType {
+	}
+
+    class pthread_once_t extends PointerType {
 		public pthread_once_t(Pointer address) {
 			super(address);
 		}
 		public pthread_once_t() {
 			super();
 		}
-	};
-	public static class pthread_rwlockattr_t extends PointerType {
+	}
+
+    class pthread_rwlockattr_t extends PointerType {
 		public pthread_rwlockattr_t(Pointer address) {
 			super(address);
 		}
 		public pthread_rwlockattr_t() {
 			super();
 		}
-	};
-	public static class pthread_t extends PointerType {
+	}
+
+    class pthread_t extends PointerType {
 		public pthread_t(Pointer address) {
 			super(address);
 		}
 		public pthread_t() {
 			super();
 		}
-	};
-	public static class pthread_cond_t extends PointerType {
+	}
+
+    class pthread_cond_t extends PointerType {
 		public pthread_cond_t(Pointer address) {
 			super(address);
 		}
 		public pthread_cond_t() {
 			super();
 		}
-	};
-	public static class pthread_attr_t extends PointerType {
+	}
+
+    class pthread_attr_t extends PointerType {
 		public pthread_attr_t(Pointer address) {
 			super(address);
 		}
 		public pthread_attr_t() {
 			super();
 		}
-	};
-	public static class pthread_override_t extends PointerType {
+	}
+
+    class pthread_override_t extends PointerType {
 		public pthread_override_t(Pointer address) {
 			super(address);
 		}
 		public pthread_override_t() {
 			super();
 		}
-	};
-	public static class pthread_rwlock_t extends PointerType {
+	}
+
+    class pthread_rwlock_t extends PointerType {
 		public pthread_rwlock_t(Pointer address) {
 			super(address);
 		}
 		public pthread_rwlock_t() {
 			super();
 		}
-	};
+	}
 }

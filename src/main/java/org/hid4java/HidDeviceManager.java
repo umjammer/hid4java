@@ -195,7 +195,7 @@ public class HidDeviceManager {
 
         if (!removeList.isEmpty()) {
             // Update the attached devices map
-            this.attachedDevices.keySet().removeAll(removeList);
+            removeList.forEach(this.attachedDevices.keySet()::remove);
         }
 
     }
@@ -214,7 +214,7 @@ public class HidDeviceManager {
 
         List<HidDevice> hidDeviceList = new ArrayList<>();
 
-        final List<HidDevice.Info> infos;
+        List<HidDevice.Info> infos;
         try {
             // Use 0,0 to list all attached devices
             // This comes back as a linked list from hidapi
@@ -283,8 +283,8 @@ public class HidDeviceManager {
 
     private synchronized Runnable getScanRunnable() {
 
-        final int scanInterval = hidServicesSpecification.getScanInterval();
-        final int pauseInterval = hidServicesSpecification.getPauseInterval();
+        int scanInterval = hidServicesSpecification.getScanInterval();
+        int pauseInterval = hidServicesSpecification.getPauseInterval();
 
         switch (hidServicesSpecification.getScanMode()) {
         case NO_SCAN:
@@ -298,7 +298,7 @@ public class HidDeviceManager {
                     try {
                         //noinspection BusyWait
                         Thread.sleep(scanInterval);
-                    } catch (final InterruptedException e) {
+                    } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
                     }
@@ -314,7 +314,7 @@ public class HidDeviceManager {
                 // Provide an initial pause
                 try {
                     Thread.sleep(pauseInterval);
-                } catch (final InterruptedException e) {
+                } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
 
@@ -323,7 +323,7 @@ public class HidDeviceManager {
                     try {
                         //noinspection BusyWait
                         Thread.sleep(scanInterval);
-                    } catch (final InterruptedException e) {
+                    } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         break;
                     }

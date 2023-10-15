@@ -45,7 +45,7 @@ public class HidServicesListenerList {
     /**
      * The list with registered listeners
      */
-    private final List<HidServicesListener> listeners = Collections.synchronizedList(new ArrayList<HidServicesListener>());
+    private final List<HidServicesListener> listeners = Collections.synchronizedList(new ArrayList<>());
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(
             3, runnable -> {
@@ -58,7 +58,7 @@ public class HidServicesListenerList {
     /**
      * @param listener The listener to add
      */
-    public final void add(final HidServicesListener listener) {
+    public final void add(HidServicesListener listener) {
         if (this.listeners.contains(listener)) {
             return;
         }
@@ -68,7 +68,7 @@ public class HidServicesListenerList {
     /**
      * @param listener The listener to remove
      */
-    public final void remove(final HidServicesListener listener) {
+    public final void remove(HidServicesListener listener) {
         this.listeners.remove(listener);
     }
 
@@ -101,7 +101,7 @@ public class HidServicesListenerList {
      *
      * @param hidDevice The device that was attached
      */
-    public void fireHidDeviceAttached(final HidDevice hidDevice) {
+    public void fireHidDeviceAttached(HidDevice hidDevice) {
 
         // Broadcast on a different thread
         executorService.submit(() -> {
@@ -118,7 +118,7 @@ public class HidServicesListenerList {
      *
      * @param hidDevice The device that was detached
      */
-    public void fireHidDeviceDetached(final HidDevice hidDevice) {
+    public void fireHidDeviceDetached(HidDevice hidDevice) {
 
         // Broadcast on a different thread
         executorService.submit(() -> {
@@ -136,7 +136,7 @@ public class HidServicesListenerList {
      *
      * @param hidDevice The device that caused the error if known
      */
-    public void fireHidFailure(final HidDevice hidDevice) {
+    public void fireHidFailure(HidDevice hidDevice) {
 
         // Broadcast on a different thread
         executorService.submit(() -> {
@@ -154,13 +154,13 @@ public class HidServicesListenerList {
      * @param hidDevice    The device that triggered the data input
      * @param dataReceived The buffer with the data received
      */
-    public void fireHidDataReceived(final HidDevice hidDevice, final byte[] dataReceived) {
+    public void fireHidDataReceived(HidDevice hidDevice, byte[] dataReceived) {
 
         // Broadcast on a different thread
         executorService.submit(() -> {
             HidServicesEvent event = new HidServicesEvent(hidDevice, dataReceived);
 
-            for (final HidServicesListener listener : toArray()) {
+            for (HidServicesListener listener : toArray()) {
                 listener.hidDataReceived(event);
             }
         });

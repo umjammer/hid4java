@@ -28,6 +28,7 @@ package org.hid4java;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.logging.Logger;
@@ -131,14 +132,14 @@ public class HidServices {
     /**
      * @param listener The listener to add
      */
-    public void addHidServicesListener(final HidServicesListener listener) {
+    public void addHidServicesListener(HidServicesListener listener) {
         this.listeners.add(listener);
     }
 
     /**
      * @param listener The listener to remove
      */
-    public void removeHidServicesListener(final HidServicesListener listener) {
+    public void removeHidServicesListener(HidServicesListener listener) {
         this.listeners.remove(listener);
     }
 
@@ -197,11 +198,7 @@ public class HidServices {
         }
         Attributes attr = manifest.getMainAttributes();
         String value = attr.getValue("Implementation-Version");
-        if (null == value) {
-            return "0.0.3";
-        } else {
-            return value;
-        }
+        return Objects.requireNonNullElse(value, "0.0.3");
     }
 
     /**

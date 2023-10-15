@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.security.SecureRandom;
 
 import org.hid4java.HidDevice;
-import org.hid4java.HidException;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;

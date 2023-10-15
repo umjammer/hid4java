@@ -21,7 +21,7 @@ public class sched_param extends Structure {
 		return Arrays.asList("sched_priority", "__opaque");
 	}
 	/** @param __opaque C type : char[4] */
-	public sched_param(int sched_priority, byte __opaque[]) {
+	public sched_param(int sched_priority, byte[] __opaque) {
 		super();
 		this.sched_priority = sched_priority;
 		if ((__opaque.length != this.__opaque.length)) 
@@ -33,8 +33,9 @@ public class sched_param extends Structure {
 	}
 	public static class ByReference extends sched_param implements Structure.ByReference {
 		
-	};
-	public static class ByValue extends sched_param implements Structure.ByValue {
+	}
+
+    public static class ByValue extends sched_param implements Structure.ByValue {
 		
-	};
+	}
 }

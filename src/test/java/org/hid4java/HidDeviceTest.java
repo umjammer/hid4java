@@ -1,8 +1,6 @@
 package org.hid4java;
 
 import org.junit.jupiter.api.Test;
-import vavi.util.Debug;
-import vavix.rococoa.corefoundation.CFLib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

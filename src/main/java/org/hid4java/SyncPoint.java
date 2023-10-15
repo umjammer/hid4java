@@ -39,7 +39,7 @@ public class SyncPoint {
     int m_TripCount;
     int m_Count;
     boolean m_Tripped;
-    Object m_Mutex = new Object();
+    final Object m_Mutex = new Object();
 
     public SyncPoint(int tripCount) {
         m_TripCount = tripCount;
