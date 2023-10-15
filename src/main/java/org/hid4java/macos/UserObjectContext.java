@@ -54,11 +54,13 @@ public class UserObjectContext extends Structure {
     private static final Map<Integer, Object> objects = new HashMap<>();
 
     /**  */
-    private static int objectIDMaster = 0;
+    static int objectIDMaster = 0;
 
     /**  */
     public static ByReference createContext(Object o) {
         ByReference object_context = new ByReference();
+//new Exception("objectID: " + objectIDMaster).printStackTrace(System.err);
+//System.err.flush();
         object_context.objectID = objectIDMaster++;
         objects.put(object_context.objectID, o);
         return object_context;

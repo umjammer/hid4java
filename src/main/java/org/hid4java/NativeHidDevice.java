@@ -12,7 +12,7 @@ import java.io.IOException;
 public interface NativeHidDevice {
 
     /** adds ReportInputListener */
-    void addReportInputListener(InputReportListener listener);
+    void setReportInputListener(InputReportListener listener);
 
     /**
      * Close a HID device
@@ -47,11 +47,10 @@ public interface NativeHidDevice {
      * Upon return, the first byte will still contain the Report ID, and the report data will start in data[1].
      *
      * @param data     A buffer to put the read data into, including the Report ID. Set the first byte of data[] to the Report ID of the report to be read, or set it to zero if your device does not use numbered reports.
-     * @param length   The number of bytes to read, including an extra byte for the report ID. The buffer can be longer than the actual report.
      * @param reportId The report ID (or (byte) 0x00)
      * @return The number of bytes read plus one for the report ID (which is still in the first byte)
      */
-    int getFeatureReport(byte[] data, int length, byte reportId) throws IOException;
+    int getFeatureReport(byte[] data, byte reportId) throws IOException;
 
     /**
      * Send a Feature report to the device.
@@ -69,9 +68,40 @@ public interface NativeHidDevice {
      * In this example, the length passed in would be 17.
      *
      * @param data     The data to send, including the report number as the first byte
-     * @param length   The length in bytes of the data to send, including the report number
      * @param reportId The report ID (or (byte) 0x00)
      * @return The actual number of bytes written, -1 on error
      */
-    int sendFeatureReport(byte[] data, int length, byte reportId) throws IOException;
+    int sendFeatureReport(byte[] data, byte reportId) throws IOException;
+
+    /**
+     * Get a report descriptor from a HID device.
+     * <p>
+     * Since version 0.14.0, @ref HID_API_VERSION >= HID_API_MAKE_VERSION(0, 14, 0)
+     * <p>
+     * User has to provide a preallocated buffer where descriptor will be copied to.
+     * The recommended size for preallocated buffer is @ref HID_API_MAX_REPORT_DESCRIPTOR_SIZE bytes.
+     *
+     * @param report The buffer to copy descriptor into.
+     * @return This function returns non-negative number of bytes actually copied, or -1 on error.
+     */
+    int getReportDescriptor(byte[] report);
+
+    /**
+     * Get an input report from a HID device.
+     * <p>
+     * Set the first byte of @p data[] to the Report ID of the
+     * report to be read. Make sure to allow space for this
+     * extra byte in @p data[]. Upon return, the first byte will
+     * still contain the Report ID, and the report data will
+     * start in data[1].
+     *
+     * @param data   A buffer to put the read data into, including
+     *               the Report ID. Set the first byte of @p data[] to the
+     *               Report ID of the report to be read, or set it to zero
+     *               if your device does not use numbered reports.
+     * @return This function returns the number of bytes read plus one for the report ID
+     * (which is still in the first byte), or -1 on error. Call hid_error(dev) to get the failure reason.
+     * @since version 0.10.0
+     */
+    int getInputReport(byte[] data, byte reportId) throws IOException;
 }

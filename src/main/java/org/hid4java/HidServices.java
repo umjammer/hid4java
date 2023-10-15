@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.hid4java.event.HidServicesListenerList;
@@ -101,13 +102,17 @@ public class HidServices {
      * Stop all device threads and shut down the {@link NativeHidDevice}
      */
     public void shutdown() {
-        logger.finest("shutdown: start");
+logger.finer("shutdown: start");
+//new Exception().printStackTrace();
         stop();
         try {
             hidDeviceManager.shutdown();
         } catch (Throwable e) {
             // Silently fail (user will already have been given an exception)
         }
+if (logger.isLoggable(Level.FINER)) {
+ Thread.getAllStackTraces().keySet().forEach(System.err::println);
+}
     }
 
     /**
@@ -117,7 +122,7 @@ public class HidServices {
      * Normally part of an application shutdown
      */
     public void stop() {
-        logger.finest("stop: start");
+logger.finer("stop: start");
         hidDeviceManager.stop();
         this.listeners.clear();
     }

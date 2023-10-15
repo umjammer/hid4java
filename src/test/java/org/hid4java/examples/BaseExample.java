@@ -55,7 +55,7 @@ Debug.println("Resource prefix: " + Platform.RESOURCE_PREFIX);
 Debug.println("Libusb activation: " + Platform.isLinux());
     }
 
-    static final int wait = 5;
+    static final int wait = 180;
 
     public void waitAndShutdown(HidServices hidServices) {
 

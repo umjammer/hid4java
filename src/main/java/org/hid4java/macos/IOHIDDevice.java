@@ -20,6 +20,7 @@ import com.sun.jna.ptr.PointerByReference;
 import org.hid4java.HidDevice;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFArray;
+import vavix.rococoa.corefoundation.CFData;
 import vavix.rococoa.corefoundation.CFIndex;
 import vavix.rococoa.corefoundation.CFLib;
 import vavix.rococoa.corefoundation.CFNumber;
@@ -29,9 +30,19 @@ import vavix.rococoa.corefoundation.CFType;
 import vavix.rococoa.iokit.IOKitLib;
 
 import static vavix.rococoa.corefoundation.CFLib.CFNumberType.kCFNumberSInt32Type;
+import static vavix.rococoa.corefoundation.CFString.CFSTR;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDDeviceUsageKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDDeviceUsagePageKey;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDManufacturerKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDProductIDKey;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDProductKey;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDSerialNumberKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDTransportBluetoothValue;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDTransportI2CValue;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDTransportKey;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDTransportSPIValue;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDTransportUSBValue;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDVendorIDKey;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDVersionNumberKey;
 
 
@@ -45,11 +56,11 @@ class IOHIDDevice {
 
     private static final Logger logger = Logger.getLogger(IOHIDDevice.class.getName());
 
-    /**  */
-    Pointer/*IOHIDDeviceRef*/ device;
+    /** */
+    Pointer /* IOHIDDeviceRef */ device;
 
-    /**  */
-    public IOHIDDevice(Pointer/*IOHIDDeviceRef*/ device) {
+    /** */
+    public IOHIDDevice(Pointer /* IOHIDDeviceRef */ device) {
         this.device = device;
     }
 
@@ -61,7 +72,7 @@ class IOHIDDevice {
 //logger.fine("prop: " + prop.getString());
         CFType ret = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, prop);
         if (ret == null) {
-logger.finer("no prop value: " + prop.getString());
+logger.finest("no prop value: " + prop.getString());
             return -1;
         }
 
@@ -95,7 +106,7 @@ logger.fine("not string: " + prop.getString());
         }
     }
 
-    /**  */
+    /** */
     private static byte[] dup_wcs(byte[] s, int len) {
         if (len == -1) len = 0;
         byte[] ret = new byte[len];
@@ -103,13 +114,13 @@ logger.fine("not string: " + prop.getString());
         return ret;
     }
 
-    /**  */
+    /** */
     public String get_string_property(String key, byte[] buf, int len) {
-        int l = get_string_property(CFLib.INSTANCE.__CFStringMakeConstantString(key), buf, len);
+        int l = get_string_property(CFSTR(key), buf, len);
         return new String(dup_wcs(buf, l));
     }
 
-    /**  */
+    /** */
     private boolean try_get_ioregistry_int_property(Pointer/*io_service_t*/ service, CFString property, IntByReference out_val) {
         boolean result = false;
         CFType ref = IOKitLib.INSTANCE.IORegistryEntryCreateCFProperty(service, property, CFAllocator.kCFAllocatorDefault, 0);
@@ -123,7 +134,7 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /**  */
+    /** */
     private int read_usb_interface_from_hid_service_parent(Pointer /* io_service_t */ hid_service) {
         int result = -1;
         boolean success;
@@ -141,7 +152,7 @@ logger.fine("not string: " + prop.getString());
             IntByReference interface_number = new IntByReference();
             parent_number++;
 
-            success = try_get_ioregistry_int_property(current.getValue(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kUSBInterfaceNumber), interface_number);
+            success = try_get_ioregistry_int_property(current.getValue(), CFSTR(IOKitLib.kUSBInterfaceNumber), interface_number);
             if (success) {
                 result = interface_number.getValue();
                 break;
@@ -163,7 +174,7 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /**  */
+    /** */
     private boolean try_get_int_property(CFString key, IntByReference out_val) {
         boolean result = false;
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
@@ -175,7 +186,38 @@ logger.fine("not string: " + prop.getString());
         return result;
     }
 
-    /**  */
+    Pointer /* io_service_t */ getService() {
+        return IOKitLib.INSTANCE.IOHIDDeviceGetService(this.device);
+    }
+
+    /** */
+    String getPath() {
+        Pointer /* io_service_t */ hid_service = getService();
+        LongByReference entry_id = new LongByReference();
+        int /* kern_return_t */ res;
+        if (hid_service != null) {
+            res = IOKitLib.INSTANCE.IORegistryEntryGetRegistryEntryID(hid_service, entry_id);
+        } else {
+            res = IOKitLib.KERN_INVALID_ARGUMENT;
+        }
+
+        String path = null;
+        if (res == IOKitLib.KERN_SUCCESS) {
+            // max value of entry_id(uint64_t) is 18446744073709551615 which is 20 characters long,
+            // so for (max) "path" string 'DevSrvsID:18446744073709551615' we would need
+            // 9+1+20+1=31 bytes buffer, but allocate 32 for simple alignment
+            path = String.format("DevSrvsID:%d", entry_id.getValue());
+        }
+
+        if (path == null) {
+            // for whatever reason, trying to keep it a non-null string
+            path = "";
+        }
+
+        return path;
+    }
+
+    /** */
     private HidDevice.Info create_device_info_with_usage(int usage_page, int usage) {
         int dev_vid;
         int dev_pid;
@@ -184,39 +226,17 @@ logger.fine("not string: " + prop.getString());
         CFType transport_prop;
 
         HidDevice.Info cur_info;
-        Pointer /* io_service_t */ hid_service;
-        int /* kern_return_t */ res;
-        LongByReference entry_id = new LongByReference();
 
         cur_info = new HidDevice.Info();
 
-        dev_vid = get_int_property(IOKitLib.kIOHIDVendorIDKey) & 0xffff;
-        dev_pid = get_int_property(IOKitLib.kIOHIDProductIDKey) & 0xffff;
+        dev_vid = get_int_property(kIOHIDVendorIDKey) & 0xffff;
+        dev_pid = get_int_property(kIOHIDProductIDKey) & 0xffff;
 
         cur_info.usagePage = usage_page;
         cur_info.usage = usage;
 
         // Fill in the path (as a unique ID of the service entry)
-        cur_info.path = null;
-        hid_service = IOKitLib.INSTANCE.IOHIDDeviceGetService(this.device);
-        if (hid_service != null) {
-            res = IOKitLib.INSTANCE.IORegistryEntryGetRegistryEntryID(hid_service, entry_id);
-        } else {
-            res = IOKitLib.KERN_INVALID_ARGUMENT;
-        }
-
-        if (res == IOKitLib.KERN_SUCCESS) {
-            // max value of entry_id(uint64_t) is 18446744073709551615 which is 20 characters long,
-            // so for (max) "path" string 'DevSrvsID:18446744073709551615' we would need
-            // 9+1+20+1=31 bytes buffer, but allocate 32 for simple alignment
-            int path_len = 32;
-            cur_info.path = String.format("DevSrvsID:%d", entry_id.getValue());
-        }
-
-        if (cur_info.path == null) {
-            // for whatever reason, trying to keep it a non-null string
-            cur_info.path = "";
-        }
+        cur_info.path = getPath();
 
         // Serial Number
         cur_info.serialNumber = get_string_property(kIOHIDSerialNumberKey, buf, BUF_LEN);
@@ -238,40 +258,40 @@ logger.fine("not string: " + prop.getString());
         cur_info.interfaceNumber = -1;
 
         // Bus Type
-        transport_prop = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDTransportKey));
+        transport_prop = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, CFSTR(kIOHIDTransportKey));
 
         if (transport_prop != null && CFLib.INSTANCE.CFGetTypeID(transport_prop).equals(CFLib.INSTANCE.CFStringGetTypeID())) {
-            if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDTransportUSBValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
+            if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportUSBValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
                 IntByReference interface_number = new IntByReference();
-                cur_info.bus_type = HidDevice.Info.hid_bus_type.HID_API_BUS_USB;
+                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_USB;
 
                 // A IOHIDDeviceRef used to have this simple property,
                 // until macOS 13.3 - we will try to use it. */
-                if (try_get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kUSBInterfaceNumber), interface_number)) {
+                if (try_get_int_property(CFSTR(IOKitLib.kUSBInterfaceNumber), interface_number)) {
                     cur_info.interfaceNumber = interface_number.getValue();
                 } else {
                     // Otherwise fallback to io_service_t property.
                     // (of one of the parent services). */
-                    cur_info.interfaceNumber = read_usb_interface_from_hid_service_parent(hid_service);
+                    cur_info.interfaceNumber = read_usb_interface_from_hid_service_parent(getService());
 
                     // If the above doesn't work -
                     // no (known) fallback exists at this point. */
                 }
 
                 // Match "Bluetooth", "BluetoothLowEnergy" and "Bluetooth Low Energy" strings
-            } else if (CFLib.INSTANCE.CFStringHasPrefix(transport_prop.asString(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDTransportBluetoothValue))) {
-                cur_info.bus_type = HidDevice.Info.hid_bus_type.HID_API_BUS_BLUETOOTH;
-            } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDTransportI2CValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
-                cur_info.bus_type = HidDevice.Info.hid_bus_type.HID_API_BUS_I2C;
-            } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDTransportSPIValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
-                cur_info.bus_type = HidDevice.Info.hid_bus_type.HID_API_BUS_SPI;
+            } else if (CFLib.INSTANCE.CFStringHasPrefix(transport_prop.asString(), CFSTR(kIOHIDTransportBluetoothValue))) {
+                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_BLUETOOTH;
+            } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportI2CValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
+                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_I2C;
+            } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportSPIValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
+                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_SPI;
             }
         }
 
         return cur_info;
     }
 
-    /**  */
+    /** */
     private CFArray get_array_property(CFString key) {
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
         if (ref != null && CFLib.INSTANCE.CFGetTypeID(ref).equals(CFLib.INSTANCE.CFArrayGetTypeID())) {
@@ -281,15 +301,15 @@ logger.fine("not string: " + prop.getString());
         }
     }
 
-    /**  */
+    /** */
     private CFArray get_usage_pairs() {
-        return get_array_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDDeviceUsagePairsKey));
+        return get_array_property(CFSTR(IOKitLib.kIOHIDDeviceUsagePairsKey));
     }
 
-    /**  */
+    /** */
     public List<HidDevice.Info> create_device_info() {
-        int primary_usage_page = get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDPrimaryUsagePageKey));
-        int primary_usage = get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDPrimaryUsageKey));
+        int primary_usage_page = get_int_property(CFSTR(IOKitLib.kIOHIDPrimaryUsagePageKey));
+        int primary_usage = get_int_property(CFSTR(IOKitLib.kIOHIDPrimaryUsageKey));
 
         // Primary should always be first, to match previous behavior.
         List<HidDevice.Info> deviceInfos = new ArrayList<>();
@@ -309,8 +329,8 @@ logger.fine("not string: " + prop.getString());
                 CFType[] usage_page_ref = new CFType[1], usage_ref = new CFType[1];
                 IntByReference usage_pageP = new IntByReference(), usageP = new IntByReference();
 
-                if (!CFLib.INSTANCE.CFDictionaryGetValueIfPresent(dict.asDict(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDDeviceUsagePageKey), usage_page_ref) ||
-                        !CFLib.INSTANCE.CFDictionaryGetValueIfPresent(dict.asDict(), CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDDeviceUsageKey), usage_ref) ||
+                if (!CFLib.INSTANCE.CFDictionaryGetValueIfPresent(dict.asDict(), CFSTR(kIOHIDDeviceUsagePageKey), usage_page_ref) ||
+                        !CFLib.INSTANCE.CFDictionaryGetValueIfPresent(dict.asDict(), CFSTR(kIOHIDDeviceUsageKey), usage_ref) ||
                         !CFLib.INSTANCE.CFGetTypeID(usage_page_ref[0]).equals(CFLib.INSTANCE.CFNumberGetTypeID()) ||
                         !CFLib.INSTANCE.CFGetTypeID(usage_ref[0]).equals(CFLib.INSTANCE.CFNumberGetTypeID()) ||
                         !CFLib.INSTANCE.CFNumberGetValue(usage_page_ref[0].asNumber(), kCFNumberSInt32Type, usage_pageP) ||
@@ -320,7 +340,7 @@ logger.fine("not string: " + prop.getString());
                 int usage_page = usage_pageP.getValue();
                 int usage = usageP.getValue();
                 if (usage_page == primary_usage_page && usage == primary_usage) {
-logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
+logger.finest("same usage_page: " + usage_page + ", usage: " + usage);
                     continue; // Already added.
                 }
 
@@ -329,11 +349,11 @@ logger.finer("same usage_page: " + usage_page + ", usage: " + usage);
             }
         }
 
-logger.finer("infos: " + deviceInfos.size());
+logger.finest("infos: " + deviceInfos.size());
         return deviceInfos;
     }
 
-    /**  */
+    /** */
     private int get_int_property(CFString key) {
         CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, key);
         if (ref != null) {
@@ -346,8 +366,36 @@ logger.finer("infos: " + deviceInfos.size());
         return 0;
     }
 
-    /**  */
+    /** */
     int get_int_property(String key) {
-        return get_int_property(CFLib.INSTANCE.__CFStringMakeConstantString(key));
+        return get_int_property(CFSTR(key));
+    }
+
+    /**
+     * @return read length
+     * @throws IllegalStateException
+     */
+    int hid_get_report_descriptor(byte[] buf, int buf_size) {
+        CFType ref = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, CFSTR(IOKitLib.kIOHIDReportDescriptorKey));
+        if (ref != null && CFLib.INSTANCE.CFGetTypeID(ref).equals(CFLib.INSTANCE.CFDataGetTypeID())) {
+            CFData report_descriptor = ref.asData();
+            Pointer descriptor_buf = CFLib.INSTANCE.CFDataGetBytePtr(report_descriptor);
+            NativeLong descriptor_buf_len = CFLib.INSTANCE.CFDataGetLength(report_descriptor);
+            int copy_len = descriptor_buf_len.intValue();
+
+            if (descriptor_buf == null || descriptor_buf_len.intValue() < 0) {
+                throw new IllegalStateException("Zero buffer/length");
+            }
+
+            if (buf_size < copy_len) {
+                copy_len = buf_size;
+            }
+
+            descriptor_buf.read(0, buf, 0, copy_len);
+            return copy_len;
+        }
+        else {
+            throw new IllegalStateException("Failed to get kIOHIDReportDescriptorKey property");
+        }
     }
 }

@@ -55,6 +55,7 @@ public class UsbHidEnumerationExample extends BaseExample {
         HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
         // Use the v0.7.0 manual start feature to get immediate attach events
         hidServicesSpecification.setAutoStart(false);
+        hidServicesSpecification.setAutoShutdown(false);
 
         // Get HID services using custom specification
         HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
@@ -76,7 +77,7 @@ Debug.println(device + "\nopen?: " + !device.isClosed());
 //        boolean r = device.open();
 //Debug.println("open device: " + r);
 
-        device.addReportInputListener(e -> display(e.getReport()));
+        device.setInputReportListener(e -> display(e.getReport()));
 
         waitAndShutdown(hidServices);
     }
@@ -92,6 +93,8 @@ Debug.println(device + "\nopen?: " + !device.isClosed());
         }
         System.out.println("]");
     }
+
+    static int c = 0;
 
     static void display2(byte[] d) {
         int l3x = d[1] & 0xff;
@@ -139,7 +142,7 @@ Debug.println(device + "\nopen?: " + !device.isClosed());
         boolean extension_detection = (d[30] & 0x01) != 0;
         int battery_info = (d[30] >> 3) & 0x1f;
 
-        System.out.printf("L3 x:%02x y:%02x R3 x:%02x y:%02x%n", l3x, l3y, r3x, r3y);
+        System.out.printf("L3 x:%02x y:%02x R3 x:%02x y:%02x (%d)%n", l3x, l3y, r3x, r3y, c++);
         System.out.printf("%3s %3s %3s %3s %5s %2s %s%n", tri ? "▲" : "", cir ? "●" : "", x ? "✖" : "", sqr ? "■" : "", tPad ? "T-PAD" : "", ps ? "PS" : "", Hat.values()[dPad].s);
         System.out.printf("gyro x:%04x y:%04x z:%04x, accel x:%04x y:%04x z:%04x%n%n", gyroX, gyroY, gyroZ, accelX, accelY, accelZ);
     }

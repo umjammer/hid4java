@@ -60,7 +60,7 @@ public class HidDeviceManager {
      */
     public static boolean useLibUsbVariant = false;
 
-    private NativeHidDeviceManager nativeManager;
+    private final NativeHidDeviceManager nativeManager;
 
     /**
      * The HID services specification providing configuration parameters
@@ -84,6 +84,7 @@ public class HidDeviceManager {
      * and executors are more heavyweight in this regard
      */
     private ExecutorService scanThread = Executors.newSingleThreadExecutor();
+    private boolean scanning;
 
     /**
      * Constructs a new device manager
@@ -199,7 +200,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
      * @return True if the scan thread is running, false otherwise.
      */
     public boolean isScanning() {
-        return !scanThread.isTerminated();
+        return scanning;
     }
 
     /**
@@ -256,7 +257,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
     private synchronized void stopScanThread() {
 
         if (isScanning()) {
-            scanThread.shutdown();
+            scanThread.shutdownNow();
         }
     }
 
@@ -271,6 +272,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
 
         // Require a new one
         scanThread.submit(scanRunnable);
+        scanning = true;
     }
 
     private synchronized Runnable getScanRunnable() {

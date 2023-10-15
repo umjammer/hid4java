@@ -47,9 +47,16 @@ public class HidDevice {
     private Info info;
     private NativeHidDevice nativeDevice;
 
+    /**
+     * Maximum expected HID Report descriptor size in bytes.
+     *
+     * @since version 0.13.0
+     */
+    static int HID_API_MAX_REPORT_DESCRIPTOR_SIZE = 4096;
+
     public static class Info {
 
-        public enum hid_bus_type {
+        public enum HidBusType {
             /** Unknown bus type */
             HID_API_BUS_UNKNOWN,
             /**
@@ -120,7 +127,7 @@ public class HidDevice {
          * Underlying bus type
          * Since version 0.13.0, @ref HID_API_VERSION >= HID_API_MAKE_VERSION(0, 13, 0)
          */
-        public hid_bus_type bus_type;
+        public HidBusType busType;
     }
 
     private final boolean autoDataRead;
@@ -276,8 +283,9 @@ logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      * @since 0.1.0
      */
     public void close() {
-logger.finer("isClosed: " + isClosed());
+logger.finest("isClosed: " + info.product + ", " + isClosed());
         if (isClosed()) {
+//new Exception("close:").printStackTrace();
             return;
         }
 
@@ -287,10 +295,10 @@ logger.finer("close native: " + nativeDevice);
     }
 
     /**
-     *
+     * Sets input report listener.
      */
-    public void addReportInputListener(InputReportListener l) {
-        nativeDevice.addReportInputListener(l);
+    public void setInputReportListener(InputReportListener l) {
+        nativeDevice.setReportInputListener(l);
     }
 
     /**
@@ -312,7 +320,7 @@ logger.finer("close native: " + nativeDevice);
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.getFeatureReport(data, -1, reportId);
+        return nativeDevice.getFeatureReport(data, reportId);
     }
 
     /**
@@ -343,7 +351,7 @@ logger.finer("close native: " + nativeDevice);
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.sendFeatureReport(data, data.length, reportId);
+        return nativeDevice.sendFeatureReport(data, reportId);
     }
 
     /**
@@ -422,6 +430,22 @@ logger.finer("close native: " + nativeDevice);
             return (vendorId == 0 || this.info.vendorId == vendorId)
                     && (productId == 0 || this.info.productId == productId)
                     && (this.info.serialNumber.equals(serialNumber));
+    }
+
+    /** */
+    public int getReportDescriptor(byte[] report) {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return nativeDevice.getReportDescriptor(report);
+    }
+
+    /** */
+    public int getInputDescriptor(byte[] report, byte reportId) throws IOException {
+        if (isClosed()) {
+            throw new IllegalStateException("Device has not been opened");
+        }
+        return nativeDevice.getInputReport(report, reportId);
     }
 
     @Override

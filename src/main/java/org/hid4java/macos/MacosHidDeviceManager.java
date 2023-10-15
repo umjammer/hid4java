@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
+import java.util.NoSuchElementException;
 import java.util.logging.Logger;
 
 import com.sun.jna.Memory;
@@ -51,6 +51,7 @@ import vavix.rococoa.iokit.IOKitLib;
 
 import static vavix.rococoa.corefoundation.CFLib.kCFCoreFoundationVersionNumber;
 import static vavix.rococoa.corefoundation.CFLib.kCFRunLoopDefaultMode;
+import static vavix.rococoa.corefoundation.CFString.CFSTR;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeNone;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeSeizeDevice;
 import static vavix.rococoa.iokit.IOKitLib.kIOReturnSuccess;
@@ -124,17 +125,16 @@ logger.fine("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
 
     @Override
     public void exit() {
-logger.finest("here10.0: hid_exit");
+logger.finer("here10.0: hid_exit");
         devices.forEach(MacosHidDevice::close);
 
         if (manager != null) {
             /* Close the HID manager. */
-logger.fine("here10.1");
+logger.fine("here10.1: manager close");
             IOKitLib.INSTANCE.IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
             CFLib.INSTANCE.CFRelease(manager);
             manager = null;
-logger.fine("here10.2");
-//Thread.getAllStackTraces().keySet().forEach(System.err::println);
+logger.fine("here10.2: manager = null");
         }
     }
 
@@ -177,7 +177,7 @@ logger.fine("here10.2");
         return device;
     }
 
-    /**  */
+    /** */
     private void processPendingEvents() {
         int res;
         do {
@@ -202,14 +202,14 @@ logger.fine("here10.2");
             if (matching != null && vendorId != 0) {
                 ShortByReference r = new ShortByReference((short) vendorId);
                 CFNumber v = CFLib.INSTANCE.CFNumberCreate(CFAllocator.kCFAllocatorDefault, CFLib.CFNumberType.kCFNumberShortType, r);
-                CFLib.INSTANCE.CFDictionarySetValue(matching, CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDVendorIDKey), v);
+                CFLib.INSTANCE.CFDictionarySetValue(matching, CFSTR(IOKitLib.kIOHIDVendorIDKey), v);
                 CFLib.INSTANCE.CFRelease(v);
             }
 
             if (matching != null && productId != 0) {
                 ShortByReference r = new ShortByReference((short) productId);
                 CFNumber p = CFLib.INSTANCE.CFNumberCreate(CFAllocator.kCFAllocatorDefault, CFLib.CFNumberType.kCFNumberShortType, r);
-                CFLib.INSTANCE.CFDictionarySetValue(matching, CFLib.INSTANCE.__CFStringMakeConstantString(IOKitLib.kIOHIDProductIDKey), p);
+                CFLib.INSTANCE.CFDictionarySetValue(matching, CFSTR(IOKitLib.kIOHIDProductIDKey), p);
                 CFLib.INSTANCE.CFRelease(p);
             }
         }
@@ -227,7 +227,7 @@ logger.finest("here7.1");
         if (deviceSet != null) {
             // Convert the list into a C array so we can iterate easily.
             numDevices = CFLib.INSTANCE.CFSetGetCount(deviceSet).intValue();
-logger.finer("num_devices: " + numDevices);
+logger.finest("num_devices: " + numDevices);
             devices = new Pointer[(int) numDevices];
             CFLib.INSTANCE.CFSetGetValues(deviceSet, devices);
         } else {
@@ -278,13 +278,15 @@ logger.fine("empty");
             return MACH_PORT_NULL;
 
         // Get the IORegistry entry for the given path
-logger.finer("path: " + path.substring(10));
+logger.finer("here80.0: path: " + path.substring(10));
         if (path.startsWith("DevSrvsID:")) {
             long entryId = Long.parseLong(path.substring(10));
+logger.finer("here80.1: " + entryId);
             return IOKitLib.INSTANCE.IOServiceGetMatchingService(/* mach_port_t */ Pointer.NULL, IOKitLib.INSTANCE.IORegistryEntryIDMatching(entryId).asDict());
         } else {
             // Fallback to older format of the path
             ByteBuffer bb = ByteBuffer.wrap(path.getBytes());
+logger.finer("here80.2");
             return IOKitLib.INSTANCE.IORegistryEntryFromPath(/* mach_port_t */ Pointer.NULL, bb);
         }
     }
@@ -293,7 +295,7 @@ logger.finer("path: " + path.substring(10));
     private void onDeviceRemovalCallback(Pointer context, int /* IOReturn */ result, Pointer sender) {
         MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
         if (dev == null) {
-logger.finer("here5.0: dev is null");
+logger.fine("here5.0: dev is null");
             return;
         }
 logger.fine("here5: device_removal_callback: dev: " + dev.deviceInfo.product);
@@ -309,7 +311,7 @@ logger.fine("here5: device_removal_callback: dev: " + dev.deviceInfo.product);
     private void onSignalCallback(Pointer context) {
         MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
         if (dev == null) {
-logger.finer("here3.0: dev is null");
+logger.fine("here3.0: dev is null");
             return;
         }
 logger.fine("here3.1: signal_callback: dev: " + dev.deviceInfo.product);
@@ -325,27 +327,58 @@ logger.finest("here3.2: stop run loop: @" + dev.runLoop.hashCode());
      *
      * @see IOKitLib.IOHIDReportCallback
      */
-    private void onReportCallback(Pointer context, int/*IOReturn*/ result, Pointer sender, int/*IOHIDReportType*/ report_type, int report_id, Pointer report, CFIndex reportRength) {
+    private void onReportCallback(Pointer context, int/*IOReturn*/ result, Pointer sender, int/*IOHIDReportType*/ report_type, int report_id, Pointer report, CFIndex reportLength) {
         MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
         if (dev == null) {
-logger.finer("here4.0: dev is null");
+logger.fine("here4.0: dev is null: " + UserObjectContext.objectIDMaster);
             return;
         }
 logger.finest("here4: report_callback: dev: " + dev.deviceInfo.product);
 
         // Make a new Input Report object
-        dev.inputData = new byte[reportRength.intValue()];
-        report.read(0, dev.inputData, 0, dev.inputData.length);
+        int length = reportLength.intValue();
+        report.read(0, dev.inputData, 0, length);
 
         // Signal a waiting thread that there is data.
-        dev.fireInputReport(new InputReportEvent(this, report_id, dev.inputData));
-logger.finest("here4.1: report: " + reportRength.intValue());
+        if (dev.inputReportListener != null)
+            dev.inputReportListener.onInputReport(new InputReportEvent(dev, report_id, dev.inputData, length));
+logger.finest("here4.1: report: " + length + ", " + Thread.currentThread());
+    }
+
+    /** purejavahidapi way */
+    IOHIDDevice getIOHIDDeviceRef(String path) {
+logger.fine("path: " + path);
+        processPendingEvents(); // FIXME why do we call this here???
+
+        CFType /* CFSet */ device_set = IOKitLib.INSTANCE.IOHIDManagerCopyDevices(manager);
+
+        int num_devices = CFLib.INSTANCE.CFSetGetCount(device_set).intValue();
+        Pointer[] device_array = new Pointer[num_devices];
+
+        CFLib.INSTANCE.CFSetGetValues(device_set, device_array);
+        for (int i = 0; i < num_devices; i++) {
+            IOHIDDevice os_dev = new IOHIDDevice(device_array[i]);
+            String x = os_dev.getPath();
+logger.fine(String.format("dev[%d]: %s, %s", i, x, path));
+            if (path.equals(x)) {
+                int ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(device_array[i], kIOHIDOptionsTypeNone);
+                if (ret == kIOReturnSuccess) {
+                    CFLib.INSTANCE.CFRetain(device_array[i]);
+                    CFLib.INSTANCE.CFRelease(device_set);
+                    return os_dev;
+                } else {
+logger.warning(String.format("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF));
+                }
+            }
+        }
+        CFLib.INSTANCE.CFRelease(device_set);
+        throw new NoSuchElementException(path);
     }
 
     @Override
     public MacosHidDevice open(HidDevice.Info info) throws IOException {
-logger.finer("here00.0: path: " + info);
-        Pointer/* io_registry_entry_t */ entry = null;
+logger.finer("here00.0: path: " + info.path);
+        Pointer/* io_registry_entry_t */ entry;
         MacosHidDevice device = new MacosHidDevice(device_open_options);
         device.deviceInfo = info;
         try {
@@ -355,7 +388,7 @@ logger.finer("here00.0: path: " + info);
                 // Path wasn't valid (maybe device was removed?)
                 throw new IOException("hid_open_path: device mach entry not found with the given path");
             }
-logger.finest("here00.1: entry: " + entry);
+logger.finer("here00.1: entry: " + entry + ", openOptions: " + device.openOptions);
 
             // Create an IOHIDDevice for the entry
             Pointer /* IOHIDDevice */ deviceHandle = IOKitLib.INSTANCE.IOHIDDeviceCreate(CFAllocator.kCFAllocatorDefault, entry);
@@ -371,6 +404,9 @@ logger.finest("here00.1: entry: " + entry);
             }
 
             device.deviceHandle = new IOHIDDevice(deviceHandle);
+
+            // purejavahidapi way
+//            device.deviceHandle = getIOHIDDeviceRef(info.path);
 
             // Create the buffers for receiving data
             device.maxInputReportLength = device.deviceHandle.get_int_property(IOKitLib.kIOHIDMaxInputReportSizeKey);
@@ -391,8 +427,8 @@ logger.finest("here00.2: str: " + str);
                 IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
                         device.deviceHandle.device, device.inputReportBuffer, CFIndex.of(device.maxInputReportLength),
                         this::onReportCallback, object_context);
+logger.fine("here00.3: start report");
             }
-
             IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(device.deviceHandle.device, this::onDeviceRemovalCallback, object_context);
 
             // Start the read thread
@@ -406,7 +442,7 @@ logger.finest("here50.0: thread start");
                 // event loop to stop when hid_close() is called.
                 CFLib.CFRunLoopSourceContext.ByReference ctx = new CFLib.CFRunLoopSourceContext.ByReference();
                 ctx.version = CFIndex.of(0);
-                ctx.info = UserObjectContext.createContext(device).getPointer();
+                ctx.info = object_context.getPointer();
                 ctx.perform = this::onSignalCallback;
                 device.source = CFLib.INSTANCE.CFRunLoopSourceCreate(CFAllocator.kCFAllocatorDefault, CFIndex.of(0) /* order */, ctx);
                 CFLib.INSTANCE.CFRunLoopAddSource(CFLib.INSTANCE.CFRunLoopGetCurrent(), device.source, device.runLoopMode);
@@ -416,19 +452,19 @@ logger.finest("here50.0: thread start");
                 device.runLoop = CFLib.INSTANCE.CFRunLoopGetCurrent();
 
                 // Notify the main thread that the read thread is up and running.
-logger.finest("here50.4: notify barrier -1");
+logger.finest("here50.1: notify barrier -1");
                 device.barrier.waitAndSync();
 
                 // Run the Event Loop. CFRunLoopRunInMode() will dispatch HID input
                 // reports into the hid_report_callback().
                 int code;
-logger.finest("here50.5: dev.shutdownThread: " + !device.shutdownThread + ", !dev.disconnected: " + !device.disconnected);
+logger.finer("here50.2: dev.shutdownThread: " + !device.shutdownThread + ", !dev.disconnected: " + !device.disconnected);
                 while (!device.shutdownThread && !device.disconnected) {
                     code = CFLib.INSTANCE.CFRunLoopRunInMode(device.runLoopMode, 1000 /* sec */, false);
                     // Return if the device has been disconnected
                     if (code == CFLib.kCFRunLoopRunFinished || code == CFLib.kCFRunLoopRunStopped) {
                         device.disconnected = true;
-logger.finest("here50.6: dev.disconnected: " + device.disconnected + " cause run loop: " + code);
+logger.fine("here50.3: dev.disconnected: " + device.disconnected + " cause run loop: " + code);
                         break;
                     }
 
@@ -437,7 +473,7 @@ logger.finest("here50.6: dev.disconnected: " + device.disconnected + " cause run
                         // There was some kind of error. Setting
                         // shutdown seems to make sense, but
                         // there may be something else more appropriate
-logger.finest("here50.7: dev.disconnected: " + device.disconnected);
+logger.fine("here50.4: dev.disconnected: " + device.disconnected);
                         device.shutdownThread = true;
                         break;
                     }
@@ -446,11 +482,17 @@ logger.finest("here50.7: dev.disconnected: " + device.disconnected);
                 // Wait here until hid_close() is called and makes it past
                 // the call to CFRunLoopWakeUp(). This thread still needs to
                 // be valid when that function is called on the other thread.
-logger.finest("here50.8: notify shutdownBarrier -1");
+logger.fine("here50.5: notify shutdownBarrier -1");
                 device.shutdownBarrier.waitAndSync();
-logger.finest("here50.9: thread done");
+logger.fine("here50.6: thread done");
             }, str);
             device.thread.start();
+//new Thread(() -> {
+// while (!device.disconnected) {
+//  /*if (!device.thread.isAlive())*/ logger.info(device.thread + ": is alive?: " + device.thread.isAlive() + ", " + device.thread.getStackTrace()[1]);
+//  try { Thread.sleep(500); } catch (InterruptedException ignore) {}
+// }
+//}).start();
 
             // Wait here for the read thread to be initialized.
             device.barrier.waitAndSync();
@@ -459,17 +501,18 @@ logger.finest("here50.9: thread done");
 
             device.closer = devices::remove;
             devices.add(device);
-logger.finest("here00.3: devices: +: " + device + " / " + devices.size());
+logger.fine("here00.4: devices: +: " + device + " / " + devices.size() + ", " + str);
             return device;
-        } catch (IOException e) {
-logger.log(Level.SEVERE, e.toString(), e);
-            if (device.deviceHandle != null)
-                CFLib.INSTANCE.CFRelease(device.deviceHandle.device);
-
-            if (entry != null)
-                IOKitLib.INSTANCE.IOObjectRelease(entry);
-
-            throw e;
+//        } catch (IOException e) {
+//logger.log(Level.SEVERE, e.toString(), e);
+//            if (device.deviceHandle != null)
+//                CFLib.INSTANCE.CFRelease(device.deviceHandle.device);
+//
+//            if (entry != null)
+//                IOKitLib.INSTANCE.IOObjectRelease(entry);
+//
+//            throw e;
+        } finally {
         }
     }
 }

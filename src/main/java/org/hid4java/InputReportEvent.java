@@ -22,11 +22,13 @@ public class InputReportEvent extends EventObject {
 
     /** the report data */
     private final byte[] report;
+    private final int length;
 
-    public InputReportEvent(Object source, int reportId, byte[] report) {
+    public InputReportEvent(Object source, int reportId, byte[] report, int length) {
         super(source);
         this.reportId = reportId;
         this.report = report;
+        this.length = length;
     }
 
     public int getReportId() {
@@ -35,5 +37,9 @@ public class InputReportEvent extends EventObject {
 
     public byte[] getReport() {
         return report;
+    }
+
+    public int getLength() {
+        return length;
     }
 }
