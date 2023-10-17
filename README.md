@@ -11,6 +11,10 @@
 
  * [maven](https://jitpack.io/#umjammer/hid4java)
 
+## References
+
+ * https://github.com/nyholku/purejavahidapi
+
 ## TODO
 
  * ~~sigabrt~~ ... `-Djbr.catch.SIGABRT=true` (maybe only for jetbrain's jvm)
@@ -19,7 +23,7 @@
 
 ## LESSON
 
- * `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type should be `Pointer`
+ * `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type that should be `Pointer`
 ---
 
 ## Original
