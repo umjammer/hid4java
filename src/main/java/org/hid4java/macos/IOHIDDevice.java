@@ -23,7 +23,6 @@ import vavix.rococoa.corefoundation.CFArray;
 import vavix.rococoa.corefoundation.CFData;
 import vavix.rococoa.corefoundation.CFIndex;
 import vavix.rococoa.corefoundation.CFLib;
-import vavix.rococoa.corefoundation.CFNumber;
 import vavix.rococoa.corefoundation.CFRange;
 import vavix.rococoa.corefoundation.CFString;
 import vavix.rococoa.corefoundation.CFType;
@@ -126,7 +125,7 @@ logger.fine("not string: " + prop.getString());
         CFType ref = IOKitLib.INSTANCE.IORegistryEntryCreateCFProperty(service, property, CFAllocator.kCFAllocatorDefault, 0);
         if (ref != null) {
             if (CFLib.INSTANCE.CFGetTypeID(ref).equals(CFLib.INSTANCE.CFNumberGetTypeID())) {
-                result = CFLib.INSTANCE.CFNumberGetValue((CFNumber) ref, kCFNumberSInt32Type, out_val);
+                result = CFLib.INSTANCE.CFNumberGetValue(ref.asNumber(), kCFNumberSInt32Type, out_val);
             }
 
             CFLib.INSTANCE.CFRelease(ref);
