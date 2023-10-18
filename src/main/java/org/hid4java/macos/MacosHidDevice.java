@@ -44,6 +44,7 @@ import vavix.rococoa.iokit.IOKitLib;
 
 import static org.hid4java.HidDevice.logTraffic;
 import static vavix.rococoa.corefoundation.CFLib.kCFRunLoopDefaultMode;
+import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeSeizeDevice;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDReportTypeFeature;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDReportTypeInput;
 import static vavix.rococoa.iokit.IOKitLib.kIOReturnSuccess;
@@ -129,6 +130,7 @@ logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode());
         // Notify the read thread that it can shut down now.
 logger.finer("here20.4: " + Thread.currentThread() + ", " + this.thread);
         if (Thread.currentThread() != this.thread) {
+            this.thread.interrupt();
 logger.finest("here20.5: notify shutdownBarrier -1");
             this.shutdownBarrier.waitAndSync();
 
@@ -151,7 +153,7 @@ logger.finer("here20.6: join...: " + this.thread);
         // Not leaking a resource in all tested environments.
 
         if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
-            IOKitLib.INSTANCE.IOHIDDeviceClose(this.deviceHandle.device, this.openOptions);
+            IOKitLib.INSTANCE.IOHIDDeviceClose(this.deviceHandle.device, kIOHIDOptionsTypeSeizeDevice);
 logger.finer("here20.7: native device close: @" + this.deviceHandle.device.hashCode());
         }
 
