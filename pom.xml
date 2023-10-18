@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.1v</version>
+  <version>0.14.2v</version>
 
   <name>hid4java</name>
   <description>A cross-platform Java Native Access (JNA) wrapper for the libusb/hidapi library</description>
