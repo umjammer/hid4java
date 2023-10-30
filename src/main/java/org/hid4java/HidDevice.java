@@ -316,11 +316,11 @@ logger.finer("close native: " + nativeDevice);
      * been removed from the first byte), or -1 on error.
      * @since 0.1.0
      */
-    public int getFeatureReport(byte[] data, byte reportId) throws IOException {
+    public int getFeatureReport(byte[] data, int reportId) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.getFeatureReport(data, reportId);
+        return nativeDevice.getFeatureReport(data, (byte) reportId);
     }
 
     /**
@@ -347,11 +347,11 @@ logger.finer("close native: " + nativeDevice);
      * on error.
      * @since 0.1.0
      */
-    public int sendFeatureReport(byte[] data, byte reportId) throws IOException {
+    public int sendFeatureReport(byte[] data, int reportId) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.sendFeatureReport(data, reportId);
+        return nativeDevice.sendFeatureReport(data, (byte)reportId);
     }
 
     /**
@@ -380,11 +380,11 @@ logger.finer("close native: " + nativeDevice);
      * @return The number of bytes written (including report ID), or -1 if an error occurs
      * @since 0.1.0
      */
-    public int write(byte[] message, int packetLength, byte reportId) throws IOException {
+    public int write(byte[] message, int packetLength, int reportId) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return write(message, packetLength, reportId, false);
+        return write(message, packetLength, (byte) reportId, false);
     }
 
     /**
@@ -399,7 +399,7 @@ logger.finer("close native: " + nativeDevice);
      * @return The number of bytes written (including report ID), or -1 if an error occurs
      * @since 0.8.0
      */
-    public int write(byte[] message, int packetLength, byte reportId, boolean applyPadding) throws IOException {
+    public int write(byte[] message, int packetLength, int reportId, boolean applyPadding) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
@@ -408,7 +408,7 @@ logger.finer("close native: " + nativeDevice);
             message = Arrays.copyOf(message, packetLength + 1);
         }
 
-        int result = nativeDevice.write(message, packetLength, reportId);
+        int result = nativeDevice.write(message, packetLength, (byte) reportId);
         // Update HID manager
         manager.afterDeviceWrite();
         return result;
@@ -441,11 +441,11 @@ logger.finer("close native: " + nativeDevice);
     }
 
     /** */
-    public int getInputDescriptor(byte[] report, byte reportId) throws IOException {
+    public int getInputDescriptor(byte[] report, int reportId) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }
-        return nativeDevice.getInputReport(report, reportId);
+        return nativeDevice.getInputReport(report, (byte) reportId);
     }
 
     @Override
