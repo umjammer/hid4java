@@ -129,19 +129,12 @@ logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode());
 
         // Notify the read thread that it can shut down now.
 logger.finer("here20.4: " + Thread.currentThread() + ", " + this.thread);
-        if (Thread.currentThread() != this.thread) {
-            this.thread.interrupt();
 logger.finest("here20.5: notify shutdownBarrier -1");
             this.shutdownBarrier.waitAndSync();
 
             // Wait for read_thread() to end.
 logger.finer("here20.6: join...: " + this.thread);
-            try {
-                this.thread.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
+        try { this.thread.join(); } catch (InterruptedException ignore) {}
 
         // Close the OS handle to the device, but only if it's not
         // been unplugged. If it's been unplugged, then calling

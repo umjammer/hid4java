@@ -69,8 +69,8 @@ public class LibusbEnumerationExample extends BaseExample {
       System.out.println(hidDevice);
     }
 
-    waitAndShutdown(hidServices);
 
+        waitAndShutdown(hidServices, 10);
   }
 
 }

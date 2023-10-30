@@ -79,7 +79,7 @@ Debug.println(device + "\nopen?: " + !device.isClosed());
 
         device.setInputReportListener(e -> display(e.getReport()));
 
-        waitAndShutdown(hidServices);
+        waitAndShutdown(hidServices, 10);
     }
 
     static void display(byte[] data) {

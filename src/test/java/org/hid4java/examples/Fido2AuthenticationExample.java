@@ -183,8 +183,8 @@ public class Fido2AuthenticationExample extends BaseExample {
       }
     }
 
-    waitAndShutdown(hidServices);
 
+        waitAndShutdown(hidServices, 10);
   }
 
   /**

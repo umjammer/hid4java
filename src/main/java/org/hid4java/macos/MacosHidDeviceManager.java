@@ -346,36 +346,6 @@ logger.finest("here4.2: report_callback: dev: " + dev.deviceInfo.product);
 logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
     }
 
-    /** purejavahidapi way */
-    IOHIDDevice getIOHIDDeviceRef(String path) {
-logger.fine("path: " + path);
-        processPendingEvents(); // FIXME why do we call this here???
-
-        CFType /* CFSet */ device_set = IOKitLib.INSTANCE.IOHIDManagerCopyDevices(manager);
-
-        int num_devices = CFLib.INSTANCE.CFSetGetCount(device_set).intValue();
-        Pointer[] device_array = new Pointer[num_devices];
-
-        CFLib.INSTANCE.CFSetGetValues(device_set, device_array);
-        for (int i = 0; i < num_devices; i++) {
-            IOHIDDevice os_dev = new IOHIDDevice(device_array[i]);
-            String x = os_dev.getPath();
-logger.fine(String.format("dev[%d]: %s, %s", i, x, path));
-            if (path.equals(x)) {
-                int ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(device_array[i], kIOHIDOptionsTypeNone);
-                if (ret == kIOReturnSuccess) {
-                    CFLib.INSTANCE.CFRetain(device_array[i]);
-                    CFLib.INSTANCE.CFRelease(device_set);
-                    return os_dev;
-                } else {
-logger.warning(String.format("IOHIDDeviceOpen: %d,%d,%d\n", (ret >> (32 - 6)) & 0x3f, (ret >> (32 - 6 - 12)) & 0xFFF, ret & 0x3FFF));
-                }
-            }
-        }
-        CFLib.INSTANCE.CFRelease(device_set);
-        throw new NoSuchElementException(path);
-    }
-
     @Override
     public MacosHidDevice open(HidDevice.Info info) throws IOException {
 logger.finer("here00.0: path: " + info.path);
@@ -405,9 +375,6 @@ logger.finer("here00.1: entry: " + entry + ", openOptions: " + device.openOption
             }
 
             device.deviceHandle = new IOHIDDevice(deviceHandle);
-
-            // purejavahidapi way
-//            device.deviceHandle = getIOHIDDeviceRef(info.path);
 
             // Create the buffers for receiving data
             device.maxInputReportLength = device.deviceHandle.get_int_property(IOKitLib.kIOHIDMaxInputReportSizeKey);
@@ -483,10 +450,8 @@ logger.fine("here50.4: dev.disconnected: " + device.disconnected);
                 // Wait here until hid_close() is called and makes it past
                 // the call to CFRunLoopWakeUp(). This thread still needs to
                 // be valid when that function is called on the other thread.
-                if (!device.disconnected) {
 logger.fine("here50.5: notify shutdownBarrier -1");
                     device.shutdownBarrier.waitAndSync();
-                }
 logger.fine("here50.6: thread done");
             }, str);
             device.thread.start();
