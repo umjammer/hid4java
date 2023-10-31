@@ -27,6 +27,7 @@ package org.hid4java;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.logging.Logger;
 
 
@@ -467,15 +468,15 @@ logger.finer("close native: " + nativeDevice);
     @Override
     public String toString() {
         return "HidDevice [path=" + info.path
-                + ", vendorId=0x" + Integer.toHexString(info.vendorId)
-                + ", productId=0x" + Integer.toHexString(info.productId)
+                + String.format(", usagePage=0x%04x", info.usagePage)
+                + String.format(", usage=0x%04x", info.usage)
+                + String.format(", vendorId=0x%04x", info.vendorId)
+                + String.format(", productId=0x%04x", info.productId)
+                + ", product=" + info.product
+                + ", manufacturer=" + info.manufacturer
+                + ", interfaceNumber=" + info.interfaceNumber
                 + ", serialNumber=" + info.serialNumber
                 + ", releaseNumber=0x" + Integer.toHexString(info.releaseNumber)
-                + ", manufacturer=" + info.manufacturer
-                + ", product=" + info.product
-                + ", usagePage=0x" + Integer.toHexString(info.usagePage)
-                + ", usage=0x" + Integer.toHexString(info.usage)
-                + ", interfaceNumber=" + info.interfaceNumber
                 + "]";
     }
 

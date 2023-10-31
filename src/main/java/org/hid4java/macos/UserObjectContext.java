@@ -24,27 +24,25 @@ public class UserObjectContext extends Structure {
 
     public int objectID;
 
-    /**  */
+    /** */
     public UserObjectContext() {
         objectID = objectIDMaster++;
         write();
     }
 
-    /**  */
+    /** */
     public UserObjectContext(Pointer p) {
         super(p);
         // TODO why?
         read();
     }
 
-    /**  */
+    /** */
     public static class ByReference extends UserObjectContext implements Structure.ByReference {
-
     }
 
-    /**  */
+    /** */
     public static class ByValue extends UserObjectContext implements Structure.ByValue {
-
     }
 
     @Override
@@ -52,13 +50,13 @@ public class UserObjectContext extends Structure {
         return List.of("objectID");
     }
 
-    /**  */
+    /** */
     private static final Map<Integer, Object> objects = new HashMap<>();
 
-    /**  */
+    /** */
     static int objectIDMaster = 0;
 
-    /**  */
+    /** */
     public static ByReference create(Object o) {
         ByReference object_context = new ByReference();
 //new Exception("objectID: " + objectIDMaster).printStackTrace(System.err);

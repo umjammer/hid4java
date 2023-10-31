@@ -32,10 +32,8 @@ public class sched_param extends Structure {
 		super(peer);
 	}
 	public static class ByReference extends sched_param implements Structure.ByReference {
-		
 	}
 
     public static class ByValue extends sched_param implements Structure.ByValue {
-		
 	}
 }
