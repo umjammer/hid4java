@@ -112,7 +112,7 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
      * @throws IllegalStateException when failed
      */
     public MacosHidDeviceManager() {
-logger.fine("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
+logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
         hid_darwin_set_open_exclusive(darwinOpenDevicesNonExclusive ? 0 : 1); // Backward compatibility
 
         manager = IOKitLib.INSTANCE.IOHIDManagerCreate(CFAllocator.kCFAllocatorDefault, kIOHIDOptionsTypeNone);
@@ -131,11 +131,11 @@ logger.finer("here10.0: hid_exit");
 
         if (manager != null) {
             /* Close the HID manager. */
-logger.fine("here10.1: manager close");
+logger.finer("here10.1: manager close");
             IOKitLib.INSTANCE.IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
             CFLib.INSTANCE.CFRelease(manager);
             manager = null;
-logger.fine("here10.2: manager = null");
+logger.finer("here10.2: manager = null");
         }
     }
 
@@ -315,7 +315,7 @@ logger.fine("here5.2: device_removal_callback: dev: " + dev.deviceInfo.product);
 logger.fine("here3.1: dev is null");
             return;
         }
-logger.fine("here3.2: signal_callback: dev: " + dev.deviceInfo.product);
+logger.finer("here3.2: signal_callback: dev: " + dev.deviceInfo.product);
 
         CFLib.INSTANCE.CFRunLoopStop(dev.runLoop); // TODO CFRunLoopGetCurrent()
 logger.finest("here3.3: stop run loop: @" + dev.runLoop.hashCode());
@@ -395,7 +395,7 @@ logger.finer("here00.2: str: " + str + ", " + device.runLoopMode.getString());
                 IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
                         device.deviceHandle.device, device.inputReportBuffer, CFIndex.of(device.maxInputReportLength),
                         MacosHidDeviceManager::onReportCallback, object_context);
-logger.fine("here00.3: start report");
+logger.finer("here00.3: start report");
             }
             IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(device.deviceHandle.device, MacosHidDeviceManager::onDeviceRemovalCallback, object_context);
 
@@ -432,7 +432,7 @@ logger.finer("here50.2: dev.shutdownThread: " + !device.shutdownThread + ", !dev
                     // Return if the device has been disconnected
                     if (code == CFLib.kCFRunLoopRunFinished || code == CFLib.kCFRunLoopRunStopped) {
                         device.disconnected = true;
-logger.fine("here50.3: dev.disconnected: " + device.disconnected + " cause run loop: " + code);
+logger.finer("here50.3: dev.disconnected: " + device.disconnected + " cause run loop: " + code);
                         break;
                     }
 
@@ -441,7 +441,7 @@ logger.fine("here50.3: dev.disconnected: " + device.disconnected + " cause run l
                         // There was some kind of error. Setting
                         // shutdown seems to make sense, but
                         // there may be something else more appropriate
-logger.fine("here50.4: dev.disconnected: " + device.disconnected);
+logger.finer("here50.4: dev.disconnected: " + device.disconnected);
                         device.shutdownThread = true;
                         break;
                     }
@@ -450,9 +450,9 @@ logger.fine("here50.4: dev.disconnected: " + device.disconnected);
                 // Wait here until hid_close() is called and makes it past
                 // the call to CFRunLoopWakeUp(). This thread still needs to
                 // be valid when that function is called on the other thread.
-logger.fine("here50.5: notify shutdownBarrier -1");
-                    device.shutdownBarrier.waitAndSync();
-logger.fine("here50.6: thread done");
+logger.finer("here50.5: notify shutdownBarrier -1");
+                device.shutdownBarrier.waitAndSync();
+logger.finer("here50.6: thread done");
             }, str);
             device.thread.start();
 
@@ -463,7 +463,7 @@ logger.fine("here50.6: thread done");
 
             device.closer = devices::remove;
             devices.add(device);
-logger.fine("here00.4: devices: +: " + device + " / " + devices.size() + ", " + str);
+logger.finer("here00.4: devices: +: " + device + " / " + devices.size() + ", " + str);
             return device;
         } catch (IOException e) {
 logger.log(Level.SEVERE, e.toString(), e);

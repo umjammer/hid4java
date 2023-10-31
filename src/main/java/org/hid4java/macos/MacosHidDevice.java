@@ -109,14 +109,14 @@ logger.finer("here20.0: " + deviceInfo.path);
         // See comment below.
         if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
 
-logger.fine("here20.1: removal callback null, unschedule run loop start");
+logger.finer("here20.1: removal callback null, unschedule run loop start");
             IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
                     this.deviceHandle.device, this.inputReportBuffer, CFIndex.of(this.maxInputReportLength),
                     null, null);
             IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.deviceHandle.device, null, null);
             IOKitLib.INSTANCE.IOHIDDeviceUnscheduleFromRunLoop(this.deviceHandle.device, this.runLoop, this.runLoopMode);
             IOKitLib.INSTANCE.IOHIDDeviceScheduleWithRunLoop(this.deviceHandle.device, CFLib.INSTANCE.CFRunLoopGetMain(), kCFRunLoopDefaultMode);
-logger.fine("here20.2: removal callback null, unschedule run loop done");
+logger.finer("here20.2: removal callback null, unschedule run loop done");
         }
 
         // Cause read_thread() to stop.
@@ -125,12 +125,12 @@ logger.fine("here20.2: removal callback null, unschedule run loop done");
         // Wake up the run thread's event loop so that the thread can exit.
         CFLib.INSTANCE.CFRunLoopSourceSignal(this.source);
         CFLib.INSTANCE.CFRunLoopWakeUp(this.runLoop);
-logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode());
+logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode()); // TODO <- not here, until 20.2
 
         // Notify the read thread that it can shut down now.
 logger.finer("here20.4: " + Thread.currentThread() + ", " + this.thread);
 logger.finest("here20.5: notify shutdownBarrier -1");
-            this.shutdownBarrier.waitAndSync();
+        this.shutdownBarrier.waitAndSync();
 
             // Wait for read_thread() to end.
 logger.finer("here20.6: join...: " + this.thread);

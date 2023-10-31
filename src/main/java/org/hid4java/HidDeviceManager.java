@@ -334,7 +334,8 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
     }
 
     public void shutdown() {
-logger.finest("shutdown");
+logger.finer("shutdown.0");
         nativeManager.exit();
+logger.finer("shutdown.1");
     }
 }
