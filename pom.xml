@@ -147,9 +147,9 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.github.umjammer.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
       <artifactId>osx-plugin</artifactId>
-      <version>2.0.11v</version>
+      <version>2.0.12v-SNAPSHOT</version>
     </dependency>
 
     <dependency>
