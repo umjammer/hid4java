@@ -294,7 +294,7 @@ logger.finer("here80.2");
 
     /** Stop the Run Loop for this device */
     private static void onDeviceRemovalCallback(Pointer context, int /* IOReturn */ result, Pointer sender) {
-        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
+        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.get(context);
         if (dev == null) {
 logger.fine("here5.1: dev is null");
             return;
@@ -310,7 +310,7 @@ logger.fine("here5.2: device_removal_callback: dev: " + dev.deviceInfo.product);
      * {@link MacosHidDevice#close()}, and serves to stop the read_thread's run loop.
      */
     private static void onSignalCallback(Pointer context) {
-        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
+        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.get(context);
         if (dev == null) {
 logger.fine("here3.1: dev is null");
             return;
@@ -329,7 +329,7 @@ logger.finest("here3.3: stop run loop: @" + dev.runLoop.hashCode());
      * @see IOKitLib.IOHIDReportCallback
      */
     private static void onReportCallback(Pointer context, int/*IOReturn*/ result, Pointer sender, int/*IOHIDReportType*/ report_type, int report_id, Pointer report, CFIndex reportLength) {
-        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.getObjectFromContext(context);
+        MacosHidDevice dev = (MacosHidDevice) UserObjectContext.get(context);
         if (dev == null) {
 logger.fine("here4.1: dev is null: " + UserObjectContext.objectIDMaster);
             return;
@@ -390,7 +390,7 @@ logger.finer("here00.1: entry: " + entry + ", openOptions: " + device.openOption
 logger.finer("here00.2: str: " + str + ", " + device.runLoopMode.getString());
 
             // Attach the device to a Run Loop
-            UserObjectContext.ByReference object_context = UserObjectContext.createContext(device);
+            UserObjectContext.ByReference object_context = UserObjectContext.create(device);
             if (device.maxInputReportLength > 0) {
                 IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
                         device.deviceHandle.device, device.inputReportBuffer, CFIndex.of(device.maxInputReportLength),

@@ -26,13 +26,15 @@ public class UserObjectContext extends Structure {
 
     /**  */
     public UserObjectContext() {
+        objectID = objectIDMaster++;
+        write();
     }
 
     /**  */
     public UserObjectContext(Pointer p) {
         super(p);
         // TODO why?
-        objectID = getPointer().getInt(0);
+        read();
     }
 
     /**  */
@@ -57,18 +59,17 @@ public class UserObjectContext extends Structure {
     static int objectIDMaster = 0;
 
     /**  */
-    public static ByReference createContext(Object o) {
+    public static ByReference create(Object o) {
         ByReference object_context = new ByReference();
 //new Exception("objectID: " + objectIDMaster).printStackTrace(System.err);
 //System.err.flush();
-        object_context.objectID = objectIDMaster++;
         objects.put(object_context.objectID, o);
         return object_context;
     }
 
     /**  */
-    public static Object getObjectFromContext(Pointer context) {
+    public static Object get(Pointer context) {
         UserObjectContext object_context = new UserObjectContext(context);
-        return UserObjectContext.objects.get(object_context.objectID);
+        return objects.get(object_context.objectID);
     }
 }
