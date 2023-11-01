@@ -262,7 +262,7 @@ logger.fine("not string: " + prop.getString());
         if (transport_prop != null && CFLib.INSTANCE.CFGetTypeID(transport_prop).equals(CFLib.INSTANCE.CFStringGetTypeID())) {
             if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportUSBValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
                 IntByReference interface_number = new IntByReference();
-                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_USB;
+                cur_info.busType = HidDevice.Info.HidBusType.BUS_USB;
 
                 // A IOHIDDeviceRef used to have this simple property,
                 // until macOS 13.3 - we will try to use it. */
@@ -279,11 +279,11 @@ logger.fine("not string: " + prop.getString());
 
                 // Match "Bluetooth", "BluetoothLowEnergy" and "Bluetooth Low Energy" strings
             } else if (CFLib.INSTANCE.CFStringHasPrefix(transport_prop.asString(), CFSTR(kIOHIDTransportBluetoothValue))) {
-                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_BLUETOOTH;
+                cur_info.busType = HidDevice.Info.HidBusType.BUS_BLUETOOTH;
             } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportI2CValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
-                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_I2C;
+                cur_info.busType = HidDevice.Info.HidBusType.BUS_I2C;
             } else if (CFLib.INSTANCE.CFStringCompare(transport_prop.asString(), CFSTR(kIOHIDTransportSPIValue), 0).intValue() == CFLib.CFComparisonResult.kCFCompareEqualTo) {
-                cur_info.busType = HidDevice.Info.HidBusType.HID_API_BUS_SPI;
+                cur_info.busType = HidDevice.Info.HidBusType.BUS_SPI;
             }
         }
 

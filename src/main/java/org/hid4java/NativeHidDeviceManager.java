@@ -29,29 +29,29 @@ public interface NativeHidDeviceManager {
     /**
      * Open a HID device using a Vendor ID (VID), Product ID (PID) and optionally a serial number.
      * <p>
-     * If serial_number is NULL, the first device with the specified VID and PID is opened.
+     * If serialNumber is NULL, the first device with the specified VID and PID is opened.
      *
-     * @param vendor_id     The vendor ID
-     * @param product_id    The product ID
-     * @param serial_number The serial number (or null for wildcard)
+     * @param vendorId     The vendor ID
+     * @param productId    The product ID
+     * @param serialNumber The serial number (or null for wildcard)
      * @return A pointer to a HidDevice on success or null on failure
      */
-    NativeHidDevice open(int vendor_id, int product_id, String serial_number) throws IOException;
+    NativeHidDevice open(int vendorId, int productId, String serialNumber) throws IOException;
 
     /**
      * Enumerate the HID Devices.
      * <p>
-     * This function returns a linked list of all the HID devices attached to the system which match vendor_id and product_id.
+     * This function returns a linked list of all the HID devices attached to the system which match vendorId and productId.
      * <p>
-     * If vendor_id is set to 0 then any vendor matches. If product_id is set to 0 then any product matches.
+     * If vendorId is set to 0 then any vendor matches. If productId is set to 0 then any product matches.
      * <p>
-     * If vendor_id and product_id are both set to 0, then all HID devices will be returned.
+     * If vendorId and productId are both set to 0, then all HID devices will be returned.
      *
-     * @param vendor_id  The vendor ID
-     * @param product_id The product ID
+     * @param vendorId  The vendor ID
+     * @param productId The product ID
      * @return A linked list of all discovered matching devices
      */
-    List<HidDevice.Info> enumerate(int vendor_id, int product_id) throws IOException;
+    List<HidDevice.Info> enumerate(int vendorId, int productId) throws IOException;
 
     /**
      * Open a HID device by its path name.

@@ -27,7 +27,6 @@ package org.hid4java;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.StringJoiner;
 import java.util.logging.Logger;
 
 
@@ -59,13 +58,13 @@ public class HidDevice {
 
         public enum HidBusType {
             /** Unknown bus type */
-            HID_API_BUS_UNKNOWN,
+            BUS_UNKNOWN,
             /**
              * USB bus
              *
              * @see "https://usb.org/hid"
              */
-            HID_API_BUS_USB,
+            BUS_USB,
             /**
              * Bluetooth or Bluetooth LE bus
              *
@@ -73,19 +72,19 @@ public class HidDevice {
              * @see "https://www.bluetooth.com/specifications/specs/hid-service-1-0/"
              * @see "https://www.bluetooth.com/specifications/specs/hid-over-gatt-profile-1-0/"
              */
-            HID_API_BUS_BLUETOOTH,
+            BUS_BLUETOOTH,
             /**
              * I2C bus
              *
              * @see "https://docs.microsoft.com/previous-versions/windows/hardware/design/dn642101(v=vs.85)"
              */
-            HID_API_BUS_I2C,
+            BUS_I2C,
             /**
              * SPI bus
              *
              * @see "https://www.microsoft.com/download/details.aspx?id=103325"
              */
-            HID_API_BUS_SPI
+            BUS_SPI
         }
 
         /** Platform-specific device path */
@@ -434,7 +433,7 @@ logger.finer("close native: " + nativeDevice);
     }
 
     /** */
-    public int getReportDescriptor(byte[] report) {
+    public int getReportDescriptor(byte[] report) throws IOException {
         if (isClosed()) {
             throw new IllegalStateException("Device has not been opened");
         }

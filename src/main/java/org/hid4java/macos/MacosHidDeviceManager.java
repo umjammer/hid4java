@@ -140,7 +140,7 @@ logger.finer("here10.2: manager = null");
     }
 
     @Override
-    public MacosHidDevice open(int vendor_id, int product_id, String serial_number) throws IOException {
+    public MacosHidDevice open(int vendorId, int productId, String serialNumber) throws IOException {
         // This function is identical to the Linux version. Platform independent.
 
         List<HidDevice.Info> infos;
@@ -148,17 +148,17 @@ logger.finer("here10.2: manager = null");
         MacosHidDevice device;
 
         // throw new RuntimeException: global error is reset by hid_enumerate/hid_init
-        infos = enumerate(vendor_id, product_id);
+        infos = enumerate(vendorId, productId);
         if (infos.isEmpty()) {
             // throw new RuntimeException: global error is already set by hid_enumerate
             return null;
         }
 
         for (HidDevice.Info info : infos) {
-            if (info.vendorId == vendor_id &&
-                    info.productId == product_id) {
-                if (serial_number != null) {
-                    if (serial_number.equals(info.serialNumber)) {
+            if (info.vendorId == vendorId &&
+                    info.productId == productId) {
+                if (serialNumber != null) {
+                    if (serialNumber.equals(info.serialNumber)) {
                         infoToOpen = info;
                         break;
                     }

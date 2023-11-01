@@ -83,8 +83,8 @@ public class MacosHidDevice implements NativeHidDevice {
     /**
      * Initialise the HID API library. Should always be called before using any other API calls.
      */
-    public MacosHidDevice(int device_open_options) {
-        this.openOptions = device_open_options;
+    public MacosHidDevice(int deviceOpenOptions) {
+        this.openOptions = deviceOpenOptions;
         this.disconnected = false;
         this.shutdownThread = false;
 

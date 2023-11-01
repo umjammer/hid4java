@@ -84,7 +84,7 @@ public interface NativeHidDevice {
      * @param report The buffer to copy descriptor into.
      * @return This function returns non-negative number of bytes actually copied, or -1 on error.
      */
-    int getReportDescriptor(byte[] report);
+    int getReportDescriptor(byte[] report) throws IOException;
 
     /**
      * Get an input report from a HID device.
