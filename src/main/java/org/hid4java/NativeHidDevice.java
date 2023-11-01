@@ -1,6 +1,8 @@
 package org.hid4java;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -11,8 +13,19 @@ import java.io.IOException;
  */
 public interface NativeHidDevice {
 
+    /** input report listeners */
+    List<InputReportListener> inputReportListeners = new ArrayList<>();
+
     /** adds ReportInputListener */
-    void setReportInputListener(InputReportListener listener);
+    default void addInputReportListener(InputReportListener listener) {
+        inputReportListeners.add(listener);
+    }
+
+    /** */
+    default void fireOnInputReport(InputReportEvent event) {
+        for (InputReportListener listener : inputReportListeners)
+            listener.onInputReport(event);
+    }
 
     /**
      * Close a HID device

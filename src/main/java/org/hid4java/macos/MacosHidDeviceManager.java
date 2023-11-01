@@ -30,7 +30,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -85,9 +84,11 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
 
     // Run context
     private Pointer /* IOHIDManagerRef */ manager;
+
+    /** */
     static final boolean is_macos_10_10_or_greater = kCFCoreFoundationVersionNumber >= 1151.16;
 
-    /**  */
+    /** */
     private int /* IOOptionBits */ device_open_options = 0;
 
     /**
@@ -328,7 +329,7 @@ logger.finest("here3.3: stop run loop: @" + dev.runLoop.hashCode());
      *
      * @see IOKitLib.IOHIDReportCallback
      */
-    private static void onReportCallback(Pointer context, int/*IOReturn*/ result, Pointer sender, int/*IOHIDReportType*/ report_type, int report_id, Pointer report, CFIndex reportLength) {
+    private static void onReportCallback(Pointer context, int /* IOReturn */ result, Pointer sender, int /* IOHIDReportType */ report_type, int report_id, Pointer report, CFIndex reportLength) {
         MacosHidDevice dev = (MacosHidDevice) UserObjectContext.get(context);
         if (dev == null) {
 logger.fine("here4.1: dev is null: " + UserObjectContext.objectIDMaster);
@@ -341,8 +342,7 @@ logger.finest("here4.2: report_callback: dev: " + dev.deviceInfo.product);
         report.read(0, dev.inputData, 0, length);
 
         // Signal a waiting thread that there is data.
-        if (dev.inputReportListener != null)
-            dev.inputReportListener.onInputReport(new InputReportEvent(dev, report_id, dev.inputData, length));
+        dev.fireOnInputReport(new InputReportEvent(dev, report_id, dev.inputData, length));
 logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
     }
 
@@ -475,5 +475,10 @@ logger.log(Level.SEVERE, e.toString(), e);
 
             throw e;
         }
+    }
+
+    @Override
+    public boolean isSupported() {
+        return System.getProperty("os.name").toLowerCase().contains("mac");
     }
 }

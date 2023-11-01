@@ -201,10 +201,8 @@ public class Fido2AuthenticationExample extends BaseExample {
     private boolean handleInitialise(HidDevice hidDevice) throws IOException {
 
         // Ensure device is open
-        if (hidDevice.isClosed()) {
-            if (!hidDevice.open()) {
-                throw new IllegalStateException("Unable to open device");
-            }
+        if (!hidDevice.isOpen()) {
+            hidDevice.open();
         }
 
         generateNonce();

@@ -392,8 +392,7 @@ logger.finest("infos: " + deviceInfos.size());
 
             descriptor_buf.read(0, buf, 0, copy_len);
             return copy_len;
-        }
-        else {
+        } else {
             throw new IllegalStateException("Failed to get kIOHIDReportDescriptorKey property");
         }
     }

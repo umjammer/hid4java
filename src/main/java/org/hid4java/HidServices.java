@@ -163,6 +163,7 @@ logger.finer("stop: start");
     }
 
     /**
+     * Returns an opened device.
      * @param vendorId     The vendor ID
      * @param productId    The product ID
      * @param serialNumber The serial number (use null for wildcard)

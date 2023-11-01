@@ -33,7 +33,6 @@ import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import org.hid4java.HidDevice;
 import org.hid4java.HidException;
-import org.hid4java.InputReportListener;
 import org.hid4java.NativeHidDevice;
 import org.hid4java.SyncPoint;
 import vavix.rococoa.corefoundation.CFIndex;
@@ -91,14 +90,6 @@ public class MacosHidDevice implements NativeHidDevice {
         // Thread objects
         this.barrier = new SyncPoint(2);
         this.shutdownBarrier = new SyncPoint(2);
-    }
-
-    /** input report listeners */
-    InputReportListener inputReportListener;
-
-    @Override
-    public synchronized void setReportInputListener(InputReportListener listener) {
-        inputReportListener = listener;
     }
 
     @Override

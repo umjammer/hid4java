@@ -31,6 +31,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -60,6 +62,9 @@ public class HidDeviceManager {
      */
     public static boolean useLibUsbVariant = false;
 
+    /**
+     * The native device provider.
+     */
     private final NativeHidDeviceManager nativeManager;
 
     /**
@@ -83,8 +88,7 @@ public class HidDeviceManager {
      * We use a Thread instead of Executor since it may be stopped/paused/restarted frequently
      * and executors are more heavyweight in this regard
      */
-    private ExecutorService scanThread = Executors.newSingleThreadExecutor();
-    private boolean scanning;
+    private final ExecutorService scanThread = Executors.newSingleThreadExecutor();
 
     /**
      * Constructs a new device manager
@@ -100,7 +104,14 @@ public class HidDeviceManager {
 
         // Attempt to initialise and fail fast
         try {
-            nativeManager = new org.hid4java.macos.MacosHidDeviceManager();
+            for (NativeHidDeviceManager manager : ServiceLoader.load(NativeHidDeviceManager.class)) {
+                if (manager.isSupported()) {
+                    nativeManager = manager;
+logger.finer("native device manager: " + nativeManager.getClass().getName());
+                    return;
+                }
+            }
+            throw new NoSuchElementException("no suitable native device maneger");
         } catch (Throwable t) {
             // Typically this is a linking issue with the native library
             throw new HidException("Hidapi did not initialise: " + t.getMessage(), t);
@@ -200,7 +211,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
      * @return True if the scan thread is running, false otherwise.
      */
     public boolean isScanning() {
-        return scanning;
+        return !scanThread.isTerminated();
     }
 
     /**
@@ -272,7 +283,6 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
 
         // Require a new one
         scanThread.submit(scanRunnable);
-        scanning = true;
     }
 
     private synchronized Runnable getScanRunnable() {

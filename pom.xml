@@ -151,6 +151,16 @@
       <artifactId>osx-plugin</artifactId>
       <version>2.0.12v-SNAPSHOT</version>
     </dependency>
+    <dependency>
+      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <artifactId>linux-plugin</artifactId>
+      <version>2.0.12v-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <artifactId>windows-plugin</artifactId>
+      <version>2.0.12v-SNAPSHOT</version>
+    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>

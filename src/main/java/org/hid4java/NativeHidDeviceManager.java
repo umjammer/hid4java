@@ -62,4 +62,7 @@ public interface NativeHidDeviceManager {
      * @return The pointer if successful or null
      */
     NativeHidDevice open(HidDevice.Info info) throws IOException;
+
+    /** */
+    boolean isSupported();
 }
