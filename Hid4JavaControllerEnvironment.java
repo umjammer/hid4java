@@ -6,6 +6,7 @@
 
 package vavi.awt.joystick.hid4java;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -14,15 +15,15 @@ import java.util.logging.Level;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
+import net.java.games.input.usb.GenericDesktopUsage;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
-import org.hid4java.HidServicesListener;
 import org.hid4java.HidServicesSpecification;
-import org.hid4java.event.HidServicesEvent;
-import vavi.awt.joystick.hid4java.HidApiLibraryEX.GenericDesktopPage;
-import vavi.usb.UsbUtil;
+import vavi.hid.parser.Collection;
+import vavi.hid.parser.HidParser;
 import vavi.util.Debug;
 
 
@@ -35,113 +36,138 @@ import vavi.util.Debug;
 public final class Hid4JavaControllerEnvironment extends ControllerEnvironment {
 
     /** */
-    private final List<Hid4javaController> controllers = new ArrayList<>();
+    private List<Hid4JavaController> controllers;
 
     /** */
     public Hid4JavaControllerEnvironment() {
         if (hidServices == null) {
-            HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
-            // Use the v0.7.0 manual start feature to get immediate attach events
-            hidServicesSpecification.setAutoStart(false);
+            try {
+                HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+                // Use the v0.7.0 manual start feature to get immediate attach events
+                hidServicesSpecification.setAutoStart(false);
+                hidServicesSpecification.setAutoShutdown(false);
 
-            // Get HID services using custom specification
-            hidServices = HidManager.getHidServices(hidServicesSpecification);
-            hidServices.addHidServicesListener(new HidServicesListener() {
-                /** @param event ⚠⚠⚠ a device got by #getHidDevice() is not opened */
-                @Override
-                public void hidDeviceAttached(HidServicesEvent event) {
-                    try {
-Debug.println(Level.FINE, "HID attached: " + event);
-                        Hid4javaController c = attatch(event.getHidDevice());
-                        if (c != null) {
-Debug.println(Level.INFO, "controllerListeners: " + controllerListeners.size());
+                // Get HID services using custom specification
+                hidServices = HidManager.getHidServices(hidServicesSpecification);
+//                hidServices.addHidServicesListener(new HidServicesListener() {
+//                    /** @param event ⚠⚠⚠ a device got by #getHidDevice() is not opened */
+//                    @Override
+//                    public void hidDeviceAttached(HidServicesEvent event) {
+//                        try {
+//Debug.println(Level.FINER, "HID attached: " + event);
+//                            Hid4JavaController c = attach(event.getHidDevice());
+//                            if (c != null) {
+//Debug.println(Level.INFO, "controllerListeners: " + controllerListeners.size());
+//
+//                                Hid4JavaControllerEnvironment.this.fireControllerAdded(c);
+//                            }
+//                        } catch (Exception e) {
+//                            Debug.printStackTrace(Level.FINE, e);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void hidDeviceDetached(HidServicesEvent event) {
+//                        try {
+//Debug.println(Level.FINE, "Device detached: " + event);
+//                            Hid4JavaController c = detach(event.getHidDevice());
+//                            if (c != null) {
+//                                Hid4JavaControllerEnvironment.this.fireControllerRemoved(c);
+//                            }
+//                        } catch (Exception e) {
+//                            Debug.printStackTrace(Level.FINE, e);
+//                        }
+//                    }
+//
+//                    @Override
+//                    public void hidFailure(HidServicesEvent event) {
+//                        Debug.println("HID failure: " + event);
+//                    }
+//
+//                    @Override
+//                    public void hidDataReceived(HidServicesEvent event) {
+//Debug.printf("Data received:%n");
+//                        byte[] dataReceived = event.getDataReceived();
+//                        System.out.printf("< [%02x]:", dataReceived.length);
+//                        for (byte b : dataReceived) {
+//                            System.out.printf(" %02x", b);
+//                        }
+//                        System.out.println();
+//                    }
+//                });
 
-                            Hid4JavaControllerEnvironment.this.fireControllerAdded(c);
-                        }
-                    } catch (Exception e) {
-Debug.printStackTrace(Level.FINE, e);
-                    }
-                }
-
-                @Override
-                public void hidDeviceDetached(HidServicesEvent event) {
-                    try {
-Debug.println(Level.FINE, "Device detached: " + event);
-                        Hid4javaController c = detach(event.getHidDevice());
-                        if (c != null) {
-                            Hid4JavaControllerEnvironment.this.fireControllerRemoved(c);
-                        }
-                    } catch (Exception e) {
-                        Debug.printStackTrace(Level.FINE, e);
-                    }
-                }
-
-                @Override
-                public void hidFailure(HidServicesEvent event) {
-Debug.println("HID failure: " + event);
-                }
-
-                @Override
-                public void hidDataReceived(HidServicesEvent event) {
-Debug.printf("Data received:%n");
-                    byte[] dataReceived = event.getDataReceived();
-                    System.out.printf("< [%02x]:", dataReceived.length);
-                    for (byte b : dataReceived) {
-                        System.out.printf(" %02x", b);
-                    }
-                    System.out.println();
-                }
-            });
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> hidServices.shutdown()));
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> hidServices.shutdown()));
 
 Debug.println("starting HID services.");
-            hidServices.start();
+                hidServices.start();
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            }
         }
     }
 
-    /** */
-    private Hid4javaController attatch(HidDevice hidDevice) {
-Debug.printf(Level.FINE, "uagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), pid: %5$d(0x%5$x)%n", hidDevice.getUsagePage() & 0xffff, GenericDesktopPage.valueOf(hidDevice.getUsage()), hidDevice.getUsage(), hidDevice.getVendorId(), hidDevice.getProductId());
-        if ((hidDevice.getUsagePage() & 0xffff) == /* Generic Desktop Controls */ 0x01 &&
-                GenericDesktopPage.valueOf(hidDevice.getUsage()) == GenericDesktopPage.GAME_PAD) {
-
-
-
-
-
-
-
-
-            List<Component> cs = new ArrayList<>();
-
-            // not opened device is not set a device pointer itself.
-Debug.println("open?: " + !hidDevice.isClosed());
-            if (hidDevice.isClosed()) {
-                hidDevice.open();
+    private void enumerate() throws IOException {
+        controllers = new ArrayList<>();
+Debug.println("enumerate: " + hidServices.getAttachedHidDevices().size());
+        hidServices.getAttachedHidDevices().forEach(hidDevice -> {
+            try {
+                attach(hidDevice);
+            } catch (IOException e) {
+                Debug.printStackTrace(e);
             }
-Debug.println("open2?: " + !hidDevice.isClosed());
+        });
+    }
 
-            byte[] desk = HidApiLibraryEX.getDescriptor(hidDevice);
-UsbUtil.dump_report_desc(desk, desk.length);
+    /** */
+    private Hid4JavaController attach(HidDevice hidDevice) throws IOException {
+Debug.printf(Level.FINER, "usagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), pid: %5$d(0x%5$x)%n", hidDevice.getUsagePage() & 0xffff, GenericDesktopUsage.map(hidDevice.getUsage()), hidDevice.getUsage(), hidDevice.getVendorId(), hidDevice.getProductId());
+        if ((hidDevice.getUsagePage() & 0xffff) == /* Generic Desktop Controls */ 0x01 &&
+                GenericDesktopUsage.map(hidDevice.getUsage()) == GenericDesktopUsage.GAME_PAD) {
+
+            List<Component> components = new ArrayList<>();
+            List<Controller> children = new ArrayList<>();
+            List<Rumbler> rumblers = new ArrayList<>();
+
+
+                }
+            }
 
 
 
-            Hid4javaController c = new Hid4javaController(hidDevice, cs.toArray(Component[]::new), new Controller[0], new Rumbler[0]);
-            controllers.add(c);
+
+
+
+
+
+
+
+            hidDevice.open();
+
+            byte[] desk = new byte[4096];
+            int r = hidDevice.getReportDescriptor(desk);
+//UsbUtil.dump_report_desc(desk, r);
+            HidParser parser = new HidParser();
+            Collection collection = parser.parse(desk, r);
+Debug.println("collection: " + collection.getUsagePair());
+
+            Hid4JavaController controller = new Hid4JavaController(hidDevice,
+                    components.toArray(Component[]::new),
+                    children.toArray(Controller[]::new),
+                    rumblers.toArray(Rumbler[]::new));
+            controllers.add(controller);
 Debug.printf("@@@@@@@@@@@ add: %s/%s ... %d%n", hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size());
-            return c;
+            return controller;
         }
         return null;
     }
 
     /** */
     @SuppressWarnings("WhileLoopReplaceableByForEach") // for remove
-    private Hid4javaController detach(HidDevice hidDevice) {
-        Iterator<Hid4javaController> i = controllers.iterator();
+    private Hid4JavaController detach(HidDevice hidDevice) {
+        Iterator<Hid4JavaController> i = controllers.iterator();
         while (i.hasNext()) {
-            Hid4javaController c = i.next();
-            if (c.getProductId() == hidDevice.getProductId() && c.getManufacturerId() == hidDevice.getVendorId()) {
+            Hid4JavaController c = i.next();
+            if (c.getProductId() == hidDevice.getProductId() && c.getVendorId() == hidDevice.getVendorId()) {
                 controllers.remove(c);
 Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size());
                 return c;
@@ -152,11 +178,20 @@ Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManufacturer(), 
 
     @Override
     public Controller[] getControllers() {
+        if (controllers == null) {
+            try {
+                enumerate();
+            } catch (IOException e) {
+Debug.printStackTrace(e);
+                return new Controller[0];
+            }
+        }
         return controllers.toArray(Controller[]::new);
     }
 
     @Override
     public boolean isSupported() {
+Debug.println("isSupported: " + (hidServices != null));
         return hidServices != null;
     }
 
@@ -168,9 +203,9 @@ Debug.printf("@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManufacturer(), 
      */
     public Controller getController(int mid, int pid) {
 Debug.println("controllers: " + controllers.size());
-        for (Hid4javaController controller : controllers) {
-Debug.printf("%s: %4x, %4x%n", controller.getName(), controller.getManufacturerId(), controller.getProductId());
-            if (controller.getManufacturerId() == mid && controller.getProductId() == pid) {
+        for (Hid4JavaController controller : controllers) {
+Debug.printf("%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), controller.getProductId());
+            if (controller.getVendorId() == mid && controller.getProductId() == pid) {
                 return controller;
             }
         }
