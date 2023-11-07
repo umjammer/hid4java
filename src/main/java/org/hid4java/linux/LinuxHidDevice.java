@@ -25,6 +25,9 @@ package org.hid4java.linux;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -35,9 +38,17 @@ import net.java.games.input.linux.LinuxIO;
 import net.java.games.input.linux.LinuxIO.hidraw_report_descriptor;
 import net.java.games.input.linux.LinuxIO.stat;
 import org.hid4java.HidDevice;
+import org.hid4java.InputReportEvent;
 import org.hid4java.NativeHidDevice;
 
+import static com.sun.jna.platform.linux.ErrNo.EAGAIN;
+import static com.sun.jna.platform.linux.ErrNo.EINPROGRESS;
 import static com.sun.jna.platform.linux.ErrNo.EINVAL;
+import static net.java.games.input.linux.LinuxIO.HIDIOCGFEATURE;
+import static net.java.games.input.linux.LinuxIO.HIDIOCGINPUT;
+import static net.java.games.input.linux.LinuxIO.HIDIOCGRDESC;
+import static net.java.games.input.linux.LinuxIO.HIDIOCGRDESCSIZE;
+import static net.java.games.input.linux.LinuxIO.HIDIOCSFEATURE;
 import static net.java.games.input.linux.LinuxIO._IOC;
 import static net.java.games.input.linux.LinuxIO._IOC_READ;
 import static net.java.games.input.linux.LinuxIO._IOC_WRITE;
@@ -53,20 +64,29 @@ import static org.hid4java.linux.LinuxHidDeviceManager.create_device_info_for_de
  */
 public class LinuxHidDevice implements NativeHidDevice {
 
-    static NativeLong HIDIOCSFEATURE(int len) { return _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x06, len); }
-    static NativeLong HIDIOCGFEATURE(int len) { return _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x07, len); }
-    static NativeLong HIDIOCGINPUT(int len) { return _IOC(_IOC_WRITE|_IOC_READ, 'H', 0x0A, len); }
-    static NativeLong HIDIOCGRDESCSIZE = _IOR('H', 0x01, Integer.BYTES);
-    static NativeLong HIDIOCGRDESC(int len) { return _IOR('H', 0x02, len /* struct hidraw_report_descriptor */); }
-
     int deviceHandle;
-    int blocking;
-    HidDevice.Info device_info;
+    HidDevice.Info deviceInfo;
+
+    private final Memory inputReportBuffer = new Memory(64);
+
+    private ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     LinuxHidDevice() {
         this.deviceHandle = -1;
-        this.blocking = 1;
-        this.device_info = null;
+        this.deviceInfo = null;
+    }
+
+    @Override
+    public void open() {
+        ses.schedule(() -> {
+            try {
+                byte[] b = new byte[64]; // TODO reuse
+                int r = read(b, b.length);
+                fireOnInputReport(new InputReportEvent(this, b[0], b, r));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, 20, TimeUnit.MILLISECONDS); // TODO interval
     }
 
     int hid_get_manufacturer_string(byte[] string, int maxlen) throws IOException {
@@ -151,17 +171,20 @@ public class LinuxHidDevice implements NativeHidDevice {
     }
 
     HidDevice.Info hid_get_device_info() throws IOException {
-        if (device_info == null) {
-            // Lazy initialize device_info
-            device_info = create_device_info_for_hid_device();
+        if (deviceInfo == null) {
+            // Lazy initialize deviceInfo
+            deviceInfo = create_device_info_for_hid_device();
         }
 
         // create_device_info_for_hid_device will set an error if needed
-        return device_info;
+        return deviceInfo;
     }
 
     @Override
     public void close() {
+        ses.shutdownNow();
+        inputReportBuffer.close();
+
         LinuxIO.INSTANCE.close(deviceHandle);
     }
 
@@ -180,6 +203,18 @@ public class LinuxHidDevice implements NativeHidDevice {
             throw new IOException(String.valueOf(Native.getLastError()));
 
         return bytes_written;
+    }
+
+    int read(byte[] data, int length) throws IOException {
+        int bytes_read = LinuxIO.INSTANCE.read(this.deviceHandle, inputReportBuffer, new NativeLong(length)).intValue();
+        if (bytes_read < 0) {
+            if (Native.getLastError() == EAGAIN || Native.getLastError() == EINPROGRESS)
+                bytes_read = 0;
+            else
+                throw new IOException(String.valueOf(Native.getLastError()));
+        }
+        inputReportBuffer.read(0, data, 0, length);
+        return bytes_read;
     }
 
     @Override
@@ -207,13 +242,13 @@ public class LinuxHidDevice implements NativeHidDevice {
     private int get_hid_report_descriptor_from_hidraw(hidraw_report_descriptor rptDesc) throws IOException {
         IntByReference descSize = new IntByReference();
 
-        /* Get Report Descriptor Size */
+        // Get Report Descriptor Size
         int res = LinuxIO.INSTANCE.ioctl(this.deviceHandle, HIDIOCGRDESCSIZE, descSize);
         if (res < 0) {
             throw new IOException(String.format("ioctl(GRDESCSIZE): %s", Native.getLastError()));
         }
 
-        /* Get Report Descriptor */
+        // Get Report Descriptor
         rptDesc.size = descSize.getValue();
         res = LinuxIO.INSTANCE.ioctl(this.deviceHandle, HIDIOCGRDESC(rptDesc.size()), rptDesc.getPointer());
         if (res < 0) {

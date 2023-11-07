@@ -41,6 +41,7 @@ import org.hid4java.NativeHidDevice;
 import org.hid4java.NativeHidDeviceManager;
 
 import static com.sun.jna.platform.linux.Fcntl.O_RDONLY;
+import static net.java.games.input.linux.LinuxIO.HIDIOCGRDESCSIZE;
 import static net.java.games.input.linux.LinuxIO.HID_MAX_DESCRIPTOR_SIZE;
 import static net.java.games.input.linux.LinuxIO.O_CLOEXEC;
 import static net.java.games.input.linux.LinuxIO.O_RDWR;
@@ -48,7 +49,6 @@ import static org.hid4java.HidDevice.Info.HidBusType.BUS_BLUETOOTH;
 import static org.hid4java.HidDevice.Info.HidBusType.BUS_I2C;
 import static org.hid4java.HidDevice.Info.HidBusType.BUS_SPI;
 import static org.hid4java.HidDevice.Info.HidBusType.BUS_USB;
-import static org.hid4java.linux.LinuxHidDevice.HIDIOCGRDESCSIZE;
 
 
 /**
@@ -276,7 +276,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
 
         rpt_handle = LinuxIO.INSTANCE.open(rptPath, O_RDONLY | O_CLOEXEC);
         if (rpt_handle < 0) {
-            throw new IOException(String.format("open failed (%s): %s", rptPath, Native.getLastError()));
+            throw new IOException(String.format("create failed (%s): %s", rptPath, Native.getLastError()));
         }
 
         // Read in the Report Descriptor
@@ -341,7 +341,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
 
         handle = LinuxIO.INSTANCE.open(ueventPath, O_RDONLY | O_CLOEXEC);
         if (handle < 0) {
-            throw new IOException(String.format("open failed (%s): %s", ueventPath, Native.getLastError()));
+            throw new IOException(String.format("create failed (%s): %s", ueventPath, Native.getLastError()));
         }
 
         Memory buf = new Memory(1024);
@@ -469,7 +469,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             break;
 
         default:
-            throw new IOException();
+            throw new IllegalArgumentException("unknown bus type: " + bus_type[0]);
         }
 
         // Create the record.
@@ -605,11 +605,11 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void exit() {
+    public void close() {
     }
 
     @Override
-    public NativeHidDevice open(int vendorId, int productId, String serialNumber) throws IOException {
+    public NativeHidDevice create(int vendorId, int productId, String serialNumber) throws IOException {
 
         // register_global_error: global error is reset by hid_enumerate/hid_init
         List<HidDevice.Info> devs = enumerate(vendorId, productId);
@@ -635,7 +635,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
 
         if (toOpen != null) {
             // Open the device
-            return open(toOpen);
+            return create(toOpen);
         } else {
             throw new NoSuchElementException("Device with requested VID/PID/(SerialNumber) not found");
         }
@@ -658,7 +658,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         Udev.INSTANCE.udev_enumerate_scan_devices(enumerate);
         Udev.UdevListEntry devices = Udev.INSTANCE.udev_enumerate_get_list_entry(enumerate);
         // For each item, see if it matches the vid/pid, and if so
-        // create a udev_device record for it
+        // create an udev_device record for it
         Udev.UdevListEntry devListEntry;
         while ((devListEntry = devices.getNext()) != null) {
             String sysfsPath;
@@ -668,7 +668,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             Udev.UdevDevice rawDev; // The device's hidraw udev node.
 
             // Get the filename of the /sys entry for the device
-            // and create a udev_device object (dev) representing it
+            // and create an udev_device object (dev) representing it
             sysfsPath = Udev.INSTANCE.udev_list_entry_get_name(devListEntry);
             if (sysfsPath == null)
                 continue;
@@ -708,7 +708,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public NativeHidDevice open(HidDevice.Info info) throws IOException {
+    public NativeHidDevice create(HidDevice.Info info) throws IOException {
         LinuxHidDevice dev = new LinuxHidDevice();
 
         dev.deviceHandle = LinuxIO.INSTANCE.open(info.path, O_RDWR | O_CLOEXEC);
@@ -724,8 +724,8 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
 
             return dev;
         } else {
-            // Unable to open a device.
-            throw new IOException(String.format("Failed to open a device with path '%s': %s", info.path, Native.getLastError()));
+            // Unable to create a device.
+            throw new IOException(String.format("Failed to create a device with path '%s': %s", info.path, Native.getLastError()));
         }
     }
 
