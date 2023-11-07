@@ -32,7 +32,6 @@ import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
-import vavi.util.Debug;
 
 
 /**
@@ -73,11 +72,7 @@ public class UsbHidEnumerationExample extends BaseExample {
         }
 
         HidDevice device = hidServices.getHidDevice(0x54c, 0x9cc, null);
-Debug.println(device + "\nopen?: " + device.isOpen());
-//        if (!device.isOpen()) {
-//            device.open();
-//        }
-//Debug.println("open device: " + device.isOpen());
+        device.open();
 
         device.addInputReportListener(e -> display(e.getReport()));
 

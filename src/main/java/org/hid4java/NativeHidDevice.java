@@ -28,9 +28,14 @@ public interface NativeHidDevice {
     }
 
     /**
+     * Starts a HID device event system.
+     */
+    void open() throws IOException;
+
+    /**
      * Close a HID device
      */
-    void close();
+    void close() throws IOException;
 
     /**
      * Write an Output report to a HID device.

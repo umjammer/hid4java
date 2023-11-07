@@ -200,7 +200,7 @@ public class Fido2AuthenticationExample extends BaseExample {
      */
     private boolean handleInitialise(HidDevice hidDevice) throws IOException {
 
-        // Ensure device is open
+        // Ensure device is create
         if (!hidDevice.isOpen()) {
             hidDevice.open();
         }

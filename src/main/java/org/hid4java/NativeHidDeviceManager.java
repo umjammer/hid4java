@@ -24,7 +24,7 @@ public interface NativeHidDeviceManager {
      * This function frees all of the static data associated with HIDAPI. It should be called
      * at the end of execution to avoid memory leaks.
      */
-    void exit();
+    void close();
 
     /**
      * Open a HID device using a Vendor ID (VID), Product ID (PID) and optionally a serial number.
@@ -36,7 +36,7 @@ public interface NativeHidDeviceManager {
      * @param serialNumber The serial number (or null for wildcard)
      * @return A pointer to a HidDevice on success or null on failure
      */
-    NativeHidDevice open(int vendorId, int productId, String serialNumber) throws IOException;
+    NativeHidDevice create(int vendorId, int productId, String serialNumber) throws IOException;
 
     /**
      * Enumerate the HID Devices.
@@ -61,7 +61,7 @@ public interface NativeHidDeviceManager {
      * @param info The path name
      * @return The pointer if successful or null
      */
-    NativeHidDevice open(HidDevice.Info info) throws IOException;
+    NativeHidDevice create(HidDevice.Info info) throws IOException;
 
     /** */
     boolean isSupported();

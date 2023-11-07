@@ -47,6 +47,8 @@ public class HidDevice {
     private Info info;
     private NativeHidDevice nativeDevice;
 
+    private boolean isOpen;
+
     /**
      * Maximum expected HID Report descriptor size in bytes.
      *
@@ -139,7 +141,7 @@ public class HidDevice {
      * @param servicesSpecification The HID services specification providing configuration details
      * @since 0.1.0
      */
-    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) {
+    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) throws IOException {
 
         this.manager = deviceManager;
 
@@ -154,6 +156,9 @@ public class HidDevice {
         // In Java 8 Short.toUnsignedInt() is available.
         this.info.vendorId = this.info.vendorId & 0xffff;
         this.info.productId = this.info.productId & 0xffff;
+
+        nativeDevice = manager.open(info);
+logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
     }
 
     /**
@@ -246,23 +251,21 @@ public class HidDevice {
     }
 
     /**
-     * Open this device and obtain a device structure.
+     * Starts device event system.
      *
-     * @return True if the device was successfully opened
      * @since 0.1.0
      */
     public void open() throws IOException {
-logger.finer(getPath() + "(@" + hashCode() + ")");
-        nativeDevice = manager.open(info);
-logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+        nativeDevice.open();
+        isOpen = true;
     }
 
     /**
-     * @return True if the device structure is present
+     * @return True if the device event system started
      * @since 0.1.0
      */
     public boolean isOpen() {
-        return nativeDevice != null;
+        return isOpen;
     }
 
     /**
@@ -270,26 +273,17 @@ logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      *
      * @since 0.1.0
      */
-    public void close() {
-logger.finest("isOpen: " + info.product + ", " + isOpen());
-        if (!isOpen()) {
-//new Exception("close:").printStackTrace();
-            return;
-        }
-
+    public void close() throws IOException {
 logger.finer("close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
-        nativeDevice = null;
+        isOpen = false;
     }
 
     /**
      * Sets input report listener.
      */
     public void addInputReportListener(InputReportListener l) {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         nativeDevice.addInputReportListener(l);
     }
 
@@ -309,9 +303,6 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public int getFeatureReport(byte[] data, int reportId) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         return nativeDevice.getFeatureReport(data, (byte) reportId);
     }
 
@@ -340,9 +331,6 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public int sendFeatureReport(byte[] data, int reportId) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         return nativeDevice.sendFeatureReport(data, (byte)reportId);
     }
 
@@ -354,9 +342,6 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public String getIndexedString(int index) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         throw new UnsupportedOperationException("getIndexedString: not available on this platform");
     }
 
@@ -372,9 +357,6 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public int write(byte[] message, int packetLength, int reportId) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         return write(message, packetLength, (byte) reportId, false);
     }
 
@@ -391,10 +373,6 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.8.0
      */
     public int write(byte[] message, int packetLength, int reportId, boolean applyPadding) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-
         if (applyPadding) {
             message = Arrays.copyOf(message, packetLength + 1);
         }
@@ -424,17 +402,11 @@ logger.finer("close native: " + nativeDevice);
 
     /** */
     public int getReportDescriptor(byte[] report) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         return nativeDevice.getReportDescriptor(report);
     }
 
     /** */
     public int getInputDescriptor(byte[] report, int reportId) throws IOException {
-        if (!isOpen()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
         return nativeDevice.getInputReport(report, (byte) reportId);
     }
 

@@ -147,7 +147,7 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
      * <p>
      * This is normally part of a general application shutdown
      */
-    public synchronized void stop() {
+    public synchronized void stop() throws IOException {
 
         stopScanThread();
 
@@ -158,7 +158,7 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
     }
 
     public synchronized NativeHidDevice open(HidDevice.Info info) throws IOException {
-        return nativeManager.open(info);
+        return nativeManager.create(info);
     }
 
     /**
@@ -178,7 +178,7 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
             if (!this.attachedDevices.containsKey(attachedDevice.getId())) {
 
 logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
-                // Device has become attached so add it but do not open
+                // Device has become attached so add it but do not create
                 attachedDevices.put(attachedDevice.getId(), attachedDevice);
 
                 // Fire the event on a separate thread
@@ -345,7 +345,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
 
     public void shutdown() {
 logger.finer("shutdown.0");
-        nativeManager.exit();
+        nativeManager.close();
 logger.finer("shutdown.1");
     }
 }
