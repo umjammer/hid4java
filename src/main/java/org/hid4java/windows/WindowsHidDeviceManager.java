@@ -377,7 +377,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void exit() {
+    public void close() {
     }
 
     private static HANDLE open_device(String path, boolean openRw) {
@@ -391,7 +391,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public NativeHidDevice open(int vendorId, int productId, String serialNumber) throws IOException {
+    public NativeHidDevice create(int vendorId, int productId, String serialNumber) throws IOException {
 
         // register_global_error: global error is reset by hid_enumerate/hid_init
         List<HidDevice.Info> devs = enumerate(vendorId, productId);
@@ -417,7 +417,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
 
         if (toOpen != null) {
             /* Open the device */
-            return open(toOpen);
+            return create(toOpen);
         } else {
             throw new IOException("Device with requested VID/PID/(SerialNumber) not found");
         }
@@ -460,7 +460,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
 
             // Check validity of device_handle.
             if (device_handle == INVALID_HANDLE_VALUE) {
-                // Unable to open the device.
+                // Unable to create the device.
                 continue;
             }
 
@@ -495,37 +495,37 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public NativeHidDevice open(HidDevice.Info info) throws IOException {
+    public NativeHidDevice create(HidDevice.Info info) throws IOException {
         HANDLE device_handle = null;
         PointerByReference /* PHIDP_PREPARSED_DATA */ pp_data = null;
 
         try {
             pp_data = new PointerByReference();
 
-            /* Open a handle to the device */
+            // Open a handle to the device
             device_handle = open_device(info.path, true);
 
-            /* Check validity of write_handle. */
+            // Check validity of write_handle.
             if (device_handle == INVALID_HANDLE_VALUE) {
-            /* System devices, such as keyboards and mice, cannot be opened in
-               read-write mode, because the system takes exclusive control over
-               them.  This is to prevent keyloggers.  However, feature reports
-               can still be sent and received.  Retry opening the device, but
-               without read/write access. */
+                // System devices, such as keyboards and mice, cannot be opened in
+                // read-write mode, because the system takes exclusive control over
+                // them.  This is to prevent keyloggers.  However, feature reports
+                // can still be sent and received.  Retry opening the device, but
+                // without read/write access.
                 device_handle = open_device(info.path, false);
 
-                /* Check the validity of the limited device_handle. */
+                // Check the validity of the limited device_handle.
                 if (device_handle == INVALID_HANDLE_VALUE) {
                     throw new IOException("open_device");
                 }
             }
 
-            /* Set the Input Report buffer size to 64 reports. */
+            // Set the Input Report buffer size to 64 reports.
             if (!Hid.INSTANCE.HidD_SetNumInputBuffers(device_handle, 64)) {
                 throw new IOException("set input buffers");
             }
 
-            /* Get the Input Report length for the device. */
+            // Get the Input Report length for the device.
             if (!Hid.INSTANCE.HidD_GetPreparsedData(device_handle, pp_data)) {
                 throw new IOException("get preparsed data");
             }

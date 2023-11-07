@@ -24,6 +24,9 @@ package org.hid4java.windows;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
@@ -36,6 +39,7 @@ import com.sun.jna.ptr.PointerByReference;
 import net.java.games.input.windows.WinAPI.Hid;
 import net.java.games.input.windows.WinAPI.Kernel32Ex;
 import org.hid4java.HidDevice;
+import org.hid4java.InputReportEvent;
 import org.hid4java.NativeHidDevice;
 
 import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
@@ -66,6 +70,8 @@ public class WindowsHidDevice implements NativeHidDevice {
     OVERLAPPED write_ol;
     HidDevice.Info device_info;
 
+    private ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+
     WindowsHidDevice() {
         this.device_handle = INVALID_HANDLE_VALUE;
         this.blocking = true;
@@ -84,7 +90,22 @@ public class WindowsHidDevice implements NativeHidDevice {
     }
 
     @Override
+    public void open() {
+        ses.schedule(() -> {
+            try {
+                byte[] b = new byte[64]; // TODO reuse
+                int r = read(b, b.length);
+                fireOnInputReport(new InputReportEvent(this, b[0], b, r));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }, 20, TimeUnit.MILLISECONDS); // TODO interval
+    }
+
+    @Override
     public void close() {
+        ses.shutdownNow();
+
         Kernel32Ex.INSTANCE.CancelIo(this.device_handle);
     }
 
@@ -148,13 +169,80 @@ public class WindowsHidDevice implements NativeHidDevice {
             }
         }
 
-end_of_function:
         return function_result;
+    }
+
+    int read(byte[] data, int length) throws IOException {
+        IntByReference bytes_read = new IntByReference();
+        int copy_len = 0;
+        boolean res = false;
+        boolean overlapped = false;
+
+        if (data == null || length == 0) {
+            throw new IllegalArgumentException("Zero buffer/length");
+        }
+
+        // Copy the handle for convenience.
+        HANDLE ev = this.ol.hEvent;
+
+        if (!this.read_pending) {
+            // Start an Overlapped I/O read.
+            this.read_pending = true;
+            Arrays.fill(this.read_buf, 0, this.input_report_length, (byte) 0);
+            Kernel32Ex.INSTANCE.ResetEvent(ev);
+            res = Kernel32Ex.INSTANCE.ReadFile(this.device_handle, this.read_buf, this.input_report_length, bytes_read, this.ol);
+
+            if (!res) {
+                if (Native.getLastError() != ERROR_IO_PENDING) {
+                    // ReadFile() has failed.
+				    // Clean up and return error.
+                    Kernel32Ex.INSTANCE.CancelIo(this.device_handle);
+                    this.read_pending = false;
+                    throw new IOException("ReadFile");
+                }
+                overlapped = true;
+            }
+        }
+        else {
+            overlapped = true;
+        }
+
+        if (overlapped) {
+
+            // Either WaitForSingleObject() told us that ReadFile has completed, or
+		    // we are in non-blocking mode. Get the number of bytes read. The actual
+		    // data has been copied to the data[] array which was passed to ReadFile().
+            res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.device_handle, this.ol.getPointer(), bytes_read, true /* wait */);
+        }
+        // Set pending back to false, even if GetOverlappedResult() returned error.
+        this.read_pending = false;
+
+        if (res && bytes_read.getValue() > 0) {
+            if (this.read_buf[0] == 0x0) {
+                // If report numbers aren't being used, but Windows sticks a report
+                // number (0x0) on the beginning of the report anyway. To make this
+                // work like the other platforms, and to make it work more like the
+                // HID spec, we'll skip over this byte. */
+                bytes_read.setValue(bytes_read.getValue() - 1);
+                copy_len = Math.min(length, bytes_read.getValue());
+                System.arraycopy(this.read_buf, 1, data, 0, copy_len);
+            }
+            else {
+                /* Copy the whole buffer, report number and all. */
+                copy_len = Math.min(length, bytes_read.getValue());
+                System.arraycopy(this.read_buf, 0, data, 0, copy_len);
+            }
+        }
+        if (!res) {
+            throw new IOException("hid_read_timeout/GetOverlappedResult");
+        }
+
+        return copy_len;
     }
 
     @Override
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
-        /* We could use HidD_GetFeature() instead, but it doesn't give us an actual length, unfortunately */
+        // We could use HidD_GetFeature() instead, but it doesn't give us an actual length, unfortunately
         return hid_get_report(IOCTL_HID_GET_FEATURE, data, data.length);
     }
 

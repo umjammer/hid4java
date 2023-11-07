@@ -982,7 +982,7 @@ public class DescriptorReconstructor {
                     }
                 }
                 // Write "Delimiter Open"
-                rpt_desc.write_short_item(local_delimiter, 1); // 1 = open set of aliased usages
+                rpt_desc.write_short_item(local_delimiter, 1); // 1 = create set of aliased usages
             } else if (curr_item_list.mainItemType == delimiter_usage) {
                 if (curr_item_list.collectionIndex != -1) {
                     // Write aliased collection "Usage"
