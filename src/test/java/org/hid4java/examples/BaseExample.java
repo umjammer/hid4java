@@ -55,17 +55,15 @@ Debug.println("Resource prefix: " + Platform.RESOURCE_PREFIX);
 Debug.println("Libusb activation: " + Platform.isLinux());
     }
 
-    static final int wait = 180;
+    public void waitAndShutdown(HidServices hidServices, int wait) {
 
-    public void waitAndShutdown(HidServices hidServices) {
-
-Debug.printf(ANSI_YELLOW + "Waiting " + wait + "s to demonstrate attach/detach handling. Watch for slow response after write if configured.%n" + ANSI_RESET);
+Debug.printf(ANSI_YELLOW + "Waiting " + wait + "s to demonstrate attach/detach handling. Watch for slow response after write if configured." + ANSI_RESET);
 
         // Stop the main thread to demonstrate attach and detach events
-        sleepNoInterruption();
+        sleepNoInterruption(wait);
 
         // Shut down and rely on auto-shutdown hook to clear HidApi resources
-        System.out.printf(ANSI_YELLOW + "Triggering shutdown...%n" + ANSI_RESET);
+Debug.printf(ANSI_YELLOW + "Triggering shutdown..." + ANSI_RESET);
         hidServices.shutdown();
     }
 
@@ -73,7 +71,7 @@ Debug.printf(ANSI_YELLOW + "Waiting " + wait + "s to demonstrate attach/detach h
      * Invokes {@code unit.}{@link TimeUnit#sleep(long) sleep(sleepFor)}
      * uninterruptibly.
      */
-    public static void sleepNoInterruption() {
+    public static void sleepNoInterruption(int wait) {
         boolean interrupted = false;
         try {
             long remainingNanos = TimeUnit.SECONDS.toNanos(wait);

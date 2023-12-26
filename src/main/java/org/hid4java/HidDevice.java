@@ -47,6 +47,8 @@ public class HidDevice {
     private Info info;
     private NativeHidDevice nativeDevice;
 
+    private boolean isOpen;
+
     /**
      * Maximum expected HID Report descriptor size in bytes.
      *
@@ -58,13 +60,13 @@ public class HidDevice {
 
         public enum HidBusType {
             /** Unknown bus type */
-            HID_API_BUS_UNKNOWN,
+            BUS_UNKNOWN,
             /**
              * USB bus
              *
              * @see "https://usb.org/hid"
              */
-            HID_API_BUS_USB,
+            BUS_USB,
             /**
              * Bluetooth or Bluetooth LE bus
              *
@@ -72,19 +74,19 @@ public class HidDevice {
              * @see "https://www.bluetooth.com/specifications/specs/hid-service-1-0/"
              * @see "https://www.bluetooth.com/specifications/specs/hid-over-gatt-profile-1-0/"
              */
-            HID_API_BUS_BLUETOOTH,
+            BUS_BLUETOOTH,
             /**
              * I2C bus
              *
              * @see "https://docs.microsoft.com/previous-versions/windows/hardware/design/dn642101(v=vs.85)"
              */
-            HID_API_BUS_I2C,
+            BUS_I2C,
             /**
              * SPI bus
              *
              * @see "https://www.microsoft.com/download/details.aspx?id=103325"
              */
-            HID_API_BUS_SPI
+            BUS_SPI
         }
 
         /** Platform-specific device path */
@@ -139,7 +141,7 @@ public class HidDevice {
      * @param servicesSpecification The HID services specification providing configuration details
      * @since 0.1.0
      */
-    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) {
+    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) throws IOException {
 
         this.manager = deviceManager;
 
@@ -154,6 +156,9 @@ public class HidDevice {
         // In Java 8 Short.toUnsignedInt() is available.
         this.info.vendorId = this.info.vendorId & 0xffff;
         this.info.productId = this.info.productId & 0xffff;
+
+        nativeDevice = manager.open(info);
+logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
     }
 
     /**
@@ -246,35 +251,21 @@ public class HidDevice {
     }
 
     /**
-     * Open this device and obtain a device structure
+     * Starts device event system.
      *
-     * @return True if the device was successfully opened
      * @since 0.1.0
      */
-    public boolean open() throws IOException {
-logger.finer(getPath() + "(@" + hashCode() + ")");
-        nativeDevice = manager.open(info);
-logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
-
-        return nativeDevice != null;
+    public void open() throws IOException {
+        nativeDevice.open();
+        isOpen = true;
     }
 
     /**
-     * @return True if the device structure is present
+     * @return True if the device event system started
      * @since 0.1.0
-     * @deprecated Use isClosed() instead of !isOpen() to improve code clarity
      */
-    @Deprecated
     public boolean isOpen() {
-        return !isClosed();
-    }
-
-    /**
-     * @return True if the device structure is not present (device closed)
-     * @since 0.8.0
-     */
-    public boolean isClosed() {
-        return nativeDevice == null;
+        return isOpen;
     }
 
     /**
@@ -282,23 +273,18 @@ logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      *
      * @since 0.1.0
      */
-    public void close() {
-logger.finest("isClosed: " + info.product + ", " + isClosed());
-        if (isClosed()) {
-//new Exception("close:").printStackTrace();
-            return;
-        }
-
+    public void close() throws IOException {
 logger.finer("close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
+        isOpen = false;
     }
 
     /**
      * Sets input report listener.
      */
-    public void setInputReportListener(InputReportListener l) {
-        nativeDevice.setReportInputListener(l);
+    public void addInputReportListener(InputReportListener l) {
+        nativeDevice.addInputReportListener(l);
     }
 
     /**
@@ -316,11 +302,8 @@ logger.finer("close native: " + nativeDevice);
      * been removed from the first byte), or -1 on error.
      * @since 0.1.0
      */
-    public int getFeatureReport(byte[] data, byte reportId) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        return nativeDevice.getFeatureReport(data, reportId);
+    public int getFeatureReport(byte[] data, int reportId) throws IOException {
+        return nativeDevice.getFeatureReport(data, (byte) reportId);
     }
 
     /**
@@ -347,11 +330,8 @@ logger.finer("close native: " + nativeDevice);
      * on error.
      * @since 0.1.0
      */
-    public int sendFeatureReport(byte[] data, byte reportId) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        return nativeDevice.sendFeatureReport(data, reportId);
+    public int sendFeatureReport(byte[] data, int reportId) throws IOException {
+        return nativeDevice.sendFeatureReport(data, (byte)reportId);
     }
 
     /**
@@ -362,11 +342,7 @@ logger.finer("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public String getIndexedString(int index) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        // TODO for windows/linux
-        throw new UnsupportedOperationException("hid_get_indexed_string: not available on this platform");
+        throw new UnsupportedOperationException("getIndexedString: not available on this platform");
     }
 
     /**
@@ -380,11 +356,8 @@ logger.finer("close native: " + nativeDevice);
      * @return The number of bytes written (including report ID), or -1 if an error occurs
      * @since 0.1.0
      */
-    public int write(byte[] message, int packetLength, byte reportId) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        return write(message, packetLength, reportId, false);
+    public int write(byte[] message, int packetLength, int reportId) throws IOException {
+        return write(message, packetLength, (byte) reportId, false);
     }
 
     /**
@@ -399,20 +372,15 @@ logger.finer("close native: " + nativeDevice);
      * @return The number of bytes written (including report ID), or -1 if an error occurs
      * @since 0.8.0
      */
-    public int write(byte[] message, int packetLength, byte reportId, boolean applyPadding) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-
+    public int write(byte[] message, int packetLength, int reportId, boolean applyPadding) throws IOException {
         if (applyPadding) {
             message = Arrays.copyOf(message, packetLength + 1);
         }
 
-        int result = nativeDevice.write(message, packetLength, reportId);
+        int result = nativeDevice.write(message, packetLength, (byte) reportId);
         // Update HID manager
         manager.afterDeviceWrite();
         return result;
-
     }
 
     /**
@@ -433,19 +401,13 @@ logger.finer("close native: " + nativeDevice);
     }
 
     /** */
-    public int getReportDescriptor(byte[] report) {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
+    public int getReportDescriptor(byte[] report) throws IOException {
         return nativeDevice.getReportDescriptor(report);
     }
 
     /** */
-    public int getInputDescriptor(byte[] report, byte reportId) throws IOException {
-        if (isClosed()) {
-            throw new IllegalStateException("Device has not been opened");
-        }
-        return nativeDevice.getInputReport(report, reportId);
+    public int getInputDescriptor(byte[] report, int reportId) throws IOException {
+        return nativeDevice.getInputReport(report, (byte) reportId);
     }
 
     @Override
@@ -467,15 +429,15 @@ logger.finer("close native: " + nativeDevice);
     @Override
     public String toString() {
         return "HidDevice [path=" + info.path
-                + ", vendorId=0x" + Integer.toHexString(info.vendorId)
-                + ", productId=0x" + Integer.toHexString(info.productId)
+                + String.format(", usagePage=0x%04x", info.usagePage)
+                + String.format(", usage=0x%04x", info.usage)
+                + String.format(", vendorId=0x%04x", info.vendorId)
+                + String.format(", productId=0x%04x", info.productId)
+                + ", product=" + info.product
+                + ", manufacturer=" + info.manufacturer
+                + ", interfaceNumber=" + info.interfaceNumber
                 + ", serialNumber=" + info.serialNumber
                 + ", releaseNumber=0x" + Integer.toHexString(info.releaseNumber)
-                + ", manufacturer=" + info.manufacturer
-                + ", product=" + info.product
-                + ", usagePage=0x" + Integer.toHexString(info.usagePage)
-                + ", usage=0x" + Integer.toHexString(info.usage)
-                + ", interfaceNumber=" + info.interfaceNumber
                 + "]";
     }
 

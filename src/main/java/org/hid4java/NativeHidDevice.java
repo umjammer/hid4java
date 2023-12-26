@@ -1,6 +1,8 @@
 package org.hid4java;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -11,13 +13,29 @@ import java.io.IOException;
  */
 public interface NativeHidDevice {
 
+    /** input report listeners */
+    List<InputReportListener> inputReportListeners = new ArrayList<>();
+
     /** adds ReportInputListener */
-    void setReportInputListener(InputReportListener listener);
+    default void addInputReportListener(InputReportListener listener) {
+        inputReportListeners.add(listener);
+    }
+
+    /** */
+    default void fireOnInputReport(InputReportEvent event) {
+        for (InputReportListener listener : inputReportListeners)
+            listener.onInputReport(event);
+    }
+
+    /**
+     * Starts a HID device event system.
+     */
+    void open() throws IOException;
 
     /**
      * Close a HID device
      */
-    void close();
+    void close() throws IOException;
 
     /**
      * Write an Output report to a HID device.
@@ -84,7 +102,7 @@ public interface NativeHidDevice {
      * @param report The buffer to copy descriptor into.
      * @return This function returns non-negative number of bytes actually copied, or -1 on error.
      */
-    int getReportDescriptor(byte[] report);
+    int getReportDescriptor(byte[] report) throws IOException;
 
     /**
      * Get an input report from a HID device.

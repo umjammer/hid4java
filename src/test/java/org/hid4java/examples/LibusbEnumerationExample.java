@@ -32,6 +32,7 @@ import org.hid4java.HidDeviceManager;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -41,36 +42,32 @@ import org.hid4java.HidServicesSpecification;
  */
 public class LibusbEnumerationExample extends BaseExample {
 
-  public static void main(String[] args) throws Exception {
-
-    LibusbEnumerationExample example = new LibusbEnumerationExample();
-    example.executeExample();
-
-  }
-
-  private void executeExample() throws IOException {
-
-    printPlatform();
-
-    // Configure to use default specification
-    HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
-
-    // Set the libusb variant (only needed for older Linux platforms)
-    HidDeviceManager.useLibUsbVariant = true;
-
-    // Get HID services using custom specification
-    HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
-    hidServices.addHidServicesListener(this);
-
-    System.out.println(ANSI_GREEN + "Enumerating attached devices..." + ANSI_RESET);
-
-    // Provide a list of attached devices
-    for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
-      System.out.println(hidDevice);
+    public static void main(String[] args) throws Exception {
+        LibusbEnumerationExample example = new LibusbEnumerationExample();
+        example.executeExample();
     }
 
-    waitAndShutdown(hidServices);
+    @Test
+    void executeExample() throws IOException {
+        printPlatform();
 
-  }
+        // Configure to use default specification
+        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
 
+        // Set the libusb variant (only needed for older Linux platforms)
+        HidDeviceManager.useLibUsbVariant = true;
+
+        // Get HID services using custom specification
+        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
+        hidServices.addHidServicesListener(this);
+
+        System.out.println(ANSI_GREEN + "Enumerating attached devices..." + ANSI_RESET);
+
+        // Provide a list of attached devices
+        for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
+            System.out.println(hidDevice);
+        }
+
+        waitAndShutdown(hidServices, 10);
+    }
 }

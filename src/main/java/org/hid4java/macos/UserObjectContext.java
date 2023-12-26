@@ -24,25 +24,25 @@ public class UserObjectContext extends Structure {
 
     public int objectID;
 
-    /**  */
+    /** */
     public UserObjectContext() {
+        objectID = objectIDMaster++;
+        write();
     }
 
-    /**  */
+    /** */
     public UserObjectContext(Pointer p) {
         super(p);
         // TODO why?
-        objectID = getPointer().getInt(0);
+        read();
     }
 
-    /**  */
+    /** */
     public static class ByReference extends UserObjectContext implements Structure.ByReference {
-
     }
 
-    /**  */
+    /** */
     public static class ByValue extends UserObjectContext implements Structure.ByValue {
-
     }
 
     @Override
@@ -50,25 +50,24 @@ public class UserObjectContext extends Structure {
         return List.of("objectID");
     }
 
-    /**  */
+    /** */
     private static final Map<Integer, Object> objects = new HashMap<>();
 
-    /**  */
+    /** */
     static int objectIDMaster = 0;
 
-    /**  */
-    public static ByReference createContext(Object o) {
+    /** */
+    public static ByReference create(Object o) {
         ByReference object_context = new ByReference();
 //new Exception("objectID: " + objectIDMaster).printStackTrace(System.err);
 //System.err.flush();
-        object_context.objectID = objectIDMaster++;
         objects.put(object_context.objectID, o);
         return object_context;
     }
 
     /**  */
-    public static Object getObjectFromContext(Pointer context) {
+    public static Object get(Pointer context) {
         UserObjectContext object_context = new UserObjectContext(context);
-        return UserObjectContext.objects.get(object_context.objectID);
+        return objects.get(object_context.objectID);
     }
 }

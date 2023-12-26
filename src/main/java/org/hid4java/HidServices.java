@@ -104,8 +104,8 @@ public class HidServices {
     public void shutdown() {
 logger.finer("shutdown: start");
 //new Exception().printStackTrace();
-        stop();
         try {
+            stop();
             hidDeviceManager.shutdown();
         } catch (Throwable e) {
             // Silently fail (user will already have been given an exception)
@@ -121,7 +121,7 @@ if (logger.isLoggable(Level.FINER)) {
      * <p>
      * Normally part of an application shutdown
      */
-    public void stop() {
+    public void stop() throws IOException {
 logger.finer("stop: start");
         hidDeviceManager.stop();
         this.listeners.clear();
@@ -163,6 +163,7 @@ logger.finer("stop: start");
     }
 
     /**
+     * Returns a not opened device.
      * @param vendorId     The vendor ID
      * @param productId    The product ID
      * @param serialNumber The serial number (use null for wildcard)
@@ -173,7 +174,6 @@ logger.finer("stop: start");
         List<HidDevice> devices = hidDeviceManager.getAttachedHidDevices();
         for (HidDevice device : devices) {
             if (device.isVidPidSerial(vendorId, productId, serialNumber)) {
-                device.open();
                 return device;
             }
         }
