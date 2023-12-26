@@ -7,20 +7,19 @@
 package vavi.awt.joystick.hid4java;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Arrays;
 import java.util.logging.Level;
 
-import net.java.games.input.AbstractComponent;
 import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.Event;
 import net.java.games.input.Rumbler;
-import net.java.games.input.osx.plugin.DualShock4Plugin;
 import net.java.games.input.usb.HidController;
+import net.java.games.input.usb.HidRumbler;
 import org.hid4java.HidDevice;
 import vavi.util.Debug;
+import vavi.util.StringUtil;
 
 
 /**
@@ -33,8 +32,6 @@ public class Hid4JavaController extends AbstractController implements HidControl
 
     /** */
     private final HidDevice device;
-
-    Deque<byte[]> reports = new ArrayDeque<>(EVENT_QUEUE_DEPTH);
 
     /**
      * Protected constructor for a controller containing the specified
@@ -52,23 +49,23 @@ Debug.println("device: " + device + ", " + device.isOpen());
     }
 
     @Override
-    public void open() throws IOException {
-        // not opened device is not set a device pointer itself.
-Debug.println("open?: " + device.isOpen());
-        if (!device.isOpen()) {
-            device.open();
-            super.open();
-        }
-Debug.println("open2?: " + device.isOpen());
+    public int getVendorId() {
+        return device.getVendorId();
+    }
 
+    @Override
+    public int getProductId() {
+        return device.getProductId();
+    }
+
+    @Override
+    public void open() throws IOException {
+        super.open();
+
+        device.open();
         device.addInputReportListener(event -> {
-//Debug.println(">>> event: " + e.getReportId() + ", " + Thread.currentThread().getName());
-            while (reports.size() > EVENT_QUEUE_DEPTH) {
-                if (reports.peek() != null)
-                    reports.pop();
-            }
-            reports.push(event.getReport());
-//Debug.println(">>> event: " + reports.size());
+            byte[] data = event.getReport();
+            fireOnInput(new Hid4JavaInputEvent(Hid4JavaController.this, getComponents(), data));
         });
     }
 
@@ -84,37 +81,18 @@ Debug.println("open2?: " + device.isOpen());
     }
 
     @Override
-    protected boolean getNextDeviceEvent(Event event) throws IOException {
-Debug.println(Level.FINER, "getNextDeviceEvent: " + reports.size());
-        if (reports.peek() == null) {
-            return false;
+    public void output(Report report) throws IOException {
+        report.cascadeTo(getRumblers());
+
+        int reportId = ((HidReport) report).getReportId();
+        byte[] data = ((HidReport) report).getData();
+        for (Rumbler rumbler : getRumblers()) {
+            ((HidRumbler) rumbler).fill(data);
         }
-        byte[] data = reports.poll();
-        DualShock4Plugin.display(data);
-
-        event.set(new AbstractComponent("dummy", Component.Identifier.Button.A) {
-            @Override public boolean isRelative() {
-                return false;
-            }
-            @Override protected float poll() throws IOException {
-                return 0;
-            }
-        }, 0, 0);
-        return true;
-    }
-
-    @Override
-    public int getVendorId() {
-        return device.getVendorId();
-    }
-
-    @Override
-    public int getProductId() {
-        return device.getProductId();
-    }
-
-    @Override
-    protected void pollDevice() throws IOException {
-Debug.println(Level.FINER, "pollDevice: reports: " + reports.size());
+Debug.println(Level.FINER, "reportId: " + reportId + "\n" + StringUtil.getDump(data));
+        int r = device.write(data, data.length, reportId);
+        if (r == -1) {
+            throw new IOException("write returns -1");
+        }
     }
 }
