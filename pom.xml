@@ -42,6 +42,11 @@
     </repository>
   </distributionManagement>
 
+  <properties>
+    <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+    <jinput.version>2.0.12v</jinput.version>
+  </properties>
+
   <build>
     <plugins>
 
@@ -87,7 +92,8 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>3.5.0</version>
         <configuration>
-          <source>17</source>
+          <doclint>none</doclint>
+          <locale>EN</locale>
         </configuration>
         <executions>
           <execution>
@@ -138,7 +144,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.9.3</version>
+        <version>5.10.0</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -147,19 +153,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <groupId>${jinput.groupId}</groupId>
       <artifactId>osx-plugin</artifactId>
-      <version>2.0.12v-SNAPSHOT</version>
+      <version>${jinput.version}</version>
     </dependency>
     <dependency>
-      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <groupId>${jinput.groupId}</groupId>
       <artifactId>linux-plugin</artifactId>
-      <version>2.0.12v-SNAPSHOT</version>
+      <version>${jinput.version}</version>
     </dependency>
     <dependency>
-      <groupId>net.java.jinput</groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+      <groupId>${jinput.groupId}</groupId>
       <artifactId>windows-plugin</artifactId>
-      <version>2.0.12v-SNAPSHOT</version>
+      <version>${jinput.version}</version>
     </dependency>
 
     <dependency>

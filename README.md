@@ -19,11 +19,14 @@
 
  * ~~sigabrt~~ ... `-Djbr.catch.SIGABRT=true` (maybe only for jetbrain's jvm)
  * ~~npe on close~~
- * windows/linux
+ * windows/linux not tested yet
+ * dig into the difference between static and instance method reference
 
 ## LESSON
 
  * `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type that should be `Pointer`
+ * the context object for callback become wired after a while ... [suspect data is garbage collected](https://github.com/umjammer/hid4java/issues/1#issuecomment-1783940125)
+
 ---
 
 ## Original
