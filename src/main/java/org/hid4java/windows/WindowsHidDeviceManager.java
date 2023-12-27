@@ -377,6 +377,10 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
+    public void open() {
+    }
+
+    @Override
     public void close() {
     }
 

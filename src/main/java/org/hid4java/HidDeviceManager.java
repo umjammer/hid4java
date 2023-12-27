@@ -88,7 +88,7 @@ public class HidDeviceManager {
      * We use a Thread instead of Executor since it may be stopped/paused/restarted frequently
      * and executors are more heavyweight in this regard
      */
-    private final ExecutorService scanThread = Executors.newSingleThreadExecutor();
+    private ExecutorService scanThread;
 
     /**
      * Constructs a new device manager
@@ -129,6 +129,8 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
      * @throws HidException If something goes wrong (such as Hidapi not initialising correctly)
      */
     public void start() throws IOException {
+
+        nativeManager.open();
 
         // Check for previous start
         if (this.isScanning()) {
@@ -177,7 +179,7 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
 
             if (!this.attachedDevices.containsKey(attachedDevice.getId())) {
 
-logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
+logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice);
                 // Device has become attached so add it but do not create
                 attachedDevices.put(attachedDevice.getId(), attachedDevice);
 
@@ -211,7 +213,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
      * @return True if the scan thread is running, false otherwise.
      */
     public boolean isScanning() {
-        return !scanThread.isTerminated();
+        return scanThread != null && !scanThread.isTerminated();
     }
 
     /**
@@ -269,6 +271,7 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
 
         if (isScanning()) {
             scanThread.shutdownNow();
+            scanThread = null;
         }
     }
 
@@ -280,6 +283,8 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
         if (isScanning()) {
             stopScanThread();
         }
+
+        scanThread = Executors.newSingleThreadExecutor();
 
         // Require a new one
         scanThread.submit(scanRunnable);
@@ -345,7 +350,11 @@ logger.finer("device: " + attachedDevice.getProductId() + "," + attachedDevice);
 
     public void shutdown() {
 logger.finer("shutdown.0");
-        nativeManager.close();
+        if (isScanning()) {
+            stopScanThread();
+        }
 logger.finer("shutdown.1");
+        nativeManager.close();
+logger.finer("shutdown.2");
     }
 }

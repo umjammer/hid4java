@@ -102,13 +102,19 @@ public class HidServices {
      * Stop all device threads and shut down the {@link NativeHidDevice}
      */
     public void shutdown() {
-logger.finer("shutdown: start");
+logger.finer("shutdown: start shutdown...");
 //new Exception().printStackTrace();
         try {
             stop();
+        } catch (Throwable e) {
+            // Silently fail (user will already have been given an exception)
+logger.log(Level.FINER, e.getMessage(), e);
+        }
+        try {
             hidDeviceManager.shutdown();
         } catch (Throwable e) {
             // Silently fail (user will already have been given an exception)
+logger.log(Level.FINER, e.getMessage(), e);
         }
 if (logger.isLoggable(Level.FINER)) {
  Thread.getAllStackTraces().keySet().forEach(System.err::println);
@@ -122,7 +128,7 @@ if (logger.isLoggable(Level.FINER)) {
      * Normally part of an application shutdown
      */
     public void stop() throws IOException {
-logger.finer("stop: start");
+logger.finer("stop: start stopping...");
         hidDeviceManager.stop();
         this.listeners.clear();
     }

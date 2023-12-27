@@ -19,6 +19,11 @@ import java.util.List;
 public interface NativeHidDeviceManager {
 
     /**
+     * As an initializer (this instance is used as a service provider, so the instance is reused)
+     */
+    void open();
+
+    /**
      * Finalize the HIDAPI library.
      * <p>
      * This function frees all of the static data associated with HIDAPI. It should be called
