@@ -26,7 +26,6 @@ import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
 import vavi.hid.parser.HidParser;
-import vavi.usb.UsbUtil;
 import vavi.util.Debug;
 
 
@@ -42,74 +41,67 @@ public final class Hid4JavaEnvironmentPlugin extends ControllerEnvironment {
     private List<Hid4JavaController> controllers;
 
     /** */
-    public Hid4JavaEnvironmentPlugin() {
-        if (hidServices == null) {
-            try {
-                HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
-                // Use the v0.7.0 manual start feature to get immediate attach events
-                hidServicesSpecification.setAutoStart(false);
-                hidServicesSpecification.setAutoShutdown(false);
+    private HidServices getHidService() throws IOException {
+        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        // Use the v0.7.0 manual start feature to get immediate attach events
+        hidServicesSpecification.setAutoStart(false);
+        hidServicesSpecification.setAutoShutdown(false);
 
-                // Get HID services using custom specification
-                hidServices = HidManager.getHidServices(hidServicesSpecification);
-//                hidServices.addHidServicesListener(new HidServicesListener() {
-//                    /** @param event ⚠⚠⚠ a device got by #getHidDevice() is not opened */
-//                    @Override
-//                    public void hidDeviceAttached(HidServicesEvent event) {
-//                        try {
-//Debug.println(Level.FINER, "HID attached: " + event);
-//                            Hid4JavaController c = attach(event.getHidDevice());
-//                            if (c != null) {
+        // Get HID services using custom specification
+        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
+//        hidServices.addHidServicesListener(new HidServicesListener() {
+//            /** @param event ⚠⚠⚠ a device got by #getHidDevice() is not opened */
+//            @Override
+//            public void hidDeviceAttached(HidServicesEvent event) {
+//                try {
+//                    Debug.println(Level.FINER, "HID attached: " + event);
+//                    Hid4JavaController c = attach(event.getHidDevice());
+//                    if (c != null) {
 //Debug.println(Level.INFO, "controllerListeners: " + controllerListeners.size());
 //
-//                                Hid4JavaEnvironmentPlugin.this.fireControllerAdded(c);
-//                            }
-//                        } catch (Exception e) {
-//                            Debug.printStackTrace(Level.FINE, e);
-//                        }
+//                        Hid4JavaEnvironmentPlugin.this.fireControllerAdded(c);
 //                    }
+//                } catch (Exception e) {
+//                    Debug.printStackTrace(Level.FINE, e);
+//                }
+//            }
 //
-//                    @Override
-//                    public void hidDeviceDetached(HidServicesEvent event) {
-//                        try {
+//            @Override
+//            public void hidDeviceDetached(HidServicesEvent event) {
+//                try {
 //Debug.println(Level.FINE, "Device detached: " + event);
-//                            Hid4JavaController c = detach(event.getHidDevice());
-//                            if (c != null) {
-//                                Hid4JavaEnvironmentPlugin.this.fireControllerRemoved(c);
-//                            }
-//                        } catch (Exception e) {
-//                            Debug.printStackTrace(Level.FINE, e);
-//                        }
+//                    Hid4JavaController c = detach(event.getHidDevice());
+//                    if (c != null) {
+//                        Hid4JavaEnvironmentPlugin.this.fireControllerRemoved(c);
 //                    }
+//                } catch (Exception e) {
+//Debug.printStackTrace(Level.FINE, e);
+//                }
+//            }
 //
-//                    @Override
-//                    public void hidFailure(HidServicesEvent event) {
-//                        Debug.println("HID failure: " + event);
-//                    }
+//            @Override
+//            public void hidFailure(HidServicesEvent event) {
+//Debug.println("HID failure: " + event);
+//            }
 //
-//                    @Override
-//                    public void hidDataReceived(HidServicesEvent event) {
+//            @Override
+//            public void hidDataReceived(HidServicesEvent event) {
 //Debug.printf("Data received:%n");
-//                        byte[] dataReceived = event.getDataReceived();
-//                        System.out.printf("< [%02x]:", dataReceived.length);
-//                        for (byte b : dataReceived) {
-//                            System.out.printf(" %02x", b);
-//                        }
-//                        System.out.println();
-//                    }
-//                });
+//                byte[] dataReceived = event.getDataReceived();
+//                System.out.printf("< [%02x]:", dataReceived.length);
+//                for (byte b : dataReceived) {
+//                    System.out.printf(" %02x", b);
+//                }
+//                System.out.println();
+//            }
+//        });
 
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> hidServices.shutdown()));
-
-Debug.println("starting HID services.");
-                hidServices.start();
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
-        }
+        return hidServices;
     }
 
     private void enumerate() throws IOException {
+        boolean r = isSupported();
+Debug.println("isSupported: " + r);
         controllers = new ArrayList<>();
 Debug.println("devices: " + hidServices.getAttachedHidDevices().size());
         hidServices.getAttachedHidDevices().forEach(hidDevice -> {
@@ -207,12 +199,25 @@ Debug.printStackTrace(e);
 
     @Override
     public boolean isSupported() {
-Debug.println("isSupported: " + (hidServices != null));
-        return hidServices != null;
+        try {
+            if (hidServices == null) {
+                hidServices = getHidService();
+Debug.println("starting HID services.");
+                hidServices.start();
+            }
+            return true;
+        } catch (IOException e) {
+Debug.println(e);
+            return false;
+        }
     }
 
     /** */
-    private static HidServices hidServices;
+    private HidServices hidServices;
+
+    public void close() {
+        hidServices.shutdown();
+    }
 
     /**
      * @throws IllegalArgumentException no matched device of mid and pid
