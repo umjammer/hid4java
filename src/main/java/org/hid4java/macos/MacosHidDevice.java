@@ -177,9 +177,10 @@ logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
     }
 
     private void internalOpen() throws IOException {
-        if (deviceHandle != null) {
-            return;
-        }
+if (deviceHandle != null) {
+logger.warning("deviceHandle is not null");
+ return;
+}
 
         Pointer/* io_registry_entry_t */ entry = null;
         try {
@@ -312,38 +313,51 @@ logger.finer("here50.6: thread done");
 
     @Override
     public void close() {
-logger.finer("here20.0: " + deviceInfo.path);
-
-        // Disconnect the report callback before close.
-        // See comment below.
-        if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
-
-logger.finer("here20.1: removal callback null, unschedule run loop start");
-            IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
-                    this.deviceHandle.device, this.inputReportBuffer, CFIndex.of(this.maxInputReportLength),
-                    null, null);
-            IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.deviceHandle.device, null, null);
-            IOKitLib.INSTANCE.IOHIDDeviceUnscheduleFromRunLoop(this.deviceHandle.device, this.runLoop, this.runLoopMode);
-            IOKitLib.INSTANCE.IOHIDDeviceScheduleWithRunLoop(this.deviceHandle.device, CFLib.INSTANCE.CFRunLoopGetMain(), kCFRunLoopDefaultMode);
-logger.finer("here20.2: removal callback null, unschedule run loop done");
+logger.finest("here20.0: " + deviceInfo);
+        if (this.deviceHandle == null) {
+logger.finest("not opened");
+            return;
         }
 
-        // Cause read_thread() to stop.
-        this.shutdownThread = true;
+logger.finer("here20.0.1: source: " + this.source + ", thread: " + this.thread);
+        if (this.thread != null) { // when not #open()
+            // Disconnect the report callback before close.
+            // See comment below.
+            if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
 
-        // Wake up the run thread's event loop so that the thread can close.
-        CFLib.INSTANCE.CFRunLoopSourceSignal(this.source);
-        CFLib.INSTANCE.CFRunLoopWakeUp(this.runLoop);
-logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode()); // TODO <- not here, until 20.2
+logger.finer("here20.1: removal callback null, unschedule run loop start: " + this.deviceHandle.device);
+                IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
+                        this.deviceHandle.device, this.inputReportBuffer, CFIndex.of(this.maxInputReportLength),
+                        null, null);
+                IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.deviceHandle.device, null, null);
+                IOKitLib.INSTANCE.IOHIDDeviceUnscheduleFromRunLoop(this.deviceHandle.device, this.runLoop, this.runLoopMode);
+                IOKitLib.INSTANCE.IOHIDDeviceScheduleWithRunLoop(this.deviceHandle.device, CFLib.INSTANCE.CFRunLoopGetMain(), kCFRunLoopDefaultMode);
+logger.finer("here20.2: removal callback null, unschedule run loop done");
+            }
 
-        // Notify the read thread that it can shut down now.
+            // Cause read_thread() to stop.
+            this.shutdownThread = true;
+
+            // Wake up the run thread's event loop so that the thread can close.
+            CFLib.INSTANCE.CFRunLoopSourceSignal(this.source);
+            CFLib.INSTANCE.CFRunLoopWakeUp(this.runLoop);
+logger.finest("here20.3: wake up run loop: @" + this.runLoop.hashCode());
+
+            // Notify the read thread that it can shut down now.
 logger.finer("here20.4: " + Thread.currentThread() + ", " + this.thread);
 logger.finest("here20.5: notify shutdownBarrier -1");
-        this.shutdownBarrier.waitAndSync();
+            this.shutdownBarrier.waitAndSync();
 
-        // Wait for read_thread() to end.
+            // Wait for read_thread() to end.
 logger.finer("here20.6: join...: " + this.thread);
-        try { this.thread.join(); } catch (InterruptedException ignore) {}
+            try {
+                this.thread.join();
+            } catch (InterruptedException ignore) {
+            }
+
+            CFLib.INSTANCE.CFRelease(this.runLoopMode);
+            CFLib.INSTANCE.CFRelease(this.source);
+        }
 
         // Close the OS handle to the device, but only if it's not
         // been unplugged. If it's been unplugged, then calling
@@ -354,18 +368,17 @@ logger.finer("here20.6: join...: " + this.thread);
         // crash happenes if IOHIDDeviceClose() is not called.
         // Not leaking a resource in all tested environments.
 
+logger.finer("here20.7.0: native device: " + this.deviceHandle.device);
         if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
+logger.finer("here20.7.1: native device: " + this.deviceHandle.device);
             IOKitLib.INSTANCE.IOHIDDeviceClose(this.deviceHandle.device, kIOHIDOptionsTypeSeizeDevice);
-logger.finer("here20.7: native device close: @" + this.deviceHandle.device.hashCode());
+logger.finer("here20.7.2: native device close: @" + this.deviceHandle.device.hashCode());
         }
 
-        if (this.runLoopMode != null)
-            CFLib.INSTANCE.CFRelease(this.runLoopMode);
-        if (this.source != null)
-            CFLib.INSTANCE.CFRelease(this.source);
-
+logger.finest("here20.8.1: native device release");
         CFLib.INSTANCE.CFRelease(this.deviceHandle.device);
-logger.finest("here20.8: native device release");
+logger.finest("here20.8.2: native device release");
+        deviceHandle = null;
 
         closer.accept(this.deviceInfo.path);
 logger.finer("here20.9: close done");

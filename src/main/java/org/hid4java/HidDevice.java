@@ -27,6 +27,7 @@ package org.hid4java;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.logging.Logger;
 
 
@@ -130,6 +131,22 @@ public class HidDevice {
          * Since version 0.13.0, @ref HID_API_VERSION >= HID_API_MAKE_VERSION(0, 13, 0)
          */
         public HidBusType busType;
+
+        @Override public String toString() {
+            return new StringJoiner(", ", Info.class.getSimpleName() + "[", "]")
+                    .add("path='" + path + "'")
+                    .add("vendorId=" + vendorId)
+                    .add("productId=" + productId)
+                    .add("serialNumber='" + serialNumber + "'")
+                    .add("releaseNumber=" + releaseNumber)
+                    .add("manufacturer='" + manufacturer + "'")
+                    .add("product='" + product + "'")
+                    .add("usagePage=" + usagePage)
+                    .add("usage=" + usage)
+                    .add("interfaceNumber=" + interfaceNumber)
+                    .add("busType=" + busType)
+                    .toString();
+        }
     }
 
     private final boolean autoDataRead;
@@ -158,7 +175,7 @@ public class HidDevice {
         this.info.productId = this.info.productId & 0xffff;
 
         nativeDevice = manager.open(info);
-logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+logger.finest(getPath() + "(@" + hashCode() + "): " + nativeDevice);
     }
 
     /**
@@ -274,7 +291,7 @@ logger.finer(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      * @since 0.1.0
      */
     public void close() throws IOException {
-logger.finer("close native: " + nativeDevice);
+logger.finest("close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
         isOpen = false;

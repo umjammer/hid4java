@@ -28,6 +28,7 @@ package org.hid4java.macos;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -108,7 +109,10 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     public MacosHidDeviceManager() {
 logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
         hid_darwin_set_open_exclusive(!darwinOpenDevicesNonExclusive); // Backward compatibility
+    }
 
+    @Override
+    public void open() {
         manager = IOKitLib.INSTANCE.IOHIDManagerCreate(CFAllocator.kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         if (manager != null) {
             IOKitLib.INSTANCE.IOHIDManagerSetDeviceMatching(manager, null);
@@ -119,9 +123,13 @@ logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
     }
 
     @Override
+    @SuppressWarnings("WhileLoopReplaceableByForEach") // for ConcurrentModificationException
     public void close() {
 logger.finer("here10.0: hid_exit");
-        devices.values().forEach(MacosHidDevice::close);
+        Iterator<MacosHidDevice> i = devices.values().iterator();
+        while (i.hasNext()) {
+            i.next().close();
+        }
 
         if (manager != null) {
             /* Close the HID manager. */
@@ -208,7 +216,7 @@ logger.finer("here10.2: manager = null");
                 CFLib.INSTANCE.CFRelease(p);
             }
         }
-logger.finest("here7.0: " + matching + ", " + Thread.currentThread());
+logger.finest("here7.0: " + matching + ", " + Thread.currentThread() + ", " + manager);
         IOKitLib.INSTANCE.IOHIDManagerSetDeviceMatching(manager, matching);
         if (matching != null) {
 logger.finer("here7.1: matching null");
@@ -263,10 +271,10 @@ logger.fine("empty");
 
     @Override
     public MacosHidDevice create(HidDevice.Info info) throws IOException {
-logger.finer("here00.0: path: " + info.path);
+logger.finest("here00.0: path: " + info.path);
         MacosHidDevice device = devices.get(info.path);
         if (device != null) {
-logger.finer("here00.1: devices: cached: " + device);
+logger.finest("here00.1: devices: cached: " + device);
             device.deviceInfo = info;
             return device;
         }
@@ -276,7 +284,7 @@ logger.finer("here00.1: devices: cached: " + device);
 
         device.closer = devices::remove;
         devices.put(device.deviceInfo.path, device);
-logger.finer("here00.E: devices: +: " + device.deviceInfo.path + " / " + devices.size());
+logger.finest("here00.E: devices: +: " + device.deviceInfo.path + " / " + devices.size());
         return device;
     }
 
