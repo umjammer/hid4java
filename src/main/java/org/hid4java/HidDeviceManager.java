@@ -290,6 +290,7 @@ logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice)
         scanThread.submit(scanRunnable);
     }
 
+    /** */
     private synchronized Runnable getScanRunnable() {
 
         int scanInterval = hidServicesSpecification.getScanInterval();
@@ -348,6 +349,7 @@ logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice)
         }
     }
 
+    /** */
     public void shutdown() {
 logger.finer("shutdown.0");
         if (isScanning()) {
@@ -356,5 +358,10 @@ logger.finer("shutdown.0");
 logger.finer("shutdown.1");
         nativeManager.close();
 logger.finer("shutdown.2");
+    }
+
+    /** debug */
+    NativeHidDeviceManager getNativeHidDeviceManager() {
+        return nativeManager;
     }
 }

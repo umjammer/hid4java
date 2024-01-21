@@ -26,12 +26,17 @@
 package org.hid4java.examples;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import net.java.games.input.osx.plugin.DualShock4Plugin;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
+import org.junit.jupiter.api.BeforeEach;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 
 /**
@@ -39,10 +44,22 @@ import org.hid4java.HidServicesSpecification;
  *
  * @since 0.0.1
  */
+@PropsEntity(url = "file:local.properties")
 public class UsbHidEnumerationExample extends BaseExample {
+
+    @Property(name = "mid")
+    String mid;
+    @Property(name = "pid")
+    String pid;
+
+    int vendorId;
+    int productId;
 
     public static void main(String[] args) throws Exception {
         UsbHidEnumerationExample example = new UsbHidEnumerationExample();
+        PropsEntity.Util.bind(example);
+        example.vendorId = Integer.decode(example.mid);
+        example.productId = Integer.decode(example.pid);
         example.executeExample();
     }
 
@@ -71,7 +88,7 @@ public class UsbHidEnumerationExample extends BaseExample {
             System.out.printf("%s/%s ... %x%n", hidDevice.getManufacturer(), hidDevice.getProduct(), hidDevice.getUsagePage());
         }
 
-        HidDevice device = hidServices.getHidDevice(0x54c, 0x9cc, null);
+        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
         device.open();
 
         device.addInputReportListener(e -> display(e.getReport()));
