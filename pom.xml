@@ -44,7 +44,7 @@
 
   <properties>
     <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.12v</jinput.version>
+    <jinput.version>2.0.14v</jinput.version>
   </properties>
 
   <build>

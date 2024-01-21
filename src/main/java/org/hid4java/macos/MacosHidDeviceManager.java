@@ -41,6 +41,7 @@ import org.hid4java.HidException;
 import org.hid4java.NativeHidDeviceManager;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFDictionary;
+import vavix.rococoa.corefoundation.CFIndex;
 import vavix.rococoa.corefoundation.CFLib;
 import vavix.rococoa.corefoundation.CFNumber;
 import vavix.rococoa.corefoundation.CFType;
@@ -200,7 +201,7 @@ logger.finer("here10.2: manager = null");
         CFDictionary /* CFMutableDictionaryRef */ matching = null;
         if (vendorId != 0 || productId != 0) {
             matching = CFLib.INSTANCE.CFDictionaryCreateMutable(CFAllocator.kCFAllocatorDefault,
-                    new NativeLong(kIOHIDOptionsTypeNone), CFLib.kCFTypeDictionaryKeyCallBacks, CFLib.kCFTypeDictionaryValueCallBacks);
+                    CFIndex.of(kIOHIDOptionsTypeNone), CFLib.kCFTypeDictionaryKeyCallBacks, CFLib.kCFTypeDictionaryValueCallBacks);
 
             if (matching != null && vendorId != 0) {
                 ShortByReference r = new ShortByReference((short) vendorId);

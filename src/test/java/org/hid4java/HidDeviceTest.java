@@ -1,16 +1,45 @@
 package org.hid4java;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIf;
+import vavi.util.properties.annotation.Property;
+import vavi.util.properties.annotation.PropsEntity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-@Disabled
+@PropsEntity(url = "file:local.properties")
 class HidDeviceTest {
+
+    static boolean localPropertiesExists() {
+        return Files.exists(Paths.get("local.properties"));
+    }
+
+    @Property(name = "mid")
+    String mid;
+    @Property(name = "pid")
+    String pid;
+
+    int vendorId;
+    int productId;
+
+    @BeforeEach
+    void setup() throws Exception {
+        if (localPropertiesExists()) {
+            PropsEntity.Util.bind(this);
+
+            vendorId = Integer.decode(mid);
+            productId = Integer.decode(pid);
+        }
+    }
 
     HidDevice.Info mockStructure = new HidDevice.Info();
 
@@ -79,5 +108,19 @@ class HidDeviceTest {
         assertEquals(4, testObject.getUsagePage());
         assertEquals(5, testObject.getUsage());
         assertEquals(6, testObject.getInterfaceNumber());
+    }
+
+    @Test
+    @EnabledIf("localPropertiesExists")
+    void test1() throws Exception {
+        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        hidServicesSpecification.setAutoStart(false);
+        hidServicesSpecification.setAutoShutdown(false);
+
+        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
+        hidServices.start();
+
+        List<HidDevice.Info> devices = hidServices.getHidDeviceManager().getNativeHidDeviceManager().enumerate(vendorId, productId);
+        assertEquals(1, devices.size());
     }
 }
