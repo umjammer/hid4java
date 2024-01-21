@@ -58,7 +58,7 @@ public class HidServices {
     /**
      * The HID device manager handles scanning operations
      */
-    private final org.hid4java.HidDeviceManager hidDeviceManager;
+    private final HidDeviceManager hidDeviceManager;
 
     /**
      * Jar entry point to allow for version interrogation
@@ -72,7 +72,7 @@ public class HidServices {
     /**
      * Initialise with a default HID specification
      *
-     * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
      */
     public HidServices() throws IOException {
         this(new HidServicesSpecification());
@@ -80,10 +80,10 @@ public class HidServices {
 
     /**
      * @param hidServicesSpecification Provides various parameters for configuring HID services
-     * @throws HidException If something goes wrong (see {@link org.hid4java.HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
      */
     public HidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
-        hidDeviceManager = new org.hid4java.HidDeviceManager(listeners, hidServicesSpecification);
+        hidDeviceManager = new HidDeviceManager(listeners, hidServicesSpecification);
 
         // Check for automatic start (default behaviour for 0.6.0 and below)
         // which will prevent an attachment event firing if the device is already
@@ -188,6 +188,7 @@ logger.finer("stop: start stopping...");
     }
 
     /**
+     * TODO check
      * @return The current library version from the manifest or 0.0.x if an error occurs
      */
     public static String getVersion() {
@@ -210,5 +211,10 @@ logger.finer("stop: start stopping...");
         Attributes attr = manifest.getMainAttributes();
         String value = attr.getValue("Implementation-Version");
         return Objects.requireNonNullElse(value, "0.0.3");
+    }
+
+    /** debug */
+    HidDeviceManager getHidDeviceManager() {
+        return hidDeviceManager;
     }
 }
