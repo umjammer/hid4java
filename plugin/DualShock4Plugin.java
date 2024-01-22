@@ -15,6 +15,7 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
+import net.java.games.input.osx.plugin.DualShock4Plugin.DualShock4Output;
 import org.hid4java.HidDevice;
 import vavi.awt.joystick.hid4java.Hid4JavaComponent;
 import vavi.awt.joystick.hid4java.Hid4JavaRumbler;
@@ -66,13 +67,13 @@ Debug.printf(Level.FINER, "%04x, %s, %04x, %s", device.getVendorId(), device.get
     @Override
     public Collection<Rumbler> getExtraRumblers(Object object) {
         return List.of(
-                new Hid4JavaRumbler(Component.Identifier.Output.SMALL_RUMBLE, 3),
-                new Hid4JavaRumbler(Component.Identifier.Output.BIG_RUMBLE, 4),
-                new Hid4JavaRumbler(Component.Identifier.Output.LED_RED, 5),
-                new Hid4JavaRumbler(Component.Identifier.Output.LED_BLUE, 6),
-                new Hid4JavaRumbler(Component.Identifier.Output.LED_GREEN,7),
-                new Hid4JavaRumbler(Component.Identifier.Output.FLASH_LED1, 8),
-                new Hid4JavaRumbler(Component.Identifier.Output.FLASH_LED2, 9)
+                new Hid4JavaRumbler(5, DualShock4Output.SMALL_RUMBLE, 3),
+                new Hid4JavaRumbler(5, DualShock4Output.BIG_RUMBLE, 4),
+                new Hid4JavaRumbler(5, DualShock4Output.LED_RED, 5),
+                new Hid4JavaRumbler(5, DualShock4Output.LED_BLUE, 6),
+                new Hid4JavaRumbler(5, DualShock4Output.LED_GREEN,7),
+                new Hid4JavaRumbler(5, DualShock4Output.FLASH_LED1, 8),
+                new Hid4JavaRumbler(5, DualShock4Output.FLASH_LED2, 9)
         );
     }
 }

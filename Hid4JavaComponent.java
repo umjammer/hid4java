@@ -49,12 +49,12 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
         return field != null && Feature.containsIn(RELATIVE, field.getFeature());
     }
 
-    /** by hid input report */
+    @Override
     public boolean isValueChanged(byte[] data) {
         return getEventValue() != getValue(data);
     }
 
-    /** */
+    @Override
     public float getValue() {
         return getEventValue();
     }
@@ -64,7 +64,7 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
         return field.getValue(data);
     }
 
-    /** by hid input report */
+    @Override
     public void setValue(byte[] data) {
         setEventValue(field.getValue(data));
     }

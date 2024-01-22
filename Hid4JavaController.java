@@ -7,13 +7,11 @@
 package vavi.awt.joystick.hid4java;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.logging.Level;
 
 import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.Event;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.HidController;
 import net.java.games.input.usb.HidRumbler;
@@ -82,13 +80,10 @@ Debug.println("device: " + device + ", " + device.isOpen());
 
     @Override
     public void output(Report report) throws IOException {
-        report.cascadeTo(getRumblers());
+        ((HidReport) report).setup(getRumblers());
 
         int reportId = ((HidReport) report).getReportId();
         byte[] data = ((HidReport) report).getData();
-        for (Rumbler rumbler : getRumblers()) {
-            ((HidRumbler) rumbler).fill(data);
-        }
 Debug.println(Level.FINER, "reportId: " + reportId + "\n" + StringUtil.getDump(data));
         int r = device.write(data, data.length, reportId);
         if (r == -1) {

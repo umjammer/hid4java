@@ -21,12 +21,14 @@ import vavi.util.Debug;
  */
 public class Hid4JavaRumbler implements HidRumbler {
 
+    private final int reportId;
     private final Component.Identifier identifier;
     private float value;
 
     private final int offset;
 
-    public Hid4JavaRumbler(Component.Identifier identifier, int offset) {
+    public Hid4JavaRumbler(int reportId, Component.Identifier identifier, int offset) {
+        this.reportId = reportId;
         this.identifier = identifier;
         this.offset = offset;
     }
@@ -52,6 +54,11 @@ public class Hid4JavaRumbler implements HidRumbler {
     @Override
     public Component.Identifier getOutputIdentifier() {
         return identifier;
+    }
+
+    @Override
+    public int getReportId() {
+        return reportId;
     }
 
     @Override
