@@ -17,6 +17,10 @@ import net.java.games.input.InputEvent;
 
 /**
  * Hid4JavaInputEvent.
+ * <p>
+ * <h4>system property</h4>
+ * <li>"net.java.games.input.InputEvent.fillAll" ... determine to fill all events (true) or events which value is changed (false)</li>
+ * </p>
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-11-07 nsano initial version <br>
@@ -43,9 +47,11 @@ public class Hid4JavaInputEvent extends InputEvent {
         this.data = data;
         this.time = System.nanoTime();
 
+        boolean fillAll = Boolean.parseBoolean(System.getProperty("net.java.games.input.InputEvent.fillAll", "false"));
+
         deque.clear();
         for (Hid4JavaComponent component : Arrays.stream(components).map(Hid4JavaComponent.class::cast).toArray(Hid4JavaComponent[]::new)) {
-            if (component.isValueChanged(data)) {
+            if (fillAll || component.isValueChanged(data)) {
                 component.setValue(data);
                 deque.offer(component);
             }
