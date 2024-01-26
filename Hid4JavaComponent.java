@@ -28,6 +28,9 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
     /** an input report definition */
     private final Field field;
 
+    /** special data picker (e.g. for touch x, y) */
+    private Function<byte[], Integer> function;
+
     /**
      * Protected constructor
      *
@@ -40,12 +43,21 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
     }
 
     /**
-     * @param offset bits
+     * @param offset bits (must be excluded first one byte (8 bits) for report id)
      * @param size bit length
      */
     public Hid4JavaComponent(String name, Identifier id, int offset, int size) {
+        this(name, id, offset, size, null);
+    }
+
+    /**
+     * @param offset bits (must be excluded first one byte (8 bits) for report id)
+     * @param size bit length
+     */
+    public Hid4JavaComponent(String name, Identifier id, int offset, int size, Function<byte[], Integer> function) {
         super(name, id);
         this.field = new Field(offset, size);
+        this.function = function;
     }
 
     @Override
@@ -65,7 +77,8 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
 
     /** by hid input report */
     private int getValue(byte[] data) {
-        return field.getValue(data);
+        int value = field.getValue(data);
+        return function != null ? function.apply(data) : value;
     }
 
     @Override
