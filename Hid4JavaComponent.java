@@ -6,7 +6,10 @@
 
 package vavi.awt.joystick.hid4java;
 
+import java.util.function.Function;
+
 import net.java.games.input.AbstractComponent;
+import net.java.games.input.WrappedComponent;
 import net.java.games.input.usb.HidComponent;
 import vavi.hid.parser.Field;
 import vavi.hid.parser.HidParser.Feature;
@@ -20,8 +23,9 @@ import static vavi.hid.parser.HidParser.Feature.RELATIVE;
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-11-06 nsano initial version <br>
  */
-public class Hid4JavaComponent extends AbstractComponent implements HidComponent {
+public class Hid4JavaComponent extends AbstractComponent implements HidComponent, WrappedComponent<Field> {
 
+    /** an input report definition */
     private final Field field;
 
     /**
@@ -67,5 +71,10 @@ public class Hid4JavaComponent extends AbstractComponent implements HidComponent
     @Override
     public void setValue(byte[] data) {
         setEventValue(field.getValue(data));
+    }
+
+    @Override
+    public Field getWrappedObject() {
+        return field;
     }
 }
