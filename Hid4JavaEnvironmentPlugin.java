@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.logging.Level;
 
 import net.java.games.input.Component;
@@ -19,6 +20,7 @@ import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.GenericDesktopUsageId;
+import net.java.games.input.usb.HidControllerEnvironment;
 import net.java.games.input.usb.UsageId;
 import net.java.games.input.usb.UsagePage;
 import org.hid4java.HidDevice;
@@ -35,7 +37,7 @@ import vavi.util.Debug;
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 230927 nsano initial version <br>
  */
-public final class Hid4JavaEnvironmentPlugin extends ControllerEnvironment {
+public final class Hid4JavaEnvironmentPlugin extends ControllerEnvironment implements HidControllerEnvironment {
 
     /** */
     private List<Hid4JavaController> controllers;
@@ -220,8 +222,9 @@ Debug.println(e);
     }
 
     /**
-     * @throws IllegalArgumentException no matched device of mid and pid
+     * @throws NoSuchElementException no matched device of mid and pid
      */
+    @Override
     public Hid4JavaController getController(int mid, int pid) {
         Hid4JavaController[] controllers = Arrays.stream(getControllers()).map(Hid4JavaController.class::cast).toArray(Hid4JavaController[]::new);
 Debug.println("controllers: " + getControllers().length);
@@ -231,7 +234,7 @@ Debug.printf("%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), c
                 return controller;
             }
         }
-        throw new IllegalArgumentException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
+        throw new NoSuchElementException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
     }
 }
 
