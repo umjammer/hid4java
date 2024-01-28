@@ -23,11 +23,11 @@ import net.java.games.input.usb.GenericDesktopUsageId;
 import net.java.games.input.usb.HidControllerEnvironment;
 import net.java.games.input.usb.UsageId;
 import net.java.games.input.usb.UsagePage;
+import net.java.games.input.usb.parser.HidParser;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
-import vavi.hid.parser.HidParser;
 import vavi.util.Debug;
 
 

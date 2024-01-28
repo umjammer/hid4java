@@ -13,9 +13,8 @@ import java.util.logging.Level;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
-import net.java.games.input.osx.plugin.DualShock4Plugin.DualShock4Output;
+import net.java.games.input.plugin.DualShock4PluginBase;
 import org.hid4java.HidDevice;
 import vavi.awt.joystick.hid4java.Hid4JavaComponent;
 import vavi.awt.joystick.hid4java.Hid4JavaRumbler;
@@ -29,7 +28,7 @@ import vavi.util.Debug;
  * @version 0.00 2023-10-30 nsano initial version <br>
  * @see "https://www.psdevwiki.com/ps4/DS4-USB"
  */
-public class DualShock4Plugin implements DeviceSupportPlugin {
+public class DualShock4Plugin extends DualShock4PluginBase {
 
     /** @param object HidDevice */
     @Override
