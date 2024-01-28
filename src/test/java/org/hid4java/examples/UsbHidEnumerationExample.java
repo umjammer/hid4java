@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import net.java.games.input.osx.plugin.DualShock4Plugin;
+import net.java.games.input.plugin.DualShock4PluginBase;
 import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
@@ -97,7 +98,7 @@ public class UsbHidEnumerationExample extends BaseExample {
     }
 
     static void display(byte[] data) {
-        DualShock4Plugin.display(data);
+        DualShock4Plugin.display(data, System.out);
     }
 
     static void display1(byte[] data) {

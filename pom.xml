@@ -4,10 +4,10 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.5v</version>
+  <version>0.14.6v</version>
 
   <name>hid4java</name>
-  <description>A cross-platform Java Native Access (JNA) wrapper for the libusb/hidapi library</description>
+  <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
   <url>https://github.com/umjammer/hid4java</url>
   <inceptionYear>2014</inceptionYear>
   <developers>
@@ -34,22 +34,69 @@
     <url>git@github.com:umjammer/hid4java.git</url>
   </scm>
 
-  <distributionManagement>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-    </repository>
-  </distributionManagement>
-
   <properties>
     <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.14v</jinput.version>
+    <jinput.version>2.0.15v</jinput.version>
   </properties>
+
+
+  <profiles>
+    <profile>
+      <!-- mvn -P jnaerator jnaerator:generate -->
+      <id>jnaerator</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.nativelibs4java</groupId>
+            <artifactId>maven-jnaerator-plugin</artifactId>
+            <version>0.12</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>generate</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <javaOutputDirectory>${project.build.testSourceDirectory}</javaOutputDirectory>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <!-- mvn -P run antrun:run -Dfoo='bar' -->
+      <id>run</id>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>3.1.0</version>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <java classname="vavi.games.input.hid4java.spi.GamepadTest" fork="true">
+                  <classpath>
+                    <path refid="maven.compile.classpath"/>
+                    <path refid="maven.test.classpath"/>
+                  </classpath>
+                  <jvmarg value="-Djava.util.logging.config.file=${project.build.testOutputDirectory}/logging.properties" />
+                </java>
+              </target>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <build>
     <plugins>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -128,7 +175,6 @@
           </archive>
         </configuration>
       </plugin>
-
     </plugins>
   </build>
 
@@ -152,6 +198,12 @@
   </dependencyManagement>
 
   <dependencies>
+    <dependency>
+      <groupId>com.github.umjammer</groupId>
+      <artifactId>vavi-commons</artifactId>
+      <version>1.1.9</version>
+    </dependency>
+
     <dependency>
       <groupId>${jinput.groupId}</groupId>
       <artifactId>osx-plugin</artifactId>
@@ -178,38 +230,5 @@
       <artifactId>junit-platform-commons</artifactId>
       <scope>test</scope>
     </dependency>
-
-    <dependency>
-      <groupId>com.github.umjammer</groupId>
-      <artifactId>vavi-commons</artifactId>
-      <version>1.1.9</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
-
-  <profiles>
-    <profile>
-      <!-- mvn -P jnaerator jnaerator:generate -->
-      <id>jnaerator</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.nativelibs4java</groupId>
-            <artifactId>maven-jnaerator-plugin</artifactId>
-            <version>0.12</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>generate</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <javaOutputDirectory>${project.build.testSourceDirectory}</javaOutputDirectory>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 </project>
