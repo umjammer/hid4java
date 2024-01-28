@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.awt.joystick.hid4java;
+package vavi.games.input.hid4java.spi;
 
 import java.util.logging.Level;
 

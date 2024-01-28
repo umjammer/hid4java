@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.awt.joystick.hid4java.plugin;
+package vavi.games.input.hid4java.spi.plugin;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -16,8 +16,8 @@ import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
 import net.java.games.input.plugin.DualShock4PluginBase;
 import org.hid4java.HidDevice;
-import vavi.awt.joystick.hid4java.Hid4JavaComponent;
-import vavi.awt.joystick.hid4java.Hid4JavaRumbler;
+import vavi.games.input.hid4java.spi.Hid4JavaComponent;
+import vavi.games.input.hid4java.spi.Hid4JavaRumbler;
 import vavi.util.Debug;
 
 

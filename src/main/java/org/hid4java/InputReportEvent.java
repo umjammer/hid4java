@@ -17,13 +17,14 @@ import java.util.EventObject;
  */
 public class InputReportEvent extends EventObject {
 
-    /** the report Id number if used or zero */
+    /** the report id number if used or zero */
     private final int reportId;
 
-    /** the report data */
+    /** the report data that contains first report id */
     private final byte[] report;
     private final int length;
 
+    /** @param report a report data that contains first report id */
     public InputReportEvent(Object source, int reportId, byte[] report, int length) {
         super(source);
         this.reportId = reportId;
@@ -31,6 +32,7 @@ public class InputReportEvent extends EventObject {
         this.length = length;
     }
 
+    /** the report data that contains first report id */
     public int getReportId() {
         return reportId;
     }

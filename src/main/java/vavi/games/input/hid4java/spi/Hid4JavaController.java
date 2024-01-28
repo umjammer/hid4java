@@ -4,7 +4,7 @@
  * Programmed by Naohide Sano
  */
 
-package vavi.awt.joystick.hid4java;
+package vavi.games.input.hid4java.spi;
 
 import java.io.IOException;
 import java.util.logging.Level;
@@ -14,7 +14,6 @@ import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.HidController;
-import net.java.games.input.usb.HidRumbler;
 import org.hid4java.HidDevice;
 import vavi.util.Debug;
 import vavi.util.StringUtil;
