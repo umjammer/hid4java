@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.5v</version>
+  <version>0.14.6v</version>
 
   <name>hid4java</name>
   <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
@@ -35,8 +35,8 @@
   </scm>
 
   <properties>
-    <jinput.groupId>net.java.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.15v-SNAPSHOT</jinput.version>
+    <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+    <jinput.version>2.0.15v</jinput.version>
   </properties>
 
 
@@ -68,8 +68,8 @@
     <profile>
       <!-- mvn -P run antrun:run -Dfoo='bar' -->
       <id>run</id>
-  <build>
-    <plugins>
+      <build>
+        <plugins>
           <plugin>
             <!-- GOOD: fork: OK, test jars: OK, user args, default args: OK -->
             <groupId>org.apache.maven.plugins</groupId>

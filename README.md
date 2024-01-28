@@ -5,7 +5,7 @@
 
 # hid4java
 
-🎮 gamepad api for java
+🎮 hid api for java
 
  - by jna directory instead of hidapi
  - with [jinput](https://github.com/umjammer/jinput) spi
