@@ -64,7 +64,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * Returns 1 if successful, 0 if an invalid key
      * Sets dataLen and keySize when successful
      */
-    private static int get_hid_item_size(byte[] reportDescriptor, int size, int pos, int[] dataLen, int[] keySize) {
+    private static int getHidItemSize(byte[] reportDescriptor, int size, int pos, int[] dataLen, int[] keySize) {
         int key = reportDescriptor[pos];
         int sizeCode;
 
@@ -114,7 +114,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * Get bytes from a HID Report Descriptor.
      * Only call with a numBytes of 0, 1, 2, or 4.
      */
-    private static int get_hid_report_bytes(byte[] rpt, int len, int numBytes, int cur) {
+    private static int getHidReportBytes(byte[] rpt, int len, int numBytes, int cur) {
         // Return if there aren't enough bytes.
         if (cur + numBytes >= len)
             return 0;
@@ -144,18 +144,18 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * 0 when error is occured (broken Descriptor, end of a Collection is found before its begin,
      * or no Collection is found at all).
      */
-    private static int hid_iterate_over_collection(byte[] report_descriptor, int size, int[] pos, int[] dataLen, int[] keySize) {
+    private static int hidIterateOverCollection(byte[] reportDescriptor, int size, int[] pos, int[] dataLen, int[] keySize) {
         int collectionLevel = 0;
 
         while (pos[0] < size) {
-            int key = report_descriptor[pos[0]];
-            int key_cmd = key & 0xfc;
+            int key = reportDescriptor[pos[0]];
+            int keyCmd = key & 0xfc;
 
             // Determine dataLen and keySize
-            if (get_hid_item_size(report_descriptor, size, pos[0], dataLen, keySize) == 0)
+            if (getHidItemSize(reportDescriptor, size, pos[0], dataLen, keySize) == 0)
                 return 0; // malformed report
 
-            switch (key_cmd) {
+            switch (keyCmd) {
             case 0xa0: // Collection 6.2.2.4 (Main)
                 collectionLevel++;
                 break;
@@ -206,40 +206,40 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * 1 when finished processing descriptor.
      * -1 on a malformed report.
      */
-    private static int get_next_hid_usage(byte[] reportDescriptor, int size, HidUsageIterator ctx, int[] usagePage, int[] usage) {
-        int[] data_len = new int[1], key_size = new int[1];
+    private static int getNextHidUsage(byte[] reportDescriptor, int size, HidUsageIterator ctx, int[] usagePage, int[] usage) {
+        int[] dataLen = new int[1], keySize = new int[1];
         boolean initial = ctx.pos[0] == 0; // Used to handle case where no top-level application collection is defined
 
         int usageFound = 0;
 
         while (ctx.pos[0] < size) {
             int key = reportDescriptor[ctx.pos[0]];
-            int key_cmd = key & 0xfc;
+            int keyCmd = key & 0xfc;
 
-            // Determine data_len and key_size
-            if (get_hid_item_size(reportDescriptor, size, ctx.pos[0], data_len, key_size) == 0)
+            // Determine dataLen and keySize
+            if (getHidItemSize(reportDescriptor, size, ctx.pos[0], dataLen, keySize) == 0)
                 return -1; // malformed report
 
-            switch (key_cmd) {
+            switch (keyCmd) {
             case 0x4: // Usage Page 6.2.2.7 (Global)
-                ctx.usagePage = get_hid_report_bytes(reportDescriptor, size, data_len[0], ctx.pos[0]);
+                ctx.usagePage = getHidReportBytes(reportDescriptor, size, dataLen[0], ctx.pos[0]);
                 ctx.usagePageFound = 1;
                 break;
 
             case 0x8: // Usage 6.2.2.8 (Local)
-                if (data_len[0] == 4) { // Usages 5.5 / Usage Page 6.2.2.7
-                    ctx.usagePage = get_hid_report_bytes(reportDescriptor, size, 2, ctx.pos[0] + 2);
+                if (dataLen[0] == 4) { // Usages 5.5 / Usage Page 6.2.2.7
+                    ctx.usagePage = getHidReportBytes(reportDescriptor, size, 2, ctx.pos[0] + 2);
                     ctx.usagePageFound = 1;
-                    usage[0] = get_hid_report_bytes(reportDescriptor, size, 2, ctx.pos[0]);
+                    usage[0] = getHidReportBytes(reportDescriptor, size, 2, ctx.pos[0]);
                     usageFound = 1;
                 } else {
-                    usage[0] = get_hid_report_bytes(reportDescriptor, size, data_len[0], ctx.pos[0]);
+                    usage[0] = getHidReportBytes(reportDescriptor, size, dataLen[0], ctx.pos[0]);
                     usageFound = 1;
                 }
                 break;
 
             case 0xa0: // Collection 6.2.2.4 (Main)
-                if (hid_iterate_over_collection(reportDescriptor, size, ctx.pos, data_len, key_size) == 0) {
+                if (hidIterateOverCollection(reportDescriptor, size, ctx.pos, dataLen, keySize) == 0) {
                     return -1;
                 }
 
@@ -253,7 +253,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             }
 
             // Skip over this key and its associated data
-            ctx.pos[0] += data_len[0] + key_size[0];
+            ctx.pos[0] += dataLen[0] + keySize[0];
         }
 
         // If no top-level application collection is found and usage page/usage pair is found, pair is valid
@@ -270,12 +270,12 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * Retrieves the hidraw report descriptor from a file.
      * When using this form, <sysfs_path>/device/report_descriptor, elevated privileges are not required.
      */
-    private static int get_hid_report_descriptor(String rptPath, hidraw_report_descriptor rptDesc) throws IOException {
-        int rpt_handle;
+    private static int getHidReportDescriptor(String rptPath, hidraw_report_descriptor rptDesc) throws IOException {
+        int rptHandle;
         int res;
 
-        rpt_handle = LinuxIO.INSTANCE.open(rptPath, O_RDONLY | O_CLOEXEC);
-        if (rpt_handle < 0) {
+        rptHandle = LinuxIO.INSTANCE.open(rptPath, O_RDONLY | O_CLOEXEC);
+        if (rptHandle < 0) {
             throw new IOException(String.format("create failed (%s): %s", rptPath, Native.getLastError()));
         }
 
@@ -284,27 +284,27 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         // be ok when reading the descriptor.
         // In practice if the HID descriptor is any larger I suspect many other things will break.
         Memory memory = new Memory(HID_MAX_DESCRIPTOR_SIZE);
-        res = LinuxIO.INSTANCE.read(rpt_handle, memory, new NativeLong(HID_MAX_DESCRIPTOR_SIZE)).intValue();
+        res = LinuxIO.INSTANCE.read(rptHandle, memory, new NativeLong(HID_MAX_DESCRIPTOR_SIZE)).intValue();
         if (res < 0) {
             throw new IOException(String.format("read failed (%s): %s", rptPath, Native.getLastError()));
         }
         memory.read(0, rptDesc.value, 0, res);
         rptDesc.size = res;
 
-        LinuxIO.INSTANCE.close(rpt_handle);
+        LinuxIO.INSTANCE.close(rptHandle);
         return (int) res;
     }
 
     /* return size of the descriptor, or -1 on failure */
-    private static int get_hid_report_descriptor_from_sysfs(String sysfsPath, hidraw_report_descriptor rptDesc) throws IOException {
+    private static int getHidReportDescriptorFromSysfs(String sysfsPath, hidraw_report_descriptor rptDesc) throws IOException {
         /* Con<sysfsPath>/device/report_descriptor */
-        String rpt_path = String.format("%s/device/report_descriptor", sysfsPath);
+        String rptPath = String.format("%s/device/report_descriptor", sysfsPath);
 
-        return get_hid_report_descriptor(rpt_path, rptDesc);
+        return getHidReportDescriptor(rptPath, rptDesc);
     }
 
     /** return non-zero if successfully parsed */
-    private boolean parse_hid_vid_pid_from_uevent(String uevent, int[] busType, short[] vendorId, short[] productId) {
+    private static boolean parseHidVidPidFromUevent(String uevent, int[] busType, short[] vendorId, short[] productId) {
 
         Scanner s = new Scanner(uevent);
         while (s.hasNextLine()) {
@@ -335,7 +335,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
     }
 
     /** return non-zero if successfully parsed */
-    private boolean parse_hid_vid_pid_from_uevent_path(String ueventPath, int[] busType, short[] vendorId, short[] productId) throws IOException {
+    private static boolean parseHidVidPidFromUeventPath(String ueventPath, int[] busType, short[] vendorId, short[] productId) throws IOException {
         int handle;
         int res;
 
@@ -352,24 +352,24 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             throw new IOException(String.format("read failed (%s): %s", ueventPath, Native.getLastError()));
         }
 
-        return parse_hid_vid_pid_from_uevent(new String(buf.getByteArray(0, res)), busType, vendorId, productId);
+        return parseHidVidPidFromUevent(new String(buf.getByteArray(0, res)), busType, vendorId, productId);
     }
 
     /** return non-zero if successfully read/parsed */
-    private boolean parse_hid_vid_pid_from_sysfs(String sysfsPath, int[] busType, short[] vendorId, short[] productId) throws IOException {
+    private boolean parseHidVidPidFromSysfs(String sysfsPath, int[] busType, short[] vendorId, short[] productId) throws IOException {
         // Con<sysfsPath>/device/uevent
-        String uevent_path = String.format("%s/device/uevent", sysfsPath);
+        String ueventPath = String.format("%s/device/uevent", sysfsPath);
 
-        return parse_hid_vid_pid_from_uevent_path(uevent_path, busType, vendorId, productId);
+        return parseHidVidPidFromUeventPath(ueventPath, busType, vendorId, productId);
     }
 
     /**
      * The caller is responsible for free()ing the (newly-allocated) character
      * strings pointed to by serialNumber and productName after use.
      */
-    private static boolean parse_uevent_info(String uevent, int[] bus_type,
-                                             short[] vendorId, short[] productId,
-                                             String[] serialNumber, String[] productName) {
+    private static boolean parseUeventInfo(String uevent, int[] busType,
+                                           short[] vendorId, short[] productId,
+                                           String[] serialNumber, String[] productName) {
         if (uevent == null) {
             return false;
         }
@@ -396,7 +396,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
                 String[] ret = value.split(":");
                 if (ret.length == 3) {
                     foundId = true;
-                    bus_type[0] = Integer.decode(ret[0]);
+                    busType[0] = Integer.decode(ret[0]);
                     vendorId[0] = Short.decode(ret[1]);
                     productId[0] = Short.decode(ret[2]);
                 }
@@ -421,11 +421,12 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
      * Get an attribute value from a udev_device and return it as a whar_t
      * string. The returned string must be freed with free() when done.
      */
-    private static String copy_udev_string(Udev.UdevDevice dev, String udevName) {
+    private static String copyUdevString(Udev.UdevDevice dev, String udevName) {
         return Udev.INSTANCE.udev_device_get_sysattr_value(dev, udevName);
     }
 
-    static HidDevice.Info create_device_info_for_device(Udev.UdevDevice rawDev) throws IOException {
+    /** */
+    static HidDevice.Info createDeviceInfoForDevice(Udev.UdevDevice rawDev) throws IOException {
         List<HidDevice.Info> root = new ArrayList<>();
 
         Udev.UdevDevice usbDev; // The device's USB udev node.
@@ -448,10 +449,10 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         short[] devPid = new short[1];
         String[] serialNumber = new String[1];
         String[] productName = new String[1];
-        int[] bus_type = new int[1];
-        boolean result = parse_uevent_info(
+        int[] busType = new int[1];
+        boolean result = parseUeventInfo(
                 Udev.INSTANCE.udev_device_get_sysattr_value(hidDev, "uevent"),
-                bus_type,
+                busType,
                 devVid,
                 devPid,
                 serialNumber,
@@ -461,7 +462,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         }
 
         // Filter out unhandled devices right away
-        switch (HidDevice.Info.HidBusType.values()[bus_type[0]]) {
+        switch (HidDevice.Info.HidBusType.values()[busType[0]]) {
         case BUS_BLUETOOTH:
         case BUS_I2C:
         case BUS_USB:
@@ -469,7 +470,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             break;
 
         default:
-            throw new IllegalArgumentException("unknown bus type: " + bus_type[0]);
+            throw new IllegalArgumentException("unknown bus type: " + busType[0]);
         }
 
         // Create the record.
@@ -491,7 +492,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         // Interface Number
         curDev.interfaceNumber = -1;
 
-        switch (HidDevice.Info.HidBusType.values()[bus_type[0]]) {
+        switch (HidDevice.Info.HidBusType.values()[busType[0]]) {
         case BUS_USB:
             // The device pointed to by rawDev contains information about
             // the hidraw device. In order to get information about the
@@ -514,8 +515,8 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
                 break;
             }
 
-            curDev.manufacturer = copy_udev_string(usbDev, "manufacturer");
-            curDev.product = copy_udev_string(usbDev, "product");
+            curDev.manufacturer = copyUdevString(usbDev, "manufacturer");
+            curDev.product = copyUdevString(usbDev, "product");
 
             curDev.busType = BUS_USB;
 
@@ -564,23 +565,23 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
         }
 
         // Usage Page and Usage
-        int res = get_hid_report_descriptor_from_sysfs(sysfsPath, reportDesc);
+        int res = getHidReportDescriptorFromSysfs(sysfsPath, reportDesc);
         if (res >= 0) {
             int[] page = new int[1], usage = new int[1];
-            HidUsageIterator usage_iterator = new HidUsageIterator();
+            HidUsageIterator usageIterator = new HidUsageIterator();
 
             // Parse the first usage and usage page
             // out of the report descriptor.
-            if (get_next_hid_usage(reportDesc.value, reportDesc.size, usage_iterator, page, usage) == 0) {
+            if (getNextHidUsage(reportDesc.value, reportDesc.size, usageIterator, page, usage) == 0) {
                 curDev.usagePage = page[0];
                 curDev.usage = usage[0];
             }
 
             // Parse any additional usage and usage pages
             // out of the report descriptor.
-            while (get_next_hid_usage(reportDesc.value, reportDesc.size, usage_iterator, page, usage) == 0) {
+            while (getNextHidUsage(reportDesc.value, reportDesc.size, usageIterator, page, usage) == 0) {
                 // Create new record for additional usage pairs
-                HidDevice.Info prev_dev = curDev;
+                HidDevice.Info prevDev = curDev;
 
                 curDev = new HidDevice.Info();
 
@@ -588,14 +589,14 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
                 curDev.path = devPath;
                 curDev.vendorId = devVid[0];
                 curDev.productId = devPid[0];
-                curDev.serialNumber = prev_dev.serialNumber != null ? prev_dev.serialNumber : null;
-                curDev.releaseNumber = prev_dev.releaseNumber;
-                curDev.interfaceNumber = prev_dev.interfaceNumber;
-                curDev.manufacturer = prev_dev.manufacturer != null ? prev_dev.manufacturer : null;
-                curDev.product = prev_dev.product != null ? prev_dev.product : null;
+                curDev.serialNumber = prevDev.serialNumber != null ? prevDev.serialNumber : null;
+                curDev.releaseNumber = prevDev.releaseNumber;
+                curDev.interfaceNumber = prevDev.interfaceNumber;
+                curDev.manufacturer = prevDev.manufacturer != null ? prevDev.manufacturer : null;
+                curDev.product = prevDev.product != null ? prevDev.product : null;
                 curDev.usagePage = page[0];
                 curDev.usage = usage[0];
-                curDev.busType = prev_dev.busType;
+                curDev.busType = prevDev.busType;
 
                 root.add(curDev);
             }
@@ -678,7 +679,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
                 continue;
 
             if (vendorId != 0 || productId != 0) {
-                if (!parse_hid_vid_pid_from_sysfs(sysfsPath, busType, devVid, devPid))
+                if (!parseHidVidPidFromSysfs(sysfsPath, busType, devVid, devPid))
                     continue;
 
                 if (vendorId != 0 && vendorId != devVid[0])
@@ -691,7 +692,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
             if (rawDev == null)
                 continue;
 
-            root.add(create_device_info_for_device(rawDev));
+            root.add(createDeviceInfoForDevice(rawDev));
 
             Udev.INSTANCE.udev_device_unref(rawDev);
         }

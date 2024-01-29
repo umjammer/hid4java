@@ -28,44 +28,44 @@
  * OF SUCH DAMAGE.
  */
 
-package org.hid4java;
+package org.hid4java.macos;
 
 
 /**
  * @see "https://github.com/nyholku/purejavahidapi/blob/f769fcddf62503cff554e646587c92350ca664e5/src/purejavahidapi/shared/SyncPoint.java"
  */
-public class SyncPoint {
+class SyncPoint {
 
-    int m_TripCount;
-    int m_Count;
-    boolean m_Tripped;
-    final Object m_Mutex = new Object();
+    private final int tripCount;
+    private int count;
+    private boolean tripped;
+    private final Object mutex = new Object();
 
     public SyncPoint(int tripCount) {
-        m_TripCount = tripCount;
+        this.tripCount = tripCount;
     }
 
     public boolean waitAndSync() {
-        synchronized (m_Mutex) {
-            if (m_Tripped)
+        synchronized (mutex) {
+            if (tripped)
                 throw new IllegalStateException();
-            m_Count++;
-            if (m_Count >= m_TripCount) {
-                m_Tripped = true;
-                m_Count--;
-                m_Mutex.notifyAll();
+            count++;
+            if (count >= tripCount) {
+                tripped = true;
+                count--;
+                mutex.notifyAll();
                 return true;
             } else {
-                while (!m_Tripped) {
+                while (!tripped) {
                     try {
-                        m_Mutex.wait();
-                    } catch (InterruptedException ie) {
+                        mutex.wait();
+                    } catch (InterruptedException ignored) {
                     }
                 }
 
-                m_Count--;
-                if (m_Count <= 0)
-                    m_Tripped = false;
+                count--;
+                if (count <= 0)
+                    tripped = false;
                 return false;
             }
         }

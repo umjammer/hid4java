@@ -46,7 +46,7 @@ import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
 import static com.sun.jna.platform.win32.WinError.ERROR_IO_PENDING;
 import static net.java.games.input.windows.WinAPI.IOCTL_HID_GET_FEATURE;
 import static net.java.games.input.windows.WinAPI.IOCTL_HID_GET_INPUT_REPORT;
-import static org.hid4java.windows.DescriptorReconstructor.hid_winapi_descriptor_reconstruct_pp_data;
+import static org.hid4java.windows.DescriptorReconstructor.hidWinapiDescriptorReconstructPpData;
 
 
 /**
@@ -57,36 +57,36 @@ import static org.hid4java.windows.DescriptorReconstructor.hid_winapi_descriptor
  */
 public class WindowsHidDevice implements NativeHidDevice {
 
-    HANDLE device_handle;
-    boolean blocking;
-    short output_report_length;
-    byte[] write_buf;
-    int input_report_length;
-    short feature_report_length;
-    byte[] feature_buf;
-    boolean read_pending;
-    byte[] read_buf;
-    OVERLAPPED ol;
-    OVERLAPPED write_ol;
-    HidDevice.Info device_info;
+    HANDLE deviceHandle;
+    private final boolean blocking;
+    short outputReportLength;
+    private byte[] writeBuf;
+    short featureReportLength;
+    int inputReportLength;
+    private byte[] featureBuf;
+    private boolean readPending;
+    byte[] readBuf;
+    private OVERLAPPED ol;
+    private OVERLAPPED writeOl;
+    HidDevice.Info deviceInfo;
 
     private ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     WindowsHidDevice() {
-        this.device_handle = INVALID_HANDLE_VALUE;
+        this.deviceHandle = INVALID_HANDLE_VALUE;
         this.blocking = true;
-        this.output_report_length = 0;
-        this.write_buf = null;
-        this.input_report_length = 0;
-        this.feature_report_length = 0;
-        this.feature_buf = null;
-        this.read_pending = false;
-        this.read_buf = null;
+        this.outputReportLength = 0;
+        this.writeBuf = null;
+        this.inputReportLength = 0;
+        this.featureReportLength = 0;
+        this.featureBuf = null;
+        this.readPending = false;
+        this.readBuf = null;
         this.ol = new OVERLAPPED();
         this.ol.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false /*initial state f=nonsignaled*/, null);
-        this.write_ol = new OVERLAPPED();
-        this.write_ol.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false /*initial state f=nonsignaled*/, null);
-        this.device_info = null;
+        this.writeOl = new OVERLAPPED();
+        this.writeOl.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false /*initial state f=nonsignaled*/, null);
+        this.deviceInfo = null;
     }
 
     @Override
@@ -106,17 +106,14 @@ public class WindowsHidDevice implements NativeHidDevice {
     public void close() {
         ses.shutdownNow();
 
-        Kernel32Ex.INSTANCE.CancelIo(this.device_handle);
+        Kernel32Ex.INSTANCE.CancelIo(this.deviceHandle);
     }
 
     @Override
     public int write(byte[] data, int len, byte reportId) throws IOException {
-        IntByReference bytes_written = new IntByReference();
-        int function_result = -1;
-        boolean res;
+        IntByReference bytesWritten = new IntByReference();
+        int functionResult = -1;
         boolean overlapped = false;
-
-        byte[] buf;
 
         if (data == null || len == 0) {
             throw new IllegalArgumentException("Zero buffer/length");
@@ -128,19 +125,20 @@ public class WindowsHidDevice implements NativeHidDevice {
         // which is shorter than that. Windows gives us this value in
         // caps.OutputReportByteLength. If a user passes in fewer bytes than this,
         // use cached temporary buffer which is the proper size.
-        if (len >= this.output_report_length) {
+        byte[] buf;
+        if (len >= this.outputReportLength) {
             // The user passed the right number of bytes. Use the buffer as-is.
             buf = new byte[data.length];
         } else {
-            if (this.write_buf == null)
-                this.write_buf = new byte[this.output_report_length];
-            buf = this.write_buf;
+            if (this.writeBuf == null)
+                this.writeBuf = new byte[this.outputReportLength];
+            buf = this.writeBuf;
             System.arraycopy(data, 0, buf, 0, len);
-            Arrays.fill(buf, len, this.output_report_length, (byte) 0);
-            len = this.output_report_length;
+            Arrays.fill(buf, len, this.outputReportLength, (byte) 0);
+            len = this.outputReportLength;
         }
 
-        res = Kernel32.INSTANCE.WriteFile(this.device_handle, buf, len, null, this.write_ol);
+        boolean res = Kernel32.INSTANCE.WriteFile(this.deviceHandle, buf, len, null, this.writeOl);
         if (!res) {
             if (Native.getLastError() != ERROR_IO_PENDING) {
                 /* WriteFile() failed. Return error. */
@@ -152,16 +150,16 @@ public class WindowsHidDevice implements NativeHidDevice {
         if (overlapped) {
             // Wait for the transaction to complete. This makes
             // hid_write() synchronous.
-            int result = Kernel32.INSTANCE.WaitForSingleObject(this.write_ol.hEvent, 1000);
+            int result = Kernel32.INSTANCE.WaitForSingleObject(this.writeOl.hEvent, 1000);
             if (result != Kernel32.WAIT_OBJECT_0) {
                 // There was a Timeout.
                 throw new IOException("hid_write/WaitForSingleObject");
             }
 
             /* Get the result. */
-            res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.device_handle, this.write_ol.getPointer(), bytes_written, /* wait */ false);
+            res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.deviceHandle, this.writeOl.getPointer(), bytesWritten, /* wait */ false);
             if (res) {
-                function_result = bytes_written.getValue();
+                functionResult = bytesWritten.getValue();
             }
             else {
                 /* The Write operation failed. */
@@ -169,12 +167,12 @@ public class WindowsHidDevice implements NativeHidDevice {
             }
         }
 
-        return function_result;
+        return functionResult;
     }
 
     int read(byte[] data, int length) throws IOException {
-        IntByReference bytes_read = new IntByReference();
-        int copy_len = 0;
+        IntByReference bytesRead = new IntByReference();
+        int copyLen = 0;
         boolean res = false;
         boolean overlapped = false;
 
@@ -185,19 +183,19 @@ public class WindowsHidDevice implements NativeHidDevice {
         // Copy the handle for convenience.
         HANDLE ev = this.ol.hEvent;
 
-        if (!this.read_pending) {
+        if (!this.readPending) {
             // Start an Overlapped I/O read.
-            this.read_pending = true;
-            Arrays.fill(this.read_buf, 0, this.input_report_length, (byte) 0);
+            this.readPending = true;
+            Arrays.fill(this.readBuf, 0, this.inputReportLength, (byte) 0);
             Kernel32Ex.INSTANCE.ResetEvent(ev);
-            res = Kernel32Ex.INSTANCE.ReadFile(this.device_handle, this.read_buf, this.input_report_length, bytes_read, this.ol);
+            res = Kernel32Ex.INSTANCE.ReadFile(this.deviceHandle, this.readBuf, this.inputReportLength, bytesRead, this.ol);
 
             if (!res) {
                 if (Native.getLastError() != ERROR_IO_PENDING) {
                     // ReadFile() has failed.
 				    // Clean up and return error.
-                    Kernel32Ex.INSTANCE.CancelIo(this.device_handle);
-                    this.read_pending = false;
+                    Kernel32Ex.INSTANCE.CancelIo(this.deviceHandle);
+                    this.readPending = false;
                     throw new IOException("ReadFile");
                 }
                 overlapped = true;
@@ -212,38 +210,38 @@ public class WindowsHidDevice implements NativeHidDevice {
             // Either WaitForSingleObject() told us that ReadFile has completed, or
 		    // we are in non-blocking mode. Get the number of bytes read. The actual
 		    // data has been copied to the data[] array which was passed to ReadFile().
-            res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.device_handle, this.ol.getPointer(), bytes_read, true /* wait */);
+            res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.deviceHandle, this.ol.getPointer(), bytesRead, true /* wait */);
         }
         // Set pending back to false, even if GetOverlappedResult() returned error.
-        this.read_pending = false;
+        this.readPending = false;
 
-        if (res && bytes_read.getValue() > 0) {
-            if (this.read_buf[0] == 0x0) {
+        if (res && bytesRead.getValue() > 0) {
+            if (this.readBuf[0] == 0x0) {
                 // If report numbers aren't being used, but Windows sticks a report
                 // number (0x0) on the beginning of the report anyway. To make this
                 // work like the other platforms, and to make it work more like the
                 // HID spec, we'll skip over this byte. */
-                bytes_read.setValue(bytes_read.getValue() - 1);
-                copy_len = Math.min(length, bytes_read.getValue());
-                System.arraycopy(this.read_buf, 1, data, 0, copy_len);
+                bytesRead.setValue(bytesRead.getValue() - 1);
+                copyLen = Math.min(length, bytesRead.getValue());
+                System.arraycopy(this.readBuf, 1, data, 0, copyLen);
             }
             else {
                 /* Copy the whole buffer, report number and all. */
-                copy_len = Math.min(length, bytes_read.getValue());
-                System.arraycopy(this.read_buf, 0, data, 0, copy_len);
+                copyLen = Math.min(length, bytesRead.getValue());
+                System.arraycopy(this.readBuf, 0, data, 0, copyLen);
             }
         }
         if (!res) {
             throw new IOException("hid_read_timeout/GetOverlappedResult");
         }
 
-        return copy_len;
+        return copyLen;
     }
 
     @Override
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
         // We could use HidD_GetFeature() instead, but it doesn't give us an actual length, unfortunately
-        return hid_get_report(IOCTL_HID_GET_FEATURE, data, data.length);
+        return hidGetReport(IOCTL_HID_GET_FEATURE, data, data.length);
     }
 
     @Override
@@ -259,20 +257,20 @@ public class WindowsHidDevice implements NativeHidDevice {
         // and HidD_SetFeature() silently truncates the data sent in the report
         // to caps.FeatureReportByteLength.
         byte[] buf;
-        int length_to_send;
-        if (data.length >= this.feature_report_length) {
+        int lengthToSend;
+        if (data.length >= this.featureReportLength) {
             buf = new byte[data.length];
-            length_to_send = data.length;
+            lengthToSend = data.length;
         } else {
-            if (this.feature_buf == null)
-                this.feature_buf = new byte[this.feature_report_length];
-            buf = this.feature_buf;
+            if (this.featureBuf == null)
+                this.featureBuf = new byte[this.featureReportLength];
+            buf = this.featureBuf;
             System.arraycopy(data, 0, buf, 0, data.length);
-            Arrays.fill(buf, data.length, this.feature_report_length, (byte) 0);
-            length_to_send = this.feature_report_length;
+            Arrays.fill(buf, data.length, this.featureReportLength, (byte) 0);
+            lengthToSend = this.featureReportLength;
         }
 
-        boolean res = Hid.INSTANCE.HidD_SetFeature(this.device_handle, buf, length_to_send);
+        boolean res = Hid.INSTANCE.HidD_SetFeature(this.deviceHandle, buf, lengthToSend);
         if (!res) {
             throw new IOException("HidD_SetFeature");
         }
@@ -280,7 +278,7 @@ public class WindowsHidDevice implements NativeHidDevice {
         return data.length;
     }
 
-    private int hid_get_report(int report_type, byte[] data, int length) throws IOException {
+    private int hidGetReport(int reportType, byte[] data, int length) throws IOException {
 
         if (data == null || length == 0) {
             throw new IllegalArgumentException("Zero buffer/length");
@@ -288,13 +286,13 @@ public class WindowsHidDevice implements NativeHidDevice {
 
         Memory m = new Memory(length);
         m.write(0, data, 0, length);
-        IntByReference bytes_returned = new IntByReference();
+        IntByReference bytesReturned = new IntByReference();
         OVERLAPPED ol = new OVERLAPPED();
-        boolean res = Kernel32.INSTANCE.DeviceIoControl(this.device_handle,
-                report_type,
+        boolean res = Kernel32.INSTANCE.DeviceIoControl(this.deviceHandle,
+                reportType,
                 m, length,
                 m, length,
-                bytes_returned, ol.getPointer());
+                bytesReturned, ol.getPointer());
 
         if (!res) {
             if (Native.getLastError() != ERROR_IO_PENDING) {
@@ -305,35 +303,35 @@ public class WindowsHidDevice implements NativeHidDevice {
 
         // Wait here until to write is done. This makes
 	    // hid_get_feature_report() synchronous.
-        res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.device_handle, ol.getPointer(), bytes_returned, /* wait */ true);
+        res = Kernel32Ex.INSTANCE.GetOverlappedResult(this.deviceHandle, ol.getPointer(), bytesReturned, /* wait */ true);
         if (!res) {
             // The operation failed.
             throw new IOException("Get Input/Feature Report GetOverLappedResult");
         }
 
         // When numbered reports aren't used,
-	    // bytes_returned seem to include only what is actually received from the device
+	    // bytesReturned seem to include only what is actually received from the device
 	    // (not including the first byte with 0, as an indication "no numbered reports").
         if (data[0] == 0x0) {
-            bytes_returned.setValue(bytes_returned.getValue() + 1);
+            bytesReturned.setValue(bytesReturned.getValue() + 1);
         }
 
-        return bytes_returned.getValue();
+        return bytesReturned.getValue();
     }
 
     @Override
     public int getReportDescriptor(byte[] report) throws IOException {
 
-        PointerByReference /* PHIDP_PREPARSED_DATA */ pp_data = new PointerByReference();
+        PointerByReference /* PHIDP_PREPARSED_DATA */ ppData = new PointerByReference();
 
         // TODO purejavahidapi uses DeviceIoControl that returns raw descriptor, so no need to reconstruct
-        if (!Hid.INSTANCE.HidD_GetPreparsedData(this.device_handle, pp_data) || pp_data.getValue() == Pointer.NULL) {
+        if (!Hid.INSTANCE.HidD_GetPreparsedData(this.deviceHandle, ppData) || ppData.getValue() == Pointer.NULL) {
             throw new IOException("HidD_GetPreparsedData");
         }
 
-        int res = hid_winapi_descriptor_reconstruct_pp_data(pp_data.getValue(), report, report.length);
+        int res = hidWinapiDescriptorReconstructPpData(ppData.getValue(), report, report.length);
 
-        Hid.INSTANCE.HidD_FreePreparsedData(pp_data.getValue());
+        Hid.INSTANCE.HidD_FreePreparsedData(ppData.getValue());
 
         return res;
     }
@@ -341,6 +339,6 @@ public class WindowsHidDevice implements NativeHidDevice {
     @Override
     public int getInputReport(byte[] data, byte reportId) throws IOException {
         // We could use HidD_GetInputReport() instead, but it doesn't give us an actual length, unfortunately
-        return hid_get_report(IOCTL_HID_GET_INPUT_REPORT, data, data.length);
+        return hidGetReport(IOCTL_HID_GET_INPUT_REPORT, data, data.length);
     }
 }

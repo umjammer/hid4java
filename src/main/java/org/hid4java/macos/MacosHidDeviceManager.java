@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ShortByReference;
 import org.hid4java.HidDevice;
@@ -84,7 +83,7 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     static final boolean is_macos_10_10_or_greater = kCFCoreFoundationVersionNumber >= 1151.16;
 
     /** */
-    private int /* IOOptionBits */ device_open_options = 0;
+    private int /* IOOptionBits */ deviceOpenOptions = 0;
 
     /**
      * Changes the behavior of all further calls to {@link #create(int, int, String)} or {@link NativeHidDeviceManager#create(HidDevice.Info)}.
@@ -99,7 +98,7 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
      * @since hidapi 0.12.0
      */
     private void hid_darwin_set_open_exclusive(boolean openExclusive) {
-        device_open_options = !openExclusive ? kIOHIDOptionsTypeNone : kIOHIDOptionsTypeSeizeDevice;
+        deviceOpenOptions = !openExclusive ? kIOHIDOptionsTypeNone : kIOHIDOptionsTypeSeizeDevice;
     }
 
     /**
@@ -248,7 +247,7 @@ logger.fine("device null: " + devices[i]);
             }
 
             IOHIDDevice nativeDevice = new IOHIDDevice(dev);
-            List<HidDevice.Info> infos = nativeDevice.create_device_info();
+            List<HidDevice.Info> infos = nativeDevice.createDeviceInfo();
             if (infos.isEmpty()) {
 logger.fine("empty");
                 continue;
@@ -280,7 +279,7 @@ logger.finest("here00.1: devices: cached: " + device);
             return device;
         }
 
-        device = new MacosHidDevice(device_open_options);
+        device = new MacosHidDevice(deviceOpenOptions);
         device.deviceInfo = info;
 
         device.closer = devices::remove;
