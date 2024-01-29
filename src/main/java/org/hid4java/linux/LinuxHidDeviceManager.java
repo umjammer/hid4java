@@ -22,7 +22,6 @@
 
 package org.hid4java.linux;
 
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +36,7 @@ import com.sun.jna.ptr.IntByReference;
 import net.java.games.input.linux.LinuxIO;
 import net.java.games.input.linux.LinuxIO.hidraw_report_descriptor;
 import org.hid4java.HidDevice;
+import org.hid4java.HidServicesSpecification;
 import org.hid4java.NativeHidDevice;
 import org.hid4java.NativeHidDeviceManager;
 
@@ -52,12 +52,14 @@ import static org.hid4java.HidDevice.Info.HidBusType.BUS_USB;
 
 
 /**
- * WindowsHidDeviceManager.
+ * LinuxHidDeviceManager.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-31 nsano initial version <br>
  */
 public class LinuxHidDeviceManager implements NativeHidDeviceManager {
+
+    private HidServicesSpecification specification;
 
     /**
      * Gets the size of the HID item at the given position
@@ -606,7 +608,8 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void open() {
+    public void open(HidServicesSpecification specification) {
+        this.specification = specification;
     }
 
     @Override
@@ -714,7 +717,7 @@ public class LinuxHidDeviceManager implements NativeHidDeviceManager {
 
     @Override
     public NativeHidDevice create(HidDevice.Info info) throws IOException {
-        LinuxHidDevice dev = new LinuxHidDevice();
+        LinuxHidDevice dev = new LinuxHidDevice(specification);
 
         dev.deviceHandle = LinuxIO.INSTANCE.open(info.path, O_RDWR | O_CLOEXEC);
 

@@ -41,6 +41,7 @@ import net.java.games.input.windows.WinAPI.HIDD_ATTRIBUTES;
 import net.java.games.input.windows.WinAPI.HIDP_CAPS;
 import net.java.games.input.windows.WinAPI.Hid;
 import org.hid4java.HidDevice;
+import org.hid4java.HidServicesSpecification;
 import org.hid4java.NativeHidDevice;
 import org.hid4java.NativeHidDeviceManager;
 
@@ -79,6 +80,8 @@ import static org.hid4java.HidDevice.Info.HidBusType.BUS_USB;
  * @version 0.00 2023-10-31 nsano initial version <br>
  */
 public class WindowsHidDeviceManager implements NativeHidDeviceManager {
+
+    private HidServicesSpecification specification;
 
     /** @return nullable */
     private static byte[] hidInternalGetDevnodeProperty(int /* DEVINST */ devNode, DEVPROPKEY propertyKey, int /* DEVPROPTYPE */ expectedPropertyType) {
@@ -377,7 +380,8 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void open() {
+    public void open(HidServicesSpecification specification) {
+        this.specification = specification;
     }
 
     @Override
@@ -539,7 +543,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
                 throw new IOException("HidP_GetCaps");
             }
 
-            WindowsHidDevice dev = new WindowsHidDevice();
+            WindowsHidDevice dev = new WindowsHidDevice(specification);
 
             dev.deviceHandle = deviceHandle;
             deviceHandle = INVALID_HANDLE_VALUE;

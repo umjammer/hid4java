@@ -27,8 +27,6 @@ package org.hid4java;
 
 import java.util.EventListener;
 
-import org.hid4java.event.HidServicesEvent;
-
 
 /**
  * Interface to provide the following to API consumers:
@@ -53,18 +51,4 @@ public interface HidServicesListener extends EventListener {
      * @param event The event
      */
     void hidDeviceDetached(HidServicesEvent event);
-
-    /**
-     * A HID failure occurred (enumeration, data transfer etc)
-     *
-     * @param event The event
-     */
-    void hidFailure(HidServicesEvent event);
-
-    /**
-     * A HID input data buffer was populated
-     *
-     * @param event The event
-     */
-    void hidDataReceived(HidServicesEvent event);
 }

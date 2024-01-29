@@ -39,6 +39,7 @@ import com.sun.jna.ptr.PointerByReference;
 import net.java.games.input.windows.WinAPI.Hid;
 import net.java.games.input.windows.WinAPI.Kernel32Ex;
 import org.hid4java.HidDevice;
+import org.hid4java.HidServicesSpecification;
 import org.hid4java.InputReportEvent;
 import org.hid4java.NativeHidDevice;
 
@@ -70,9 +71,15 @@ public class WindowsHidDevice implements NativeHidDevice {
     private OVERLAPPED writeOl;
     HidDevice.Info deviceInfo;
 
-    private ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private final HidServicesSpecification specification;
 
-    WindowsHidDevice() {
+    /** for input event */
+    private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+
+    /** for reuse */
+    private final byte[] inputBuffer = new byte[64];
+
+    WindowsHidDevice(HidServicesSpecification specification) {
         this.deviceHandle = INVALID_HANDLE_VALUE;
         this.blocking = true;
         this.outputReportLength = 0;
@@ -87,19 +94,20 @@ public class WindowsHidDevice implements NativeHidDevice {
         this.writeOl = new OVERLAPPED();
         this.writeOl.hEvent = Kernel32.INSTANCE.CreateEvent(null, false, false /*initial state f=nonsignaled*/, null);
         this.deviceInfo = null;
+
+        this.specification = specification;
     }
 
     @Override
     public void open() {
         ses.schedule(() -> {
             try {
-                byte[] b = new byte[64]; // TODO reuse
-                int r = read(b, b.length);
-                fireOnInputReport(new InputReportEvent(this, b[0], b, r));
+                int r = read(inputBuffer, inputBuffer.length);
+                fireOnInputReport(new InputReportEvent(this, inputBuffer[0], inputBuffer, r));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, 20, TimeUnit.MILLISECONDS); // TODO interval
+        }, specification.getScanInterval(), TimeUnit.MILLISECONDS);
     }
 
     @Override

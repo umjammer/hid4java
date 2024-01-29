@@ -44,9 +44,9 @@ public class HidDevice {
 
     private static final Logger logger = Logger.getLogger(HidDevice.class.getName());
 
-    private final HidDeviceManager manager;
-    private Info info;
-    private NativeHidDevice nativeDevice;
+    private final Runnable afterWrite;
+    private final Info info;
+    private final NativeHidDevice nativeDevice;
 
     private boolean isOpen;
 
@@ -149,21 +149,14 @@ public class HidDevice {
         }
     }
 
-    private final boolean autoDataRead;
-    private final int dataReadInterval;
-
     /**
-     * @param info                  The HID device info structure providing details
-     * @param deviceManager         The HID device manager providing access to device enumeration for post IO scanning
-     * @param servicesSpecification The HID services specification providing configuration details
+     * @param info          The HID device info structure providing details
+     * @param afterWrite The HID device afterWrite providing access to device enumeration for post IO scanning
      * @since 0.1.0
      */
-    public HidDevice(Info info, org.hid4java.HidDeviceManager deviceManager, HidServicesSpecification servicesSpecification) throws IOException {
+    public HidDevice(Info info, NativeHidDevice nativeDevice, Runnable afterWrite) throws IOException {
 
-        this.manager = deviceManager;
-
-        this.dataReadInterval = servicesSpecification.getDataReadInterval();
-        this.autoDataRead = servicesSpecification.isAutoDataRead();
+        this.afterWrite = afterWrite;
 
         this.info = info;
 
@@ -174,7 +167,7 @@ public class HidDevice {
         this.info.vendorId = this.info.vendorId & 0xffff;
         this.info.productId = this.info.productId & 0xffff;
 
-        nativeDevice = manager.open(info);
+        this.nativeDevice = nativeDevice;
 logger.finest(getPath() + "(@" + hashCode() + "): " + nativeDevice);
     }
 
@@ -348,7 +341,7 @@ logger.finest("close native: " + nativeDevice);
      * @since 0.1.0
      */
     public int sendFeatureReport(byte[] data, int reportId) throws IOException {
-        return nativeDevice.sendFeatureReport(data, (byte)reportId);
+        return nativeDevice.sendFeatureReport(data, (byte) reportId);
     }
 
     /**
@@ -395,8 +388,8 @@ logger.finest("close native: " + nativeDevice);
         }
 
         int result = nativeDevice.write(message, packetLength, (byte) reportId);
-        // Update HID manager
-        manager.afterDeviceWrite();
+        // Update HID afterWrite
+        afterWrite.run();
         return result;
     }
 

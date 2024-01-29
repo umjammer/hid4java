@@ -39,7 +39,6 @@
     <jinput.version>2.0.15v</jinput.version>
   </properties>
 
-
   <profiles>
     <profile>
       <!-- mvn -P jnaerator jnaerator:generate -->

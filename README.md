@@ -24,6 +24,7 @@
  * ~~npe on close~~
  * windows/linux not tested yet
  * dig into the difference between static and instance method reference
+ * ~~spi attach/detach controller~~
 
 ## LESSON
 

@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2024 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
+ */
+
 package vavi.games.input.hid4java.spi;
 
 import java.nio.file.Files;
@@ -23,6 +29,12 @@ import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 
+/**
+ * HidapiEnvironmentPluginTest.
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
+ * @version 0.00 2024-01-28 nsano initial version <br>
+ */
 @EnabledIf("localPropertiesExists")
 @PropsEntity(url = "file:local.properties")
 class Hid4JavaEnvironmentPluginTest {
@@ -52,8 +64,8 @@ class Hid4JavaEnvironmentPluginTest {
     @Test
     @DisplayName("rumbler")
     void test1() throws Exception {
-        Hid4JavaEnvironmentPlugin plugin = new Hid4JavaEnvironmentPlugin();
-        Hid4JavaController controller = plugin.getController(vendorId, productId);
+        Hid4JavaEnvironmentPlugin environment = new Hid4JavaEnvironmentPlugin();
+        Hid4JavaController controller = environment.getController(vendorId, productId);
         controller.open();
 
         Random random = new Random();
@@ -70,15 +82,15 @@ Debug.printf("R: %02x, G: %02x, B: %02x", report.ledRed, report.ledGreen, report
 
         controller.output(report);
 
-        plugin.close();
+        environment.close();
     }
 
     @Test
     @DisplayName("event")
     @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     void test2() throws Exception {
-        Hid4JavaEnvironmentPlugin plugin = new Hid4JavaEnvironmentPlugin();
-        Controller controller = plugin.getController(vendorId, productId);
+        Hid4JavaEnvironmentPlugin environment = new Hid4JavaEnvironmentPlugin();
+        Controller controller = environment.getController(vendorId, productId);
         Event event = new Event();
         controller.addInputEventListener(e -> {
             while (e.getNextEvent(event)) {

@@ -177,7 +177,7 @@ logger.finer("here80.2");
         }
     }
 
-    /** */
+    /** if you want use input report event, call {@link #open()} */
     private void internalOpen() throws IOException {
 if (deviceHandle != null) {
 logger.warning("deviceHandle is not null");
@@ -234,7 +234,7 @@ logger.finer("here00.3: " + this.deviceInfo.path);
 
     @Override
     public void open() throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         // Create the Run Loop Mode for this device
         // printing the reference seems to work.
@@ -466,6 +466,8 @@ logger.finer("here20.9: close done");
 
     @Override
     public int write(byte[] data, int length, byte reportId) throws IOException {
+        internalOpen(); // let it work w/o open
+
         // Fail fast
         if (data == null) {
             throw new IllegalArgumentException("data is null");
@@ -492,6 +494,8 @@ logger.finer("here20.9: close done");
 
     @Override
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
+        internalOpen(); // let it work w/o open
+
         // Create a large buffer
         byte[] report = new byte[data.length + 1];
         report[0] = reportId;
@@ -511,6 +515,8 @@ logger.finer("here20.9: close done");
             throw new IllegalArgumentException("data is null");
         }
 
+        internalOpen(); // let it work w/o open
+
         byte[] report = new byte[data.length + 1];
         report[0] = reportId;
 
@@ -523,11 +529,15 @@ logger.finer("here20.9: close done");
 
     @Override
     public int getReportDescriptor(byte[] report) throws IOException {
+        internalOpen(); // let it work w/o open
+
         return this.deviceHandle.hidGetReportDescriptor(report, report.length);
     }
 
     @Override
     public int getInputReport(byte[] data, byte reportId) throws IOException {
+        internalOpen(); // let it work w/o open
+
         byte[] report = new byte[data.length + 1];
         report[0] = reportId;
         int res = getReport(kIOHIDReportTypeInput, report, data.length + 1);

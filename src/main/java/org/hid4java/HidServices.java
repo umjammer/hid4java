@@ -34,15 +34,15 @@ import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hid4java.event.HidServicesListenerList;
-
 
 /**
  * JNA bridge class to provide the following to USB HID:
  * <ul>
- * <li>Access to the <code>signal11/hidapi</code> via JNA</li>
+ * <li>Access to the native api via JNA</li>
  * </ul>
  * Requires the hidapi to be present on the classpath or the system library search path.
+ *
+ * TODO merge into HidManager
  *
  * @since 0.0.1
  */
@@ -53,7 +53,7 @@ public class HidServices {
     /**
      * The HID services listeners for receiving attach/detach events etc
      */
-    private final HidServicesListenerList listeners = new HidServicesListenerList();
+    private final HidServicesListenerSupport listeners = new HidServicesListenerSupport();
 
     /**
      * The HID device manager handles scanning operations
@@ -72,7 +72,7 @@ public class HidServices {
     /**
      * Initialise with a default HID specification
      *
-     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerSupport, HidServicesSpecification)}
      */
     public HidServices() throws IOException {
         this(new HidServicesSpecification());
@@ -80,7 +80,7 @@ public class HidServices {
 
     /**
      * @param hidServicesSpecification Provides various parameters for configuring HID services
-     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerList, HidServicesSpecification)}
+     * @throws HidException If something goes wrong (see {@link HidDeviceManager#HidDeviceManager(HidServicesListenerSupport, HidServicesSpecification)}
      */
     public HidServices(HidServicesSpecification hidServicesSpecification) throws IOException {
         hidDeviceManager = new HidDeviceManager(listeners, hidServicesSpecification);
