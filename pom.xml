@@ -36,7 +36,7 @@
 
   <properties>
     <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.15v</jinput.version>
+    <jinput.version>2.0.16v</jinput.version>
   </properties>
 
   <profiles>
