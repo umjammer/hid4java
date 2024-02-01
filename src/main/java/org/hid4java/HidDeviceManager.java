@@ -38,7 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.hid4java.event.HidServicesListenerList;
+import org.hid4java.HidServicesSpecification.ScanMode;
 
 
 /**
@@ -54,13 +54,6 @@ import org.hid4java.event.HidServicesListenerList;
 public class HidDeviceManager {
 
     private static final Logger logger = Logger.getLogger(HidDeviceManager.class.getName());
-
-    /**
-     * Enables use of the libusb variant of the hidapi native library when running on a Linux platform.
-     * <p>
-     * The default is hidraw which enables Bluetooth devices but requires udev rules.
-     */
-    public static boolean useLibUsbVariant = false;
 
     /**
      * The native device provider.
@@ -80,7 +73,7 @@ public class HidDeviceManager {
     /**
      * HID services listener list
      */
-    private final HidServicesListenerList listenerList;
+    private final HidServicesListenerSupport listenerList;
 
     /**
      * The device enumeration thread
@@ -97,7 +90,7 @@ public class HidDeviceManager {
      * @param hidServicesSpecification Provides various parameters for configuring HID services
      * @throws HidException If USB HID initialization fails
      */
-    HidDeviceManager(HidServicesListenerList listenerList, HidServicesSpecification hidServicesSpecification) throws HidException {
+    HidDeviceManager(HidServicesListenerSupport listenerList, HidServicesSpecification hidServicesSpecification) throws HidException {
 
         this.listenerList = listenerList;
         this.hidServicesSpecification = hidServicesSpecification;
@@ -130,7 +123,7 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
      */
     public void start() throws IOException {
 
-        nativeManager.open();
+        nativeManager.open(hidServicesSpecification);
 
         // Check for previous start
         if (this.isScanning()) {
@@ -243,8 +236,9 @@ logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice)
                 // Wrap in HidDevice
                 hidDeviceList.add(new HidDevice(
                         hidDeviceInfo,
-                        this,
-                        hidServicesSpecification));
+                        open(hidDeviceInfo),
+                        this::afterDeviceWrite
+                ));
                 // Move to the next in the linked list
             }
         }
@@ -255,7 +249,7 @@ logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice)
     /**
      * Indicate that a device write has occurred which may require a change in scanning frequency
      */
-    public void afterDeviceWrite() {
+    private void afterDeviceWrite() {
 
         if (ScanMode.SCAN_AT_FIXED_INTERVAL_WITH_PAUSE_AFTER_WRITE == hidServicesSpecification.getScanMode() && isScanning()) {
             stopScanThread();

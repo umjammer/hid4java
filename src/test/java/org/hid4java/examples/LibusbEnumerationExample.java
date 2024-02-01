@@ -55,7 +55,7 @@ public class LibusbEnumerationExample extends BaseExample {
         HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
 
         // Set the libusb variant (only needed for older Linux platforms)
-        HidDeviceManager.useLibUsbVariant = true;
+        hidServicesSpecification.useLibUsbVariant = true;
 
         // Get HID services using custom specification
         HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);

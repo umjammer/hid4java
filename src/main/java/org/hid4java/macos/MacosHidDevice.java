@@ -38,7 +38,6 @@ import org.hid4java.HidDevice;
 import org.hid4java.HidException;
 import org.hid4java.InputReportEvent;
 import org.hid4java.NativeHidDevice;
-import org.hid4java.SyncPoint;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFIndex;
 import vavix.rococoa.corefoundation.CFLib;
@@ -58,6 +57,8 @@ import static vavix.rococoa.iokit.IOKitLib.kIOReturnSuccess;
 /**
  * JNA library interface to act as the proxy for the underlying native library
  * This approach removes the need for any JNI or native code
+ * <p>
+ * when detached device is closed by itself. see {@link #onDeviceRemovalCallback}
  *
  * @since 0.1.0
  */
@@ -158,24 +159,25 @@ logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
      * e.g.: "IOService:/AppleACPIPlatformExpert/PCI0@0/AppleACPIPCI/EHC1@1D,7/AppleUSBEHCI/PLAYSTATION(R)3 Controller@fd120000/IOUSBInterface@0/IOUSBHIDDriver");
      * Second format is for compatibility with paths accepted by older versions of HIDAPI.
      */
-    private Pointer /* io_registry_entry_t */ openServiceRegistryFromPath(String path) {
+    private static Pointer /* io_registry_entry_t */ openServiceRegistryFromPath(String path) {
         if (path == null)
             return MACH_PORT_NULL;
 
         // Get the IORegistry entry for the given path
-        logger.finer("here80.0: path: " + path.substring(10));
+logger.finer("here80.0: path: " + path.substring(10));
         if (path.startsWith("DevSrvsID:")) {
             long entryId = Long.parseLong(path.substring(10));
-            logger.finer("here80.1: " + entryId);
+logger.finer("here80.1: " + entryId);
             return IOKitLib.INSTANCE.IOServiceGetMatchingService(/* mach_port_t */ Pointer.NULL, IOKitLib.INSTANCE.IORegistryEntryIDMatching(entryId).asDict());
         } else {
             // Fallback to older format of the path
             ByteBuffer bb = ByteBuffer.wrap(path.getBytes());
-            logger.finer("here80.2");
+logger.finer("here80.2");
             return IOKitLib.INSTANCE.IORegistryEntryFromPath(/* mach_port_t */ Pointer.NULL, bb);
         }
     }
 
+    /** if you want use input report event, call {@link #open()} */
     private void internalOpen() throws IOException {
 if (deviceHandle != null) {
 logger.warning("deviceHandle is not null");
@@ -190,7 +192,7 @@ logger.warning("deviceHandle is not null");
                 // Path wasn't valid (maybe device was removed?)
                 throw new IOException("create: device mach entry not found with the given path: " + this.deviceInfo.path);
             }
-            logger.finer("here00.2: entry: " + entry + ", openOptions: " + this.openOptions);
+logger.finer("here00.2: entry: " + entry + ", openOptions: " + this.openOptions);
 
             // Create an IOHIDDevice for the entry
             Pointer /* IOHIDDevice */ deviceHandle = IOKitLib.INSTANCE.IOHIDDeviceCreate(CFAllocator.kCFAllocatorDefault, entry);
@@ -202,14 +204,14 @@ logger.warning("deviceHandle is not null");
             // Open the IOHIDDevice
             int /* IOReturn */ ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(deviceHandle, this.openOptions);
             if (ret != kIOReturnSuccess) {
-                logger.finer("here00.3: " + this.deviceInfo.path);
+logger.finer("here00.3: " + this.deviceInfo.path);
                 throw new IOException(String.format("create: failed to open IOHIDDevice from mach entry: (0x%08X)", ret));
             }
 
             this.deviceHandle = new IOHIDDevice(deviceHandle);
 
             // Create the buffers for receiving data
-            this.maxInputReportLength = this.deviceHandle.get_int_property(IOKitLib.kIOHIDMaxInputReportSizeKey);
+            this.maxInputReportLength = this.deviceHandle.getIntProperty(IOKitLib.kIOHIDMaxInputReportSizeKey);
             if (this.maxInputReportLength > 0) {
                 this.inputData = new byte[this.maxInputReportLength];
                 this.inputReportBuffer = new Memory(this.maxInputReportLength);
@@ -232,7 +234,7 @@ logger.warning("deviceHandle is not null");
 
     @Override
     public void open() throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         // Create the Run Loop Mode for this device
         // printing the reference seems to work.
@@ -241,14 +243,14 @@ logger.warning("deviceHandle is not null");
 logger.finer("here00.2: str: " + str + ", " + this.runLoopMode.getString());
 
         // Attach the device to a Run Loop
-        UserObjectContext.ByReference object_context = UserObjectContext.create(this);
+        UserObjectContext.ByReference objectContext = UserObjectContext.create(this);
         if (this.maxInputReportLength > 0) {
             IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
                     this.deviceHandle.device, this.inputReportBuffer, CFIndex.of(this.maxInputReportLength),
-                    MacosHidDevice::onReportCallback, object_context);
+                    MacosHidDevice::onReportCallback, objectContext);
 logger.finer("here00.3: start report");
         }
-        IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.deviceHandle.device, MacosHidDevice::onDeviceRemovalCallback, object_context);
+        IOKitLib.INSTANCE.IOHIDDeviceRegisterRemovalCallback(this.deviceHandle.device, MacosHidDevice::onDeviceRemovalCallback, objectContext);
 
         // Start the read thread
         this.thread = new Thread(() -> {
@@ -261,7 +263,7 @@ logger.finest("here50.0: thread start");
             // event loop to stop when hid_close() is called.
             CFLib.CFRunLoopSourceContext.ByReference ctx = new CFLib.CFRunLoopSourceContext.ByReference();
             ctx.version = CFIndex.of(0);
-            ctx.info = object_context.getPointer();
+            ctx.info = objectContext.getPointer();
             ctx.perform = MacosHidDevice::onSignalCallback;
             this.source = CFLib.INSTANCE.CFRunLoopSourceCreate(CFAllocator.kCFAllocatorDefault, CFIndex.of(0) /* order */, ctx);
             CFLib.INSTANCE.CFRunLoopAddSource(CFLib.INSTANCE.CFRunLoopGetCurrent(), this.source, this.runLoopMode);
@@ -279,7 +281,7 @@ logger.finest("here50.1: notify barrier -1");
             int code;
 logger.finer("here50.2: dev.shutdownThread: " + !this.shutdownThread + ", !dev.disconnected: " + !this.disconnected);
             while (!this.shutdownThread && !this.disconnected) {
-                code = CFLib.INSTANCE.CFRunLoopRunInMode(this.runLoopMode, 1/* sec */, false);
+                code = CFLib.INSTANCE.CFRunLoopRunInMode(this.runLoopMode, 1 /* sec */, false);
                 // Return if the device has been disconnected
                 if (code == CFLib.kCFRunLoopRunFinished || code == CFLib.kCFRunLoopRunStopped) {
                     this.disconnected = true;
@@ -387,21 +389,21 @@ logger.finer("here20.9: close done");
     /** */
     private int setReport(int /* IOHIDReportType */ type, byte[] data, int length) throws HidException {
         int dataP = 0; // data
-        int length_to_send = length;
+        int lengthToSend = length;
         int /* IOReturn */ res;
-        int report_id;
+        int reportId;
 
         if (data == null || (length == 0)) {
             throw new HidException("data is null or length is zero: " + this.deviceInfo.path);
         }
 
-        report_id = data[0] & 0xff;
+        reportId = data[0] & 0xff;
 
-        if (report_id == 0x0) {
+        if (reportId == 0x0) {
             // Not using numbered Reports.
             // Don't send the report number.
             dataP = 1;
-            length_to_send = length - 1;
+            lengthToSend = length - 1;
         }
 
         // Avoid crash if the device has been unplugged.
@@ -409,12 +411,12 @@ logger.finer("here20.9: close done");
             throw new HidException("Device is disconnected: " + this.deviceInfo.path);
         }
 
-        byte[] data_to_send = new byte[length_to_send];
-        System.arraycopy(data, dataP, data_to_send, 0, data_to_send.length);
+        byte[] dataToSend = new byte[lengthToSend];
+        System.arraycopy(data, dataP, dataToSend, 0, dataToSend.length);
         res = IOKitLib.INSTANCE.IOHIDDeviceSetReport(this.deviceHandle.device,
                 type,
-                CFIndex.of(report_id),
-                data_to_send, CFIndex.of(length_to_send));
+                CFIndex.of(reportId),
+                dataToSend, CFIndex.of(lengthToSend));
 
         if (res != kIOReturnSuccess) {
             throw new HidException(String.format("IOHIDDeviceSetReport failed: (0x%08X): %s", res, this.deviceInfo.path));
@@ -426,15 +428,15 @@ logger.finer("here20.9: close done");
     /** */
     private int getReport(int /* IOHIDReportType */ type, byte[] data, int length) throws HidException {
         int dataP = 0;
-        int report_length = length;
+        int reportLength = length;
         int /* IOReturn */ res;
-        int report_id = data[0] & 0xff;
+        int reportId = data[0] & 0xff;
 
-        if (report_id == 0x0) {
+        if (reportId == 0x0) {
             // Not using numbered Reports.
             // Don't send the report number.
             dataP = 1;
-            report_length = length - 1;
+            reportLength = length - 1;
         }
 
         // Avoid crash if the device has been unplugged.
@@ -442,29 +444,29 @@ logger.finer("here20.9: close done");
             throw new HidException("Device is disconnected: " + this.deviceInfo.path);
         }
 
-        byte[] report = new byte[report_length];
-        System.arraycopy(data, dataP, report, 0, report_length);
-        CFIndex[] rl = new CFIndex[] { CFIndex.of(report_length) };
+        byte[] report = new byte[reportLength];
+        System.arraycopy(data, dataP, report, 0, reportLength);
+        CFIndex[] rl = new CFIndex[] { CFIndex.of(reportLength) };
         res = IOKitLib.INSTANCE.IOHIDDeviceGetReport(this.deviceHandle.device,
                 type,
-                CFIndex.of(report_id),
+                CFIndex.of(reportId),
                 report, rl);
-        report_length = rl[0].intValue();
+        reportLength = rl[0].intValue();
 
         if (res != kIOReturnSuccess) {
             throw new HidException(String.format("IOHIDDeviceGetReport failed: (0x%08X): %s", res, this.deviceInfo.path));
         }
 
-        if (report_id == 0x0) { // 0 report number still present at the beginning
-            report_length++;
+        if (reportId == 0x0) { // 0 report number still present at the beginning
+            reportLength++;
         }
 
-        return report_length;
+        return reportLength;
     }
 
     @Override
     public int write(byte[] data, int length, byte reportId) throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         // Fail fast
         if (data == null) {
@@ -492,7 +494,7 @@ logger.finer("here20.9: close done");
 
     @Override
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         // Create a large buffer
         byte[] report = new byte[data.length + 1];
@@ -513,7 +515,7 @@ logger.finer("here20.9: close done");
             throw new IllegalArgumentException("data is null");
         }
 
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         byte[] report = new byte[data.length + 1];
         report[0] = reportId;
@@ -527,14 +529,14 @@ logger.finer("here20.9: close done");
 
     @Override
     public int getReportDescriptor(byte[] report) throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
-        return this.deviceHandle.hid_get_report_descriptor(report, report.length);
+        return this.deviceHandle.hidGetReportDescriptor(report, report.length);
     }
 
     @Override
     public int getInputReport(byte[] data, byte reportId) throws IOException {
-        internalOpen();
+        internalOpen(); // let it work w/o open
 
         byte[] report = new byte[data.length + 1];
         report[0] = reportId;

@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import com.sun.jna.Platform;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesListener;
-import org.hid4java.event.HidServicesEvent;
+import org.hid4java.HidServicesEvent;
 import vavi.util.Debug;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -101,21 +101,5 @@ Debug.printf(ANSI_YELLOW + "Triggering shutdown..." + ANSI_RESET);
     @Override
     public void hidDeviceDetached(HidServicesEvent event) {
         System.out.println(ANSI_YELLOW + "Device detached: " + event + ANSI_RESET);
-    }
-
-    @Override
-    public void hidFailure(HidServicesEvent event) {
-Debug.println(ANSI_RED + "HID failure: " + event + ANSI_RESET);
-    }
-
-    @Override
-    public void hidDataReceived(HidServicesEvent event) {
-Debug.printf(ANSI_PURPLE + "Data received:%n");
-        byte[] dataReceived = event.getDataReceived();
-        System.out.printf("< [%02x]:", dataReceived.length);
-        for (byte b : dataReceived) {
-            System.out.printf(" %02x", b);
-        }
-        System.out.println(ANSI_RESET);
     }
 }

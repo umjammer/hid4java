@@ -427,7 +427,7 @@ public class DescriptorReconstructor {
          * @param data     Data (Size depends on item 0,1,2 or 4bytes).
          * @return Returns 0 if successful, -1 for error.
          */
-        int write_short_item(Items item, long data) {
+        int writeShortItem(Items item, long data) {
             if ((item.v & 0x03) != 0) {
                 // Invalid input data, last to bits are reserved for data size
                 return -1;
@@ -436,7 +436,7 @@ public class DescriptorReconstructor {
             if (item == main_collection_end) {
                 // Item without data (1Byte prefix only)
                 byte oneBytePrefix = (byte) (item.v + 0x00);
-                append_byte(oneBytePrefix);
+                appendByte(oneBytePrefix);
             } else if ((item == global_logical_minimum) ||
                     (item == global_logical_maximum) ||
                     (item == global_physical_minimum) ||
@@ -446,24 +446,24 @@ public class DescriptorReconstructor {
                     // 1Byte prefix + 1Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x01);
                     char localData = (char) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
                 } else if ((data >= -32768) && (data <= 32767)) {
                     // 1Byte prefix + 2Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x02);
                     short localData = (short) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
-                    append_byte((byte) (localData >> 8 & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
+                    appendByte((byte) (localData >> 8 & 0xFF));
                 } else if ((data >= -2147483648L) && (data <= 2147483647)) {
                     // 1Byte prefix + 4Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x03);
                     int localData = (int) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
-                    append_byte((byte) (localData >> 8 & 0xFF));
-                    append_byte((byte) (localData >> 16 & 0xFF));
-                    append_byte((byte) (localData >> 24 & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
+                    appendByte((byte) (localData >> 8 & 0xFF));
+                    appendByte((byte) (localData >> 16 & 0xFF));
+                    appendByte((byte) (localData >> 24 & 0xFF));
                 } else {
                     // Data out of 32 bit signed integer range
                     return -1;
@@ -474,24 +474,24 @@ public class DescriptorReconstructor {
                     // 1Byte prefix + 1Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x01);
                     byte localData = (byte) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
                 } else if ((data >= 0) && (data <= 0xFFFF)) {
                     // 1Byte prefix + 2Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x02);
                     short localData = (short) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
-                    append_byte((byte) (localData >> 8 & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
+                    appendByte((byte) (localData >> 8 & 0xFF));
                 } else if ((data >= 0) && (data <= 0xFFFFFFFFL)) {
                     // 1Byte prefix + 4Byte data
                     byte oneBytePrefix = (byte) (item.v + 0x03);
                     int localData = (int) data;
-                    append_byte(oneBytePrefix);
-                    append_byte((byte) (localData & 0xFF));
-                    append_byte((byte) (localData >> 8 & 0xFF));
-                    append_byte((byte) (localData >> 16 & 0xFF));
-                    append_byte((byte) (localData >> 24 & 0xFF));
+                    appendByte(oneBytePrefix);
+                    appendByte((byte) (localData & 0xFF));
+                    appendByte((byte) (localData >> 8 & 0xFF));
+                    appendByte((byte) (localData >> 16 & 0xFF));
+                    appendByte((byte) (localData >> 24 & 0xFF));
                 } else {
                     // Data out of 32 bit unsigned integer range
                     return -1;
@@ -505,7 +505,7 @@ public class DescriptorReconstructor {
          *
          * @param b Single byte to append.
          */
-        void append_byte(byte b) {
+        void appendByte(byte b) {
             if (this.byteIdx < this.bufSize) {
                 this.buf[this.byteIdx] = b;
                 this.byteIdx++;
@@ -514,113 +514,113 @@ public class DescriptorReconstructor {
     }
 
     /** Determine first INPUT/OUTPUT/FEATURE main item, where the last bit position is equal or greater than the search bit position */
-    private static int search_main_item_list_for_bit_position(int search_bit, MainItems main_item_type, byte report_id, MainItemNode[] list, int index) {
+    private static int searchMainItemListForBitPosition(int searchBit, MainItems mainItemType, byte reportId, MainItemNode[] list, int index) {
 
         for (int i = index; i < list.length; i++) {
             MainItemNode curr = list[i];
             if ((curr.mainItemType.ordinal() != collection.ordinal()) &&
                 (curr.mainItemType.ordinal() != collection_end.ordinal()) &&
-                !((curr.lastBit >= search_bit) &&
-                        (curr.reportID == report_id) &&
-                        (curr.mainItemType == main_item_type))) {
+                !((curr.lastBit >= searchBit) &&
+                        (curr.reportID == reportId) &&
+                        (curr.mainItemType == mainItemType))) {
                 return i;
             }
         }
         return 0;
     }
 
-    static int hid_winapi_descriptor_reconstruct_pp_data(Pointer preparsed_data, byte[] buf, int buf_size) {
-        hidp_preparsed_data pp_data = new hidp_preparsed_data(preparsed_data);
+    static int hidWinapiDescriptorReconstructPpData(Pointer preparsedData, byte[] buf, int bufSize) {
+        hidp_preparsed_data ppData = new hidp_preparsed_data(preparsedData);
 
-        // Check if MagicKey is correct, to ensure that pp_data points to a valid preparse data structure
-        if (Arrays.compare(pp_data.MagicKey, "HidP KDR".getBytes()) != 0) {
+        // Check if MagicKey is correct, to ensure that ppData points to a valid preparse data structure
+        if (Arrays.compare(ppData.MagicKey, "HidP KDR".getBytes()) != 0) {
             return -1;
         }
 
-        Buffer rpt_desc = new Buffer();
-        rpt_desc.buf = buf;
-        rpt_desc.bufSize = buf_size;
-        rpt_desc.byteIdx = 0;
+        Buffer rptDesc = new Buffer();
+        rptDesc.buf = buf;
+        rptDesc.bufSize = bufSize;
+        rptDesc.byteIdx = 0;
 
-        // Set pointer to the first node of link_collection_nodes
-        Pointer p_link_collection_nodes = new Pointer(Pointer.nativeValue(pp_data.u.getPointer()) + pp_data.FirstByteOfLinkCollectionArray);
-        hid_pp_link_collection_node[] link_collection_nodes = new hid_pp_link_collection_node[pp_data.NumberLinkCollectionNodes];
+        // Set pointer to the first node of linkCollectionNodes
+        Pointer pLinkCollectionNodes = new Pointer(Pointer.nativeValue(ppData.u.getPointer()) + ppData.FirstByteOfLinkCollectionArray);
+        hid_pp_link_collection_node[] linkCollectionNodes = new hid_pp_link_collection_node[ppData.NumberLinkCollectionNodes];
 
         //
         // Create lookup tables for the bit range of each report per collection (position of first bit and last bit in each collection)
-        // coll_bit_range[COLLECTION_INDEX][REPORT_ID][INPUT/OUTPUT/FEATURE]
+        // collBitRange[COLLECTION_INDEX][REPORT_ID][INPUT/OUTPUT/FEATURE]
         //
 
         // Allocate memory and initialize lookup table
-        BitRange[][][] coll_bit_range;
-        coll_bit_range = new BitRange[pp_data.NumberLinkCollectionNodes][][];
-        for (int collection_node_idx = 0; collection_node_idx < pp_data.NumberLinkCollectionNodes; collection_node_idx++) {
-            coll_bit_range[collection_node_idx] = new BitRange[256 * coll_bit_range[0].length][]; // 256 possible report IDs (incl. 0x00)
-            for (int reportid_idx = 0; reportid_idx < 256; reportid_idx++) {
-                coll_bit_range[collection_node_idx][reportid_idx] = new BitRange[NUM_OF_HIDP_REPORT_TYPES * coll_bit_range[0][0].length];
-                for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
-                    coll_bit_range[collection_node_idx][reportid_idx][rt_idx] = new BitRange();
-                    coll_bit_range[collection_node_idx][reportid_idx][rt_idx].firstBit = -1;
-                    coll_bit_range[collection_node_idx][reportid_idx][rt_idx].lastBit = -1;
+        BitRange[][][] collBitRange;
+        collBitRange = new BitRange[ppData.NumberLinkCollectionNodes][][];
+        for (int collectionNodeIdx = 0; collectionNodeIdx < ppData.NumberLinkCollectionNodes; collectionNodeIdx++) {
+            collBitRange[collectionNodeIdx] = new BitRange[256 * collBitRange[0].length][]; // 256 possible report IDs (incl. 0x00)
+            for (int reportIdIdx = 0; reportIdIdx < 256; reportIdIdx++) {
+                collBitRange[collectionNodeIdx][reportIdIdx] = new BitRange[NUM_OF_HIDP_REPORT_TYPES * collBitRange[0][0].length];
+                for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
+                    collBitRange[collectionNodeIdx][reportIdIdx][rtIdx] = new BitRange();
+                    collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].firstBit = -1;
+                    collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].lastBit = -1;
                 }
             }
         }
 
         // Fill the lookup table where caps exist
-        for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
-            for (int caps_idx = pp_data.caps_info[rt_idx].FirstCap; caps_idx < pp_data.caps_info[rt_idx].LastCap; caps_idx++) {
-                int first_bit, last_bit;
-                first_bit = (pp_data.u.caps[caps_idx].BytePosition - 1) * 8
-                        + pp_data.u.caps[caps_idx].BitPosition;
-                last_bit = first_bit + pp_data.u.caps[caps_idx].ReportSize
-                        * pp_data.u.caps[caps_idx].ReportCount - 1;
-                if (coll_bit_range[pp_data.u.caps[caps_idx].LinkCollection][pp_data.u.caps[caps_idx].ReportID][rt_idx].firstBit == -1 ||
-                        coll_bit_range[pp_data.u.caps[caps_idx].LinkCollection][pp_data.u.caps[caps_idx].ReportID][rt_idx].firstBit > first_bit) {
-                    coll_bit_range[pp_data.u.caps[caps_idx].LinkCollection][pp_data.u.caps[caps_idx].ReportID][rt_idx].firstBit = first_bit;
+        for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
+            for (int capsIdx = ppData.caps_info[rtIdx].FirstCap; capsIdx < ppData.caps_info[rtIdx].LastCap; capsIdx++) {
+                int firstBit, lastBit;
+                firstBit = (ppData.u.caps[capsIdx].BytePosition - 1) * 8
+                        + ppData.u.caps[capsIdx].BitPosition;
+                lastBit = firstBit + ppData.u.caps[capsIdx].ReportSize
+                        * ppData.u.caps[capsIdx].ReportCount - 1;
+                if (collBitRange[ppData.u.caps[capsIdx].LinkCollection][ppData.u.caps[capsIdx].ReportID][rtIdx].firstBit == -1 ||
+                        collBitRange[ppData.u.caps[capsIdx].LinkCollection][ppData.u.caps[capsIdx].ReportID][rtIdx].firstBit > firstBit) {
+                    collBitRange[ppData.u.caps[capsIdx].LinkCollection][ppData.u.caps[capsIdx].ReportID][rtIdx].firstBit = firstBit;
                 }
-                if (coll_bit_range[pp_data.u.caps[caps_idx].LinkCollection][pp_data.u.caps[caps_idx].ReportID][rt_idx].lastBit < last_bit) {
-                    coll_bit_range[pp_data.u.caps[caps_idx].LinkCollection][pp_data.u.caps[caps_idx].ReportID][rt_idx].lastBit = last_bit;
+                if (collBitRange[ppData.u.caps[capsIdx].LinkCollection][ppData.u.caps[capsIdx].ReportID][rtIdx].lastBit < lastBit) {
+                    collBitRange[ppData.u.caps[capsIdx].LinkCollection][ppData.u.caps[capsIdx].ReportID][rtIdx].lastBit = lastBit;
                 }
             }
         }
 
         //
         // -Determine hierarchy levels of each collection and store it in:
-        //  coll_levels[COLLECTION_INDEX]
+        //  collLevels[COLLECTION_INDEX]
         // -Determine number of direct children of each collection and store it in:
-        //  coll_number_of_direct_children[COLLECTION_INDEX]
+        //  collNumberOfDirectChildren[COLLECTION_INDEX]
         //
-        int max_coll_level = 0;
-        int[] coll_levels = new int[pp_data.NumberLinkCollectionNodes];
-        int[] coll_number_of_direct_children = new int[pp_data.NumberLinkCollectionNodes];
-        for (int collection_node_idx = 0; collection_node_idx < pp_data.NumberLinkCollectionNodes; collection_node_idx++) {
-            coll_levels[collection_node_idx] = -1;
-            coll_number_of_direct_children[collection_node_idx] = 0;
+        int maxCollLevel = 0;
+        int[] collLevels = new int[ppData.NumberLinkCollectionNodes];
+        int[] collNumberOfDirectChildren = new int[ppData.NumberLinkCollectionNodes];
+        for (int collectionNodeIdx = 0; collectionNodeIdx < ppData.NumberLinkCollectionNodes; collectionNodeIdx++) {
+            collLevels[collectionNodeIdx] = -1;
+            collNumberOfDirectChildren[collectionNodeIdx] = 0;
         }
 
         {
-            int actual_coll_level = 0;
-            int collection_node_idx = 0;
-            while (actual_coll_level >= 0) {
-                coll_levels[collection_node_idx] = actual_coll_level;
-                link_collection_nodes[collection_node_idx] = new hid_pp_link_collection_node(p_link_collection_nodes);
-                p_link_collection_nodes = new Pointer(Pointer.nativeValue(p_link_collection_nodes) + link_collection_nodes[collection_node_idx].size());
-                if ((link_collection_nodes[collection_node_idx].NumberOfChildren > 0) &&
-                        (coll_levels[link_collection_nodes[collection_node_idx].FirstChild] == -1)) {
-                    actual_coll_level++;
-                    coll_levels[collection_node_idx] = actual_coll_level;
-                    if (max_coll_level < actual_coll_level) {
-                        max_coll_level = actual_coll_level;
+            int actualCollLevel = 0;
+            int collectionNodeIdx = 0;
+            while (actualCollLevel >= 0) {
+                collLevels[collectionNodeIdx] = actualCollLevel;
+                linkCollectionNodes[collectionNodeIdx] = new hid_pp_link_collection_node(pLinkCollectionNodes);
+                pLinkCollectionNodes = new Pointer(Pointer.nativeValue(pLinkCollectionNodes) + linkCollectionNodes[collectionNodeIdx].size());
+                if ((linkCollectionNodes[collectionNodeIdx].NumberOfChildren > 0) &&
+                        (collLevels[linkCollectionNodes[collectionNodeIdx].FirstChild] == -1)) {
+                    actualCollLevel++;
+                    collLevels[collectionNodeIdx] = actualCollLevel;
+                    if (maxCollLevel < actualCollLevel) {
+                        maxCollLevel = actualCollLevel;
                     }
-                    coll_number_of_direct_children[collection_node_idx]++;
-                    collection_node_idx = link_collection_nodes[collection_node_idx].FirstChild;
-                } else if (link_collection_nodes[collection_node_idx].NextSibling != 0) {
-                    coll_number_of_direct_children[link_collection_nodes[collection_node_idx].Parent]++;
-                    collection_node_idx = link_collection_nodes[collection_node_idx].NextSibling;
+                    collNumberOfDirectChildren[collectionNodeIdx]++;
+                    collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].FirstChild;
+                } else if (linkCollectionNodes[collectionNodeIdx].NextSibling != 0) {
+                    collNumberOfDirectChildren[linkCollectionNodes[collectionNodeIdx].Parent]++;
+                    collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].NextSibling;
                 } else {
-                    actual_coll_level--;
-                    if (actual_coll_level >= 0) {
-                        collection_node_idx = link_collection_nodes[collection_node_idx].Parent;
+                    actualCollLevel--;
+                    if (actualCollLevel >= 0) {
+                        collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].Parent;
                     }
                 }
             }
@@ -630,22 +630,22 @@ public class DescriptorReconstructor {
         // Propagate the bit range of each report from the child collections to their parent
         // and store the merged result for the parent
         //
-        for (int actual_coll_level = max_coll_level - 1; actual_coll_level >= 0; actual_coll_level--) {
-            for (int collection_node_idx = 0; collection_node_idx < pp_data.NumberLinkCollectionNodes; collection_node_idx++) {
-                if (coll_levels[collection_node_idx] == actual_coll_level) {
-                    int child_idx = link_collection_nodes[collection_node_idx].FirstChild;
-                    while (child_idx != 0) {
-                        for (int reportid_idx = 0; reportid_idx < 256; reportid_idx++) {
-                            for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
+        for (int actualCollLevel = maxCollLevel - 1; actualCollLevel >= 0; actualCollLevel--) {
+            for (int collectionNodeIdx = 0; collectionNodeIdx < ppData.NumberLinkCollectionNodes; collectionNodeIdx++) {
+                if (collLevels[collectionNodeIdx] == actualCollLevel) {
+                    int childIdx = linkCollectionNodes[collectionNodeIdx].FirstChild;
+                    while (childIdx != 0) {
+                        for (int reportIdIdx = 0; reportIdIdx < 256; reportIdIdx++) {
+                            for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
                                 // Merge bit range from children
-                                if ((coll_bit_range[child_idx][reportid_idx][rt_idx].firstBit != -1) &&
-                                        (coll_bit_range[collection_node_idx][reportid_idx][rt_idx].firstBit > coll_bit_range[child_idx][reportid_idx][rt_idx].firstBit)) {
-                                    coll_bit_range[collection_node_idx][reportid_idx][rt_idx].firstBit = coll_bit_range[child_idx][reportid_idx][rt_idx].firstBit;
+                                if ((collBitRange[childIdx][reportIdIdx][rtIdx].firstBit != -1) &&
+                                        (collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].firstBit > collBitRange[childIdx][reportIdIdx][rtIdx].firstBit)) {
+                                    collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].firstBit = collBitRange[childIdx][reportIdIdx][rtIdx].firstBit;
                                 }
-                                if (coll_bit_range[collection_node_idx][reportid_idx][rt_idx].lastBit < coll_bit_range[child_idx][reportid_idx][rt_idx].lastBit) {
-                                    coll_bit_range[collection_node_idx][reportid_idx][rt_idx].lastBit = coll_bit_range[child_idx][reportid_idx][rt_idx].lastBit;
+                                if (collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].lastBit < collBitRange[childIdx][reportIdIdx][rtIdx].lastBit) {
+                                    collBitRange[collectionNodeIdx][reportIdIdx][rtIdx].lastBit = collBitRange[childIdx][reportIdIdx][rtIdx].lastBit;
                                 }
-                                child_idx = link_collection_nodes[child_idx].NextSibling;
+                                childIdx = linkCollectionNodes[childIdx].NextSibling;
                             }
                         }
                     }
@@ -655,232 +655,232 @@ public class DescriptorReconstructor {
 
         //
         // Determine child collection order of the whole hierarchy, based on previously determined bit ranges
-        // and store it this index coll_child_order[COLLECTION_INDEX][DIRECT_CHILD_INDEX]
+        // and store it this index collChildOrder[COLLECTION_INDEX][DIRECT_CHILD_INDEX]
         //
-        int[][] coll_child_order;
-        coll_child_order = new int[pp_data.NumberLinkCollectionNodes][];
+        int[][] collChildOrder;
+        collChildOrder = new int[ppData.NumberLinkCollectionNodes][];
         {
-            boolean[] coll_parsed_flag = new boolean[pp_data.NumberLinkCollectionNodes];
-            Arrays.fill(coll_parsed_flag, false);
-            int actual_coll_level = 0;
-            int collection_node_idx = 0;
-            while (actual_coll_level >= 0) {
-                if ((coll_number_of_direct_children[collection_node_idx] != 0) &&
-                        (!coll_parsed_flag[link_collection_nodes[collection_node_idx].FirstChild])) {
-                    coll_parsed_flag[link_collection_nodes[collection_node_idx].FirstChild] = true;
-                    coll_child_order[collection_node_idx] = new int[coll_number_of_direct_children[collection_node_idx]];
+            boolean[] collParsedFlag = new boolean[ppData.NumberLinkCollectionNodes];
+            Arrays.fill(collParsedFlag, false);
+            int actualCollLevel = 0;
+            int collectionNodeIdx = 0;
+            while (actualCollLevel >= 0) {
+                if ((collNumberOfDirectChildren[collectionNodeIdx] != 0) &&
+                        (!collParsedFlag[linkCollectionNodes[collectionNodeIdx].FirstChild])) {
+                    collParsedFlag[linkCollectionNodes[collectionNodeIdx].FirstChild] = true;
+                    collChildOrder[collectionNodeIdx] = new int[collNumberOfDirectChildren[collectionNodeIdx]];
 
                     {
                         // Create list of child collection indices
                         // sorted reverse to the order returned to HidP_GetLinkCollectionNodeschild
                         // which seems to match the original order, as long as no bit position needs to be considered
-                        int child_idx = link_collection_nodes[collection_node_idx].FirstChild;
-                        int child_count = coll_number_of_direct_children[collection_node_idx] - 1;
-                        coll_child_order[collection_node_idx][child_count] = child_idx;
-                        while (link_collection_nodes[child_idx].NextSibling != 0) {
-                            child_count--;
-                            child_idx = link_collection_nodes[child_idx].NextSibling;
-                            coll_child_order[collection_node_idx][child_count] = child_idx;
+                        int childIdx = linkCollectionNodes[collectionNodeIdx].FirstChild;
+                        int childCount = collNumberOfDirectChildren[collectionNodeIdx] - 1;
+                        collChildOrder[collectionNodeIdx][childCount] = childIdx;
+                        while (linkCollectionNodes[childIdx].NextSibling != 0) {
+                            childCount--;
+                            childIdx = linkCollectionNodes[childIdx].NextSibling;
+                            collChildOrder[collectionNodeIdx][childCount] = childIdx;
                         }
                     }
 
-                    if (coll_number_of_direct_children[collection_node_idx] > 1) {
+                    if (collNumberOfDirectChildren[collectionNodeIdx] > 1) {
                         // Sort child collections indices by bit positions
-                        for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
-                            for (int reportid_idx = 0; reportid_idx < 256; reportid_idx++) {
-                                for (int child_idx = 1; child_idx < coll_number_of_direct_children[collection_node_idx]; child_idx++) {
-                                    // since the coll_bit_range array is not sorted, we need to reference the collection index in
-                                    // our sorted coll_child_order array, and look up the corresponding bit ranges for comparing values to sort
-                                    int prev_coll_idx = coll_child_order[collection_node_idx][child_idx - 1];
-                                    int cur_coll_idx = coll_child_order[collection_node_idx][child_idx];
-                                    if ((coll_bit_range[prev_coll_idx][reportid_idx][rt_idx].firstBit != -1) &&
-                                            (coll_bit_range[cur_coll_idx][reportid_idx][rt_idx].firstBit != -1) &&
-                                            (coll_bit_range[prev_coll_idx][reportid_idx][rt_idx].firstBit > coll_bit_range[cur_coll_idx][reportid_idx][rt_idx].firstBit)) {
+                        for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
+                            for (int reportIdIdx = 0; reportIdIdx < 256; reportIdIdx++) {
+                                for (int childIdx = 1; childIdx < collNumberOfDirectChildren[collectionNodeIdx]; childIdx++) {
+                                    // since the collBitRange array is not sorted, we need to reference the collection index in
+                                    // our sorted collChildOrder array, and look up the corresponding bit ranges for comparing values to sort
+                                    int prevCollIdx = collChildOrder[collectionNodeIdx][childIdx - 1];
+                                    int curCollIdx = collChildOrder[collectionNodeIdx][childIdx];
+                                    if ((collBitRange[prevCollIdx][reportIdIdx][rtIdx].firstBit != -1) &&
+                                            (collBitRange[curCollIdx][reportIdIdx][rtIdx].firstBit != -1) &&
+                                            (collBitRange[prevCollIdx][reportIdIdx][rtIdx].firstBit > collBitRange[curCollIdx][reportIdIdx][rtIdx].firstBit)) {
                                         // Swap position indices of the two compared child collections
-                                        int idx_latch = coll_child_order[collection_node_idx][child_idx - 1];
-                                        coll_child_order[collection_node_idx][child_idx - 1] = coll_child_order[collection_node_idx][child_idx];
-                                        coll_child_order[collection_node_idx][child_idx] = idx_latch;
+                                        int idx_latch = collChildOrder[collectionNodeIdx][childIdx - 1];
+                                        collChildOrder[collectionNodeIdx][childIdx - 1] = collChildOrder[collectionNodeIdx][childIdx];
+                                        collChildOrder[collectionNodeIdx][childIdx] = idx_latch;
                                     }
                                 }
                             }
                         }
                     }
-                    actual_coll_level++;
-                    collection_node_idx = link_collection_nodes[collection_node_idx].FirstChild;
-                } else if (link_collection_nodes[collection_node_idx].NextSibling != 0) {
-                    collection_node_idx = link_collection_nodes[collection_node_idx].NextSibling;
+                    actualCollLevel++;
+                    collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].FirstChild;
+                } else if (linkCollectionNodes[collectionNodeIdx].NextSibling != 0) {
+                    collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].NextSibling;
                 } else {
-                    actual_coll_level--;
-                    if (actual_coll_level >= 0) {
-                        collection_node_idx = link_collection_nodes[collection_node_idx].Parent;
+                    actualCollLevel--;
+                    if (actualCollLevel >= 0) {
+                        collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].Parent;
                     }
                 }
             }
         }
 
         //
-        // Create sorted main_item_list containing all the Collection and CollectionEnd main items
+        // Create sorted mainItemNodes containing all the Collection and CollectionEnd main items
         //
-        List<MainItemNode> main_item_list = new ArrayList<>(); // List root
-        int p_main_item_list = 0;
+        List<MainItemNode> mainItemNodes = new ArrayList<>(); // List root
+        int pMainItemList = 0;
         // Lookup table to find the Collection items in the list by index
-        MainItemNode[] coll_begin_lookup = new MainItemNode[pp_data.NumberLinkCollectionNodes];
-        MainItemNode[] coll_end_lookup = new MainItemNode[pp_data.NumberLinkCollectionNodes];
+        MainItemNode[] collBeginLookup = new MainItemNode[ppData.NumberLinkCollectionNodes];
+        MainItemNode[] collEndLookup = new MainItemNode[ppData.NumberLinkCollectionNodes];
         {
-            int[] coll_last_written_child = new int[pp_data.NumberLinkCollectionNodes];
-            Arrays.fill(coll_last_written_child, -1);
+            int[] collLastWrittenChild = new int[ppData.NumberLinkCollectionNodes];
+            Arrays.fill(collLastWrittenChild, -1);
 
-            int actual_coll_level = 0;
-            int collection_node_idx = 0;
+            int actualCollLevel = 0;
+            int collectionNodeIdx = 0;
             int firstDelimiterNode = -1;
             int delimiterCloseNode = -1;
-            coll_begin_lookup[0] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, collection, (byte) 0);
-            main_item_list.add(coll_begin_lookup[0]);
-            while (actual_coll_level >= 0) {
-                if ((coll_number_of_direct_children[collection_node_idx] != 0) &&
-                        (coll_last_written_child[collection_node_idx] == -1)) {
+            collBeginLookup[0] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, collection, (byte) 0);
+            mainItemNodes.add(collBeginLookup[0]);
+            while (actualCollLevel >= 0) {
+                if ((collNumberOfDirectChildren[collectionNodeIdx] != 0) &&
+                        (collLastWrittenChild[collectionNodeIdx] == -1)) {
                     // Collection has child collections, but none is written to the list yet
 
-                    coll_last_written_child[collection_node_idx] = coll_child_order[collection_node_idx][0];
-                    collection_node_idx = coll_child_order[collection_node_idx][0];
+                    collLastWrittenChild[collectionNodeIdx] = collChildOrder[collectionNodeIdx][0];
+                    collectionNodeIdx = collChildOrder[collectionNodeIdx][0];
 
                     // In a HID Report Descriptor, the first usage declared is the most preferred usage for the control.
                     // While the order in the WIN32 capability strutures is the opposite:
                     // Here the preferred usage is the last aliased usage in the sequence.
 
-                    if ((link_collection_nodes[collection_node_idx].bits & IsAlias) != 0 && (firstDelimiterNode == -1)) {
-                        // Aliased Collection (First node in link_collection_nodes . Last entry in report descriptor output)
-                        firstDelimiterNode = main_item_list.size() - 1;
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_usage, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_close, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        delimiterCloseNode = main_item_list.size() - 1;
+                    if ((linkCollectionNodes[collectionNodeIdx].bits & IsAlias) != 0 && (firstDelimiterNode == -1)) {
+                        // Aliased Collection (First node in linkCollectionNodes . Last entry in report descriptor output)
+                        firstDelimiterNode = mainItemNodes.size() - 1;
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_usage, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_close, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        delimiterCloseNode = mainItemNodes.size() - 1;
                     } else {
                         // Normal not aliased collection
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, collection, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        actual_coll_level++;
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, collection, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        actualCollLevel++;
                     }
 
-                } else if ((coll_number_of_direct_children[collection_node_idx] > 1) &&
-                        (coll_last_written_child[collection_node_idx] != coll_child_order[collection_node_idx][coll_number_of_direct_children[collection_node_idx] - 1])) {
+                } else if ((collNumberOfDirectChildren[collectionNodeIdx] > 1) &&
+                        (collLastWrittenChild[collectionNodeIdx] != collChildOrder[collectionNodeIdx][collNumberOfDirectChildren[collectionNodeIdx] - 1])) {
                     // Collection has child collections, and this is not the first child
 
                     int nextChild = 1;
-                    while (coll_last_written_child[collection_node_idx] != coll_child_order[collection_node_idx][nextChild - 1]) {
+                    while (collLastWrittenChild[collectionNodeIdx] != collChildOrder[collectionNodeIdx][nextChild - 1]) {
                         nextChild++;
                     }
-                    coll_last_written_child[collection_node_idx] = coll_child_order[collection_node_idx][nextChild];
-                    collection_node_idx = coll_child_order[collection_node_idx][nextChild];
+                    collLastWrittenChild[collectionNodeIdx] = collChildOrder[collectionNodeIdx][nextChild];
+                    collectionNodeIdx = collChildOrder[collectionNodeIdx][nextChild];
 
-                    if ((link_collection_nodes[collection_node_idx].bits & IsAlias) != 0 && (firstDelimiterNode == -1)) {
-                        // Aliased Collection (First node in link_collection_nodes . Last entry in report descriptor output)
-                        firstDelimiterNode = main_item_list.size() - 1;
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_usage, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_close, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        delimiterCloseNode = main_item_list.size() - 1;
-                    } else if ((link_collection_nodes[collection_node_idx].bits & IsAlias) != 0 && (firstDelimiterNode != -1)) {
+                    if ((linkCollectionNodes[collectionNodeIdx].bits & IsAlias) != 0 && (firstDelimiterNode == -1)) {
+                        // Aliased Collection (First node in linkCollectionNodes . Last entry in report descriptor output)
+                        firstDelimiterNode = mainItemNodes.size() - 1;
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_usage, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_close, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        delimiterCloseNode = mainItemNodes.size() - 1;
+                    } else if ((linkCollectionNodes[collectionNodeIdx].bits & IsAlias) != 0 && (firstDelimiterNode != -1)) {
                         // Insert item after the main item node referenced by list
-                        MainItemNode newNode = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_usage, (byte) 0);
-                        main_item_list.add(firstDelimiterNode - p_main_item_list, newNode);
-                        coll_begin_lookup[collection_node_idx] = newNode;
-                    } else if ((link_collection_nodes[collection_node_idx].bits & IsAlias) == 0 && (firstDelimiterNode != -1)) {
+                        MainItemNode newNode = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_usage, (byte) 0);
+                        mainItemNodes.add(firstDelimiterNode - pMainItemList, newNode);
+                        collBeginLookup[collectionNodeIdx] = newNode;
+                    } else if ((linkCollectionNodes[collectionNodeIdx].bits & IsAlias) == 0 && (firstDelimiterNode != -1)) {
                         // Insert item after the main item node referenced by list
-                        MainItemNode newNode1 = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_usage, (byte) 0);
-                        main_item_list.add(firstDelimiterNode - p_main_item_list, newNode1);
-                        coll_begin_lookup[collection_node_idx] = newNode1;
+                        MainItemNode newNode1 = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_usage, (byte) 0);
+                        mainItemNodes.add(firstDelimiterNode - pMainItemList, newNode1);
+                        collBeginLookup[collectionNodeIdx] = newNode1;
                         // Insert item after the main item node referenced by list
-                        MainItemNode newNode = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, delimiter_open, (byte) 0);
-                        main_item_list.add(firstDelimiterNode - p_main_item_list, newNode);
-                        coll_begin_lookup[collection_node_idx] = newNode;
+                        MainItemNode newNode = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, delimiter_open, (byte) 0);
+                        mainItemNodes.add(firstDelimiterNode - pMainItemList, newNode);
+                        collBeginLookup[collectionNodeIdx] = newNode;
                         firstDelimiterNode = -1;
-                        p_main_item_list = delimiterCloseNode;
+                        pMainItemList = delimiterCloseNode;
                         delimiterCloseNode = -1; // Last entry of alias has .IsAlias == false
                     }
-                    if ((link_collection_nodes[collection_node_idx].bits & IsAlias) == 0) {
-                        coll_begin_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, collection, (byte) 0);
-                        main_item_list.add(coll_begin_lookup[collection_node_idx]);
-                        actual_coll_level++;
+                    if ((linkCollectionNodes[collectionNodeIdx].bits & IsAlias) == 0) {
+                        collBeginLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, collection, (byte) 0);
+                        mainItemNodes.add(collBeginLookup[collectionNodeIdx]);
+                        actualCollLevel++;
                     }
                 } else {
-                    actual_coll_level--;
-                    coll_end_lookup[collection_node_idx] = new MainItemNode(0, 0, item_node_collection, 0, collection_node_idx, collection_end, (byte) 0);
-                    main_item_list.add(coll_end_lookup[collection_node_idx]);
-                    collection_node_idx = link_collection_nodes[collection_node_idx].Parent;
+                    actualCollLevel--;
+                    collEndLookup[collectionNodeIdx] = new MainItemNode(0, 0, item_node_collection, 0, collectionNodeIdx, collection_end, (byte) 0);
+                    mainItemNodes.add(collEndLookup[collectionNodeIdx]);
+                    collectionNodeIdx = linkCollectionNodes[collectionNodeIdx].Parent;
                 }
             }
         }
 
         //
-        // Inserted Input/Output/Feature main items into the main_item_list
+        // Inserted Input/Output/Feature main items into the mainItemNodes
         // in order of reconstructed bit positions
         //
-        for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
+        for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
             // Add all value caps to node list
             int firstDelimiterNode = -1;
             int delimiterCloseNode = -1;
-            for (int caps_idx = pp_data.caps_info[rt_idx].FirstCap; caps_idx < pp_data.caps_info[rt_idx].LastCap; caps_idx++) {
-                int coll_begin = pp_data.u.caps[caps_idx].LinkCollection;
-                int first_bit, last_bit;
-                first_bit = (pp_data.u.caps[caps_idx].BytePosition - 1) * 8 +
-                        pp_data.u.caps[caps_idx].BitPosition;
-                last_bit = first_bit + pp_data.u.caps[caps_idx].ReportSize *
-                        pp_data.u.caps[caps_idx].ReportCount - 1;
+            for (int capsIdx = ppData.caps_info[rtIdx].FirstCap; capsIdx < ppData.caps_info[rtIdx].LastCap; capsIdx++) {
+                int collBegin = ppData.u.caps[capsIdx].LinkCollection;
+                int firstBit, lastBit;
+                firstBit = (ppData.u.caps[capsIdx].BytePosition - 1) * 8 +
+                        ppData.u.caps[capsIdx].BitPosition;
+                lastBit = firstBit + ppData.u.caps[capsIdx].ReportSize *
+                        ppData.u.caps[capsIdx].ReportCount - 1;
 
-                for (int child_idx = 0; child_idx < coll_number_of_direct_children[pp_data.u.caps[caps_idx].LinkCollection]; child_idx++) {
+                for (int childIdx = 0; childIdx < collNumberOfDirectChildren[ppData.u.caps[capsIdx].LinkCollection]; childIdx++) {
                     // Determine in which section before/between/after child collection the item should be inserted
-                    if (first_bit < coll_bit_range[coll_child_order[pp_data.u.caps[caps_idx].LinkCollection][child_idx]][pp_data.u.caps[caps_idx].ReportID][rt_idx].firstBit) {
-                        // Note, that the default value for undefined coll_bit_range is -1, which can't be greater than the bit position
+                    if (firstBit < collBitRange[collChildOrder[ppData.u.caps[capsIdx].LinkCollection][childIdx]][ppData.u.caps[capsIdx].ReportID][rtIdx].firstBit) {
+                        // Note, that the default value for undefined collBitRange is -1, which can't be greater than the bit position
                         break;
                     }
-                    coll_begin = coll_child_order[pp_data.u.caps[caps_idx].LinkCollection][child_idx];
+                    collBegin = collChildOrder[ppData.u.caps[capsIdx].LinkCollection][childIdx];
                 }
-                int list_node_p = search_main_item_list_for_bit_position(first_bit, MainItems.values()[rt_idx], (byte) pp_data.u.caps[caps_idx].ReportID, coll_end_lookup, coll_begin);
-                List<MainItemNode> list_node = List.of(coll_end_lookup);
+                int listNodeP = searchMainItemListForBitPosition(firstBit, MainItems.values()[rtIdx], (byte) ppData.u.caps[capsIdx].ReportID, collEndLookup, collBegin);
+                List<MainItemNode> listNode = List.of(collEndLookup);
 
                 // In a HID Report Descriptor, the first usage declared is the most preferred usage for the control.
                 // While the order in the WIN32 capability strutures is the opposite:
                 // Here the preferred usage is the last aliased usage in the sequence.
 
-                if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsAlias) != 0 && (firstDelimiterNode == -1)) {
-                    // Aliased Usage (First node in pp_data.u.caps . Last entry in report descriptor output)
-                    firstDelimiterNode = list_node.size() - 1;
+                if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsAlias) != 0 && (firstDelimiterNode == -1)) {
+                    // Aliased Usage (First node in ppData.u.caps . Last entry in report descriptor output)
+                    firstDelimiterNode = listNode.size() - 1;
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode1 = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, pp_data.u.caps[caps_idx].LinkCollection, delimiter_usage, (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode1);
+                    MainItemNode newNode1 = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, ppData.u.caps[capsIdx].LinkCollection, delimiter_usage, (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode1);
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, pp_data.u.caps[caps_idx].LinkCollection, delimiter_close, (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode);
-                    delimiterCloseNode = list_node.size() - 1;
-                } else if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsAlias) != 0 && (firstDelimiterNode != -1)) {
+                    MainItemNode newNode = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, ppData.u.caps[capsIdx].LinkCollection, delimiter_close, (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode);
+                    delimiterCloseNode = listNode.size() - 1;
+                } else if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsAlias) != 0 && (firstDelimiterNode != -1)) {
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, pp_data.u.caps[caps_idx].LinkCollection, delimiter_usage, (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode);
-                } else if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsAlias) == 0 && (firstDelimiterNode != -1)) {
-                    // Aliased Collection (Last node in pp_data.u.caps . First entry in report descriptor output)
+                    MainItemNode newNode = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, ppData.u.caps[capsIdx].LinkCollection, delimiter_usage, (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode);
+                } else if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsAlias) == 0 && (firstDelimiterNode != -1)) {
+                    // Aliased Collection (Last node in ppData.u.caps . First entry in report descriptor output)
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode1 = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, pp_data.u.caps[caps_idx].LinkCollection, delimiter_usage, (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode1);
+                    MainItemNode newNode1 = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, ppData.u.caps[capsIdx].LinkCollection, delimiter_usage, (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode1);
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, pp_data.u.caps[caps_idx].LinkCollection, delimiter_open, (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode);
+                    MainItemNode newNode = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, ppData.u.caps[capsIdx].LinkCollection, delimiter_open, (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode);
                     firstDelimiterNode = -1;
-                    list_node_p = delimiterCloseNode;
+                    listNodeP = delimiterCloseNode;
                     delimiterCloseNode = -1; // Last entry of alias has .IsAlias == false
                 }
-                if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsAlias) == 0) {
+                if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsAlias) == 0) {
                     // Insert item after the main item node referenced by list
-                    MainItemNode newNode = new MainItemNode(first_bit, last_bit, item_node_cap, caps_idx, (int) pp_data.u.caps[caps_idx].LinkCollection, MainItems.values()[rt_idx], (byte) pp_data.u.caps[caps_idx].ReportID);
-                    list_node.add(list_node_p, newNode);
+                    MainItemNode newNode = new MainItemNode(firstBit, lastBit, item_node_cap, capsIdx, (int) ppData.u.caps[capsIdx].LinkCollection, MainItems.values()[rtIdx], (byte) ppData.u.caps[capsIdx].ReportID);
+                    listNode.add(listNodeP, newNode);
                 }
             }
         }
 
         //
-        // Add const main items for padding to main_item_list
+        // Add const main items for padding to mainItemNodes
         // -To fill all bit gaps
         // -At each report end for 8bit padding
         //  Note that information about the padding at the report end,
@@ -888,46 +888,46 @@ public class DescriptorReconstructor {
         //  report descriptors seem to have it, as assumed here.
         //
         {
-            int[][] last_bit_position = new int[NUM_OF_HIDP_REPORT_TYPES][256];
-            MainItemNode[][] last_report_item_lookup = new MainItemNode[NUM_OF_HIDP_REPORT_TYPES][256];
-            for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
-                for (int reportid_idx = 0; reportid_idx < 256; reportid_idx++) {
-                    last_bit_position[rt_idx][reportid_idx] = -1;
-                    last_report_item_lookup[rt_idx][reportid_idx] = null;
+            int[][] lastBitPosition = new int[NUM_OF_HIDP_REPORT_TYPES][256];
+            MainItemNode[][] lastReportItemLookup = new MainItemNode[NUM_OF_HIDP_REPORT_TYPES][256];
+            for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
+                for (int reportIdIdx = 0; reportIdIdx < 256; reportIdIdx++) {
+                    lastBitPosition[rtIdx][reportIdIdx] = -1;
+                    lastReportItemLookup[rtIdx][reportIdIdx] = null;
                 }
             }
 
-            for (MainItemNode curr : main_item_list) {
+            for (MainItemNode curr : mainItemNodes) {
                 if ((curr.mainItemType.ordinal() >= input.ordinal()) &&
                         (curr.mainItemType.ordinal() <= feature.ordinal())) {
                     // INPUT, OUTPUT or FEATURE
                     if (curr.firstBit != -1) {
-                        if ((last_bit_position[curr.mainItemType.ordinal()][curr.reportID] + 1 != curr.firstBit) &&
-                                (last_report_item_lookup[curr.mainItemType.ordinal()][curr.reportID] != null) &&
-                                (last_report_item_lookup[curr.mainItemType.ordinal()][curr.reportID].firstBit != curr.firstBit) // Happens in case of IsMultipleItemsForArray for multiple dedicated usages for a multi-button array
+                        if ((lastBitPosition[curr.mainItemType.ordinal()][curr.reportID] + 1 != curr.firstBit) &&
+                                (lastReportItemLookup[curr.mainItemType.ordinal()][curr.reportID] != null) &&
+                                (lastReportItemLookup[curr.mainItemType.ordinal()][curr.reportID].firstBit != curr.firstBit) // Happens in case of IsMultipleItemsForArray for multiple dedicated usages for a multi-button array
                         ) {
-                            int index = search_main_item_list_for_bit_position(last_bit_position[curr.mainItemType.ordinal()][curr.reportID], curr.mainItemType, curr.reportID, last_report_item_lookup[curr.mainItemType.ordinal()], curr.reportID);
-                            List<MainItemNode> list_node = List.of(last_report_item_lookup[curr.mainItemType.ordinal()]);
+                            int index = searchMainItemListForBitPosition(lastBitPosition[curr.mainItemType.ordinal()][curr.reportID], curr.mainItemType, curr.reportID, lastReportItemLookup[curr.mainItemType.ordinal()], curr.reportID);
+                            List<MainItemNode> list_node = List.of(lastReportItemLookup[curr.mainItemType.ordinal()]);
                             // Insert item after the main item node referenced by list
-                            MainItemNode newNode = new MainItemNode(last_bit_position[curr.mainItemType.ordinal()][curr.reportID] + 1, curr.firstBit - 1, item_node_padding, -1, 0, curr.mainItemType, curr.reportID);
+                            MainItemNode newNode = new MainItemNode(lastBitPosition[curr.mainItemType.ordinal()][curr.reportID] + 1, curr.firstBit - 1, item_node_padding, -1, 0, curr.mainItemType, curr.reportID);
                             list_node.add(index, newNode);
                         }
-                        last_bit_position[curr.mainItemType.ordinal()][curr.reportID] = curr.lastBit;
-                        last_report_item_lookup[curr.mainItemType.ordinal()][curr.reportID] = curr;
+                        lastBitPosition[curr.mainItemType.ordinal()][curr.reportID] = curr.lastBit;
+                        lastReportItemLookup[curr.mainItemType.ordinal()][curr.reportID] = curr;
                     }
                 }
             }
             // Add 8 bit padding at each report end
-            for (int /* HIDP_REPORT_TYPE */ rt_idx = 0; rt_idx < NUM_OF_HIDP_REPORT_TYPES; rt_idx++) {
-                for (int reportid_idx = 0; reportid_idx < 256; reportid_idx++) {
-                    if (last_bit_position[rt_idx][reportid_idx] != -1) {
-                        int padding = 8 - ((last_bit_position[rt_idx][reportid_idx] + 1) % 8);
+            for (int /* HIDP_REPORT_TYPE */ rtIdx = 0; rtIdx < NUM_OF_HIDP_REPORT_TYPES; rtIdx++) {
+                for (int reportIdIdx = 0; reportIdIdx < 256; reportIdIdx++) {
+                    if (lastBitPosition[rtIdx][reportIdIdx] != -1) {
+                        int padding = 8 - ((lastBitPosition[rtIdx][reportIdIdx] + 1) % 8);
                         if (padding < 8) {
-                            // Insert padding item after item referenced in last_report_item_lookup
-                            List<MainItemNode> list_node = List.of(last_report_item_lookup[rt_idx]);
+                            // Insert padding item after item referenced in lastReportItemLookup
+                            List<MainItemNode> listNode = List.of(lastReportItemLookup[rtIdx]);
                             // Insert item after the main item node referenced by list
-                            MainItemNode newNode = new MainItemNode(last_bit_position[rt_idx][reportid_idx] + 1, last_bit_position[rt_idx][reportid_idx] + padding, item_node_padding, -1, 0, MainItems.values()[rt_idx], (byte) reportid_idx);
-                            list_node.add(reportid_idx, newNode);
+                            MainItemNode newNode = new MainItemNode(lastBitPosition[rtIdx][reportIdIdx] + 1, lastBitPosition[rtIdx][reportIdIdx] + padding, item_node_padding, -1, 0, MainItems.values()[rtIdx], (byte) reportIdIdx);
+                            listNode.add(reportIdIdx, newNode);
                         }
                     }
                 }
@@ -937,360 +937,360 @@ public class DescriptorReconstructor {
         //
         // Encode the report descriptor output
         //
-        byte last_report_id = 0;
-        short last_usage_page = 0;
-        long last_physical_min = 0;// If both, Physical Minimum and Physical Maximum are 0, the logical limits should be taken as physical limits according USB HID spec 1.11 chapter 6.2.2.7
-        long last_physical_max = 0;
-        long last_unit_exponent = 0; // If Unit Exponent is Undefined it should be considered as 0 according USB HID spec 1.11 chapter 6.2.2.7
-        long last_unit = 0; // If the first nibble is 7, or second nibble of Unit is 0, the unit is None according USB HID spec 1.11 chapter 6.2.2.7
-        boolean inhibit_write_of_usage = false; // Needed in case of delimited usage print, before the normal collection or cap
-        int report_count = 0;
-        for (int i = 0; i < main_item_list.size(); i++) {
-            MainItemNode curr_item_list = main_item_list.get(i);
-            int rt_idx = curr_item_list.mainItemType.ordinal();
-            int caps_idx = curr_item_list.capsIndex;
-            if (curr_item_list.mainItemType == collection) {
-                if (last_usage_page != link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage) {
+        byte lastReportId = 0;
+        short lastUsagePage = 0;
+        long lastPhysicalMin = 0;// If both, Physical Minimum and Physical Maximum are 0, the logical limits should be taken as physical limits according USB HID spec 1.11 chapter 6.2.2.7
+        long lastPhysicalMax = 0;
+        long lastUnitExponent = 0; // If Unit Exponent is Undefined it should be considered as 0 according USB HID spec 1.11 chapter 6.2.2.7
+        long lastUnit = 0; // If the first nibble is 7, or second nibble of Unit is 0, the unit is None according USB HID spec 1.11 chapter 6.2.2.7
+        boolean inhibitWriteOfUsage = false; // Needed in case of delimited usage print, before the normal collection or cap
+        int reportCount = 0;
+        for (int i = 0; i < mainItemNodes.size(); i++) {
+            MainItemNode currItemList = mainItemNodes.get(i);
+            int rtIdx = currItemList.mainItemType.ordinal();
+            int capsIdx = currItemList.capsIndex;
+            if (currItemList.mainItemType == collection) {
+                if (lastUsagePage != linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage) {
                     // Write "Usage Page" at the beginning of a collection - except it refers the same table as wrote last
-                    rpt_desc.write_short_item(global_usage_page, link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage);
-                    last_usage_page = link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage;
+                    rptDesc.writeShortItem(global_usage_page, linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage);
+                    lastUsagePage = linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage;
                 }
-                if (inhibit_write_of_usage) {
+                if (inhibitWriteOfUsage) {
                     // Inhibit only once after DELIMITER statement
-                    inhibit_write_of_usage = false;
+                    inhibitWriteOfUsage = false;
                 } else {
                     // Write "Usage" of collection
-                    rpt_desc.write_short_item(local_usage, link_collection_nodes[curr_item_list.collectionIndex].LinkUsage);
+                    rptDesc.writeShortItem(local_usage, linkCollectionNodes[currItemList.collectionIndex].LinkUsage);
                 }
                 // Write begin of "Collection"
-                rpt_desc.write_short_item(main_collection, link_collection_nodes[curr_item_list.collectionIndex].bits & CollectionType);
-            } else if (curr_item_list.mainItemType == collection_end) {
+                rptDesc.writeShortItem(main_collection, linkCollectionNodes[currItemList.collectionIndex].bits & CollectionType);
+            } else if (currItemList.mainItemType == collection_end) {
                 // Write "End Collection"
-                rpt_desc.write_short_item(main_collection_end, 0);
-            } else if (curr_item_list.mainItemType == delimiter_open) {
-                if (curr_item_list.collectionIndex != -1) {
+                rptDesc.writeShortItem(main_collection_end, 0);
+            } else if (currItemList.mainItemType == delimiter_open) {
+                if (currItemList.collectionIndex != -1) {
                     // Write "Usage Page" inside a collection delimiter section
-                    if (last_usage_page != link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage) {
-                        rpt_desc.write_short_item(global_usage_page, link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage);
-                        last_usage_page = link_collection_nodes[curr_item_list.collectionIndex].LinkUsagePage;
+                    if (lastUsagePage != linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage) {
+                        rptDesc.writeShortItem(global_usage_page, linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage);
+                        lastUsagePage = linkCollectionNodes[currItemList.collectionIndex].LinkUsagePage;
                     }
-                } else if (curr_item_list.capsIndex != 0) {
+                } else if (currItemList.capsIndex != 0) {
                     // Write "Usage Page" inside a main item delimiter section
-                    if (pp_data.u.caps[caps_idx].UsagePage != last_usage_page) {
-                        rpt_desc.write_short_item(global_usage_page, pp_data.u.caps[caps_idx].UsagePage);
-                        last_usage_page = pp_data.u.caps[caps_idx].UsagePage;
+                    if (ppData.u.caps[capsIdx].UsagePage != lastUsagePage) {
+                        rptDesc.writeShortItem(global_usage_page, ppData.u.caps[capsIdx].UsagePage);
+                        lastUsagePage = ppData.u.caps[capsIdx].UsagePage;
                     }
                 }
                 // Write "Delimiter Open"
-                rpt_desc.write_short_item(local_delimiter, 1); // 1 = create set of aliased usages
-            } else if (curr_item_list.mainItemType == delimiter_usage) {
-                if (curr_item_list.collectionIndex != -1) {
+                rptDesc.writeShortItem(local_delimiter, 1); // 1 = create set of aliased usages
+            } else if (currItemList.mainItemType == delimiter_usage) {
+                if (currItemList.collectionIndex != -1) {
                     // Write aliased collection "Usage"
-                    rpt_desc.write_short_item(local_usage, link_collection_nodes[curr_item_list.collectionIndex].LinkUsage);
+                    rptDesc.writeShortItem(local_usage, linkCollectionNodes[currItemList.collectionIndex].LinkUsage);
                 }
-                if (curr_item_list.capsIndex != 0) {
+                if (currItemList.capsIndex != 0) {
                     // Write aliased main item range from "Usage Minimum" to "Usage Maximum"
-                    if ((pp_data.u.caps[caps_idx].flags & IsRange) != 0) {
-                        rpt_desc.write_short_item(local_usage_minimum, pp_data.u.caps[caps_idx].u1.range.UsageMin);
-                        rpt_desc.write_short_item(local_usage_maximum, pp_data.u.caps[caps_idx].u1.range.UsageMax);
+                    if ((ppData.u.caps[capsIdx].flags & IsRange) != 0) {
+                        rptDesc.writeShortItem(local_usage_minimum, ppData.u.caps[capsIdx].u1.range.UsageMin);
+                        rptDesc.writeShortItem(local_usage_maximum, ppData.u.caps[capsIdx].u1.range.UsageMax);
                     } else {
                         // Write single aliased main item "Usage"
-                        rpt_desc.write_short_item(local_usage, pp_data.u.caps[caps_idx].u1.notRange.Usage);
+                        rptDesc.writeShortItem(local_usage, ppData.u.caps[capsIdx].u1.notRange.Usage);
                     }
                 }
-            } else if (curr_item_list.mainItemType == delimiter_close) {
+            } else if (currItemList.mainItemType == delimiter_close) {
                 // Write "Delimiter Close"
-                rpt_desc.write_short_item(local_delimiter, 0); // 0 = close set of aliased usages
+                rptDesc.writeShortItem(local_delimiter, 0); // 0 = close set of aliased usages
                 // Inhibit next usage write
-                inhibit_write_of_usage = true;
-            } else if (curr_item_list.typeOfNode == item_node_padding) {
+                inhibitWriteOfUsage = true;
+            } else if (currItemList.typeOfNode == item_node_padding) {
                 // Padding
                 // The preparsed data doesn't contain any information about padding. Therefore all undefined gaps
                 // in the reports are filled with the same style of constant padding.
 
                 // Write "Report Size" with number of padding bits
-                rpt_desc.write_short_item(global_report_size, (curr_item_list.lastBit - curr_item_list.firstBit + 1));
+                rptDesc.writeShortItem(global_report_size, (currItemList.lastBit - currItemList.firstBit + 1));
 
                 // Write "Report Count" for padding always as 1
-                rpt_desc.write_short_item(global_report_count, 1);
+                rptDesc.writeShortItem(global_report_count, 1);
 
-                if (rt_idx == HidP_Input.ordinal()) {
+                if (rtIdx == HidP_Input.ordinal()) {
                     // Write "Input" main item - We know it's Constant - We can only guess the other bits, but they don't matter in case of const
-                    rpt_desc.write_short_item(main_input, 0x03); // Const / Abs
-                } else if (rt_idx == HidP_Output.ordinal()) {
+                    rptDesc.writeShortItem(main_input, 0x03); // Const / Abs
+                } else if (rtIdx == HidP_Output.ordinal()) {
                     // Write "Output" main item - We know it's Constant - We can only guess the other bits, but they don't matter in case of const
-                    rpt_desc.write_short_item(main_output, 0x03); // Const / Abs
-                } else if (rt_idx == HidP_Feature.ordinal()) {
+                    rptDesc.writeShortItem(main_output, 0x03); // Const / Abs
+                } else if (rtIdx == HidP_Feature.ordinal()) {
                     // Write "Feature" main item - We know it's Constant - We can only guess the other bits, but they don't matter in case of const
-                    rpt_desc.write_short_item(main_feature, 0x03); // Const / Abs
+                    rptDesc.writeShortItem(main_feature, 0x03); // Const / Abs
                 }
-                report_count = 0;
-            } else if ((pp_data.u.caps[caps_idx].flags & IsButtonCap) != 0) {
+                reportCount = 0;
+            } else if ((ppData.u.caps[capsIdx].flags & IsButtonCap) != 0) {
                 // Button
-                // (The preparsed data contain different data for 1 bit Button caps, than for parametric Value caps)
+                // (The preparsed data contain different data for 1 bit Button caps, then for parametric Value caps)
 
-                if (last_report_id != pp_data.u.caps[caps_idx].ReportID) {
+                if (lastReportId != ppData.u.caps[capsIdx].ReportID) {
                     // Write "Report ID" if changed
-                    rpt_desc.write_short_item(global_report_id, pp_data.u.caps[caps_idx].ReportID);
-                    last_report_id = (byte) pp_data.u.caps[caps_idx].ReportID;
+                    rptDesc.writeShortItem(global_report_id, ppData.u.caps[capsIdx].ReportID);
+                    lastReportId = (byte) ppData.u.caps[capsIdx].ReportID;
                 }
 
                 // Write "Usage Page" when changed
-                if (pp_data.u.caps[caps_idx].UsagePage != last_usage_page) {
-                    rpt_desc.write_short_item(global_usage_page, pp_data.u.caps[caps_idx].UsagePage);
-                    last_usage_page = pp_data.u.caps[caps_idx].UsagePage;
+                if (ppData.u.caps[capsIdx].UsagePage != lastUsagePage) {
+                    rptDesc.writeShortItem(global_usage_page, ppData.u.caps[capsIdx].UsagePage);
+                    lastUsagePage = ppData.u.caps[capsIdx].UsagePage;
                 }
 
                 // Write only local report items for each cap, if ReportCount > 1
-                if ((pp_data.u.caps[caps_idx].flags & IsRange) != 0) {
-                    report_count += (pp_data.u.caps[caps_idx].u1.range.DataIndexMax - pp_data.u.caps[caps_idx].u1.range.DataIndexMin);
+                if ((ppData.u.caps[capsIdx].flags & IsRange) != 0) {
+                    reportCount += (ppData.u.caps[capsIdx].u1.range.DataIndexMax - ppData.u.caps[capsIdx].u1.range.DataIndexMin);
                 }
 
-                if (inhibit_write_of_usage) {
+                if (inhibitWriteOfUsage) {
                     // Inhibit only once after Delimiter - Reset flags
-                    inhibit_write_of_usage = false;
+                    inhibitWriteOfUsage = false;
                 } else {
-                    if ((pp_data.u.caps[caps_idx].flags & IsRange) != 0) {
+                    if ((ppData.u.caps[capsIdx].flags & IsRange) != 0) {
                         // Write range from "Usage Minimum" to "Usage Maximum"
-                        rpt_desc.write_short_item(local_usage_minimum, pp_data.u.caps[caps_idx].u1.range.UsageMin);
-                        rpt_desc.write_short_item(local_usage_maximum, pp_data.u.caps[caps_idx].u1.range.UsageMax);
+                        rptDesc.writeShortItem(local_usage_minimum, ppData.u.caps[capsIdx].u1.range.UsageMin);
+                        rptDesc.writeShortItem(local_usage_maximum, ppData.u.caps[capsIdx].u1.range.UsageMax);
                     } else {
                         // Write single "Usage"
-                        rpt_desc.write_short_item(local_usage, pp_data.u.caps[caps_idx].u1.notRange.Usage);
+                        rptDesc.writeShortItem(local_usage, ppData.u.caps[capsIdx].u1.notRange.Usage);
                     }
                 }
 
-                if ((pp_data.u.caps[caps_idx].flags & IsDesignatorRange) == 0) {
+                if ((ppData.u.caps[capsIdx].flags & IsDesignatorRange) == 0) {
                     // Write physical descriptor indices range from "Designator Minimum" to "Designator Maximum"
-                    rpt_desc.write_short_item(local_designator_minimum, pp_data.u.caps[caps_idx].u1.range.DesignatorMin);
-                    rpt_desc.write_short_item(local_designator_maximum, pp_data.u.caps[caps_idx].u1.range.DesignatorMax);
-                } else if (pp_data.u.caps[caps_idx].u1.notRange.DesignatorIndex != 0) {
+                    rptDesc.writeShortItem(local_designator_minimum, ppData.u.caps[capsIdx].u1.range.DesignatorMin);
+                    rptDesc.writeShortItem(local_designator_maximum, ppData.u.caps[capsIdx].u1.range.DesignatorMax);
+                } else if (ppData.u.caps[capsIdx].u1.notRange.DesignatorIndex != 0) {
                     // Designator set 0 is a special descriptor set (of the HID Physical Descriptor),
                     // that specifies the number of additional descriptor sets.
                     // Therefore Designator Index 0 can never be a useful reference for a control and we can inhibit it.
                     // Write single "Designator Index"
-                    rpt_desc.write_short_item(local_designator_index, pp_data.u.caps[caps_idx].u1.notRange.DesignatorIndex);
+                    rptDesc.writeShortItem(local_designator_index, ppData.u.caps[capsIdx].u1.notRange.DesignatorIndex);
                 }
 
-                if ((pp_data.u.caps[caps_idx].flags & IsStringRange) != 0) {
+                if ((ppData.u.caps[capsIdx].flags & IsStringRange) != 0) {
                     // Write range of indices of the USB string descriptor, from "String Minimum" to "String Maximum"
-                    rpt_desc.write_short_item(local_string_minimum, pp_data.u.caps[caps_idx].u1.range.StringMin);
-                    rpt_desc.write_short_item(local_string_maximum, pp_data.u.caps[caps_idx].u1.range.StringMax);
-                } else if (pp_data.u.caps[caps_idx].u1.notRange.StringIndex != 0) {
+                    rptDesc.writeShortItem(local_string_minimum, ppData.u.caps[capsIdx].u1.range.StringMin);
+                    rptDesc.writeShortItem(local_string_maximum, ppData.u.caps[capsIdx].u1.range.StringMax);
+                } else if (ppData.u.caps[capsIdx].u1.notRange.StringIndex != 0) {
                     // String Index 0 is a special entry of the USB string descriptor, that contains a list of supported languages,
                     // therefore Designator Index 0 can never be a useful reference for a control and we can inhibit it.
                     // Write single "String Index"
-                    rpt_desc.write_short_item(local_string, pp_data.u.caps[caps_idx].u1.notRange.StringIndex);
+                    rptDesc.writeShortItem(local_string, ppData.u.caps[capsIdx].u1.notRange.StringIndex);
                 }
 
-                if ((i < main_item_list.size() - 1) &&
-                        (main_item_list.get(i + 1).mainItemType.ordinal() == rt_idx) &&
-                        (main_item_list.get(i + 1).typeOfNode == item_node_cap) &&
-                        ((pp_data.u.caps[main_item_list.get(i + 1).capsIndex].flags & IsButtonCap) != 0) &&
-                        ((pp_data.u.caps[caps_idx].flags & IsRange) == 0) && // This node in list is no array
-                        ((pp_data.u.caps[main_item_list.get(i + 1).capsIndex].flags & IsRange) == 0) && // Next node in list is no array
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].UsagePage == pp_data.u.caps[caps_idx].UsagePage) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].ReportID == pp_data.u.caps[caps_idx].ReportID) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].BitField == pp_data.u.caps[caps_idx].BitField)
+                if ((i < mainItemNodes.size() - 1) &&
+                        (mainItemNodes.get(i + 1).mainItemType.ordinal() == rtIdx) &&
+                        (mainItemNodes.get(i + 1).typeOfNode == item_node_cap) &&
+                        ((ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].flags & IsButtonCap) != 0) &&
+                        ((ppData.u.caps[capsIdx].flags & IsRange) == 0) && // This node in list is no array
+                        ((ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].flags & IsRange) == 0) && // Next node in list is no array
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].UsagePage == ppData.u.caps[capsIdx].UsagePage) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].ReportID == ppData.u.caps[capsIdx].ReportID) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].BitField == ppData.u.caps[capsIdx].BitField)
                 ) {
-                    if (main_item_list.get(i + 1).firstBit != curr_item_list.firstBit) {
+                    if (mainItemNodes.get(i + 1).firstBit != currItemList.firstBit) {
                         // In case of IsMultipleItemsForArray for multiple dedicated usages for a multi-button array, the report count should be incremented
 
                         // Skip global items until any of them changes, than use ReportCount item to write the count of identical report fields
-                        report_count++;
+                        reportCount++;
                     }
                 } else {
 
-                    if ((pp_data.u.caps[caps_idx].u2.button.LogicalMin == 0) &&
-                            (pp_data.u.caps[caps_idx].u2.button.LogicalMax == 0)) {
+                    if ((ppData.u.caps[capsIdx].u2.button.LogicalMin == 0) &&
+                            (ppData.u.caps[capsIdx].u2.button.LogicalMax == 0)) {
                         // While a HID report descriptor must always contain LogicalMinimum and LogicalMaximum,
                         // the preparsed data contain both fields set to zero, for the case of simple buttons
                         // Write "Logical Minimum" set to 0 and "Logical Maximum" set to 1
-                        rpt_desc.write_short_item(global_logical_minimum, 0);
-                        rpt_desc.write_short_item(global_logical_maximum, 1);
+                        rptDesc.writeShortItem(global_logical_minimum, 0);
+                        rptDesc.writeShortItem(global_logical_maximum, 1);
                     } else {
                         // Write logical range from "Logical Minimum" to "Logical Maximum"
-                        rpt_desc.write_short_item(global_logical_minimum, pp_data.u.caps[caps_idx].u2.button.LogicalMin);
-                        rpt_desc.write_short_item(global_logical_maximum, pp_data.u.caps[caps_idx].u2.button.LogicalMax);
+                        rptDesc.writeShortItem(global_logical_minimum, ppData.u.caps[capsIdx].u2.button.LogicalMin);
+                        rptDesc.writeShortItem(global_logical_maximum, ppData.u.caps[capsIdx].u2.button.LogicalMax);
                     }
 
                     // Write "Report Size"
-                    rpt_desc.write_short_item(global_report_size, pp_data.u.caps[caps_idx].ReportSize);
+                    rptDesc.writeShortItem(global_report_size, ppData.u.caps[capsIdx].ReportSize);
 
                     // Write "Report Count"
-                    if ((pp_data.u.caps[caps_idx].flags & IsRange) == 0) {
+                    if ((ppData.u.caps[capsIdx].flags & IsRange) == 0) {
                         // Variable bit field with one bit per button
                         // In case of multiple usages with the same items, only "Usage" is written per cap, and "Report Count" is incremented
-                        rpt_desc.write_short_item(global_report_count, pp_data.u.caps[caps_idx].ReportCount + report_count);
+                        rptDesc.writeShortItem(global_report_count, ppData.u.caps[capsIdx].ReportCount + reportCount);
                     } else {
                         // Button array of "Report Size" x "Report Count
-                        rpt_desc.write_short_item(global_report_count, pp_data.u.caps[caps_idx].ReportCount);
+                        rptDesc.writeShortItem(global_report_count, ppData.u.caps[capsIdx].ReportCount);
                     }
 
 
                     // Buttons have only 1 bit and therefore no physical limits/units . Set to undefined state
-                    if (last_physical_min != 0) {
+                    if (lastPhysicalMin != 0) {
                         // Write "Physical Minimum", but only if changed
-                        last_physical_min = 0;
-                        rpt_desc.write_short_item(global_physical_minimum, last_physical_min);
+                        lastPhysicalMin = 0;
+                        rptDesc.writeShortItem(global_physical_minimum, lastPhysicalMin);
                     }
-                    if (last_physical_max != 0) {
+                    if (lastPhysicalMax != 0) {
                         // Write "Physical Maximum", but only if changed
-                        last_physical_max = 0;
-                        rpt_desc.write_short_item(global_physical_maximum, last_physical_max);
+                        lastPhysicalMax = 0;
+                        rptDesc.writeShortItem(global_physical_maximum, lastPhysicalMax);
                     }
-                    if (last_unit_exponent != 0) {
+                    if (lastUnitExponent != 0) {
                         // Write "Unit Exponent", but only if changed
-                        last_unit_exponent = 0;
-                        rpt_desc.write_short_item(global_unit_exponent, last_unit_exponent);
+                        lastUnitExponent = 0;
+                        rptDesc.writeShortItem(global_unit_exponent, lastUnitExponent);
                     }
-                    if (last_unit != 0) {
+                    if (lastUnit != 0) {
                         // Write "Unit",but only if changed
-                        last_unit = 0;
-                        rpt_desc.write_short_item(global_unit, last_unit);
+                        lastUnit = 0;
+                        rptDesc.writeShortItem(global_unit, lastUnit);
                     }
 
                     // Write "Input" main item
-                    if (rt_idx == HidP_Input.ordinal()) {
-                        rpt_desc.write_short_item(main_input, pp_data.u.caps[caps_idx].BitField);
+                    if (rtIdx == HidP_Input.ordinal()) {
+                        rptDesc.writeShortItem(main_input, ppData.u.caps[capsIdx].BitField);
                     }
                     // Write "Output" main item
-                    else if (rt_idx == HidP_Output.ordinal()) {
-                        rpt_desc.write_short_item(main_output, pp_data.u.caps[caps_idx].BitField);
+                    else if (rtIdx == HidP_Output.ordinal()) {
+                        rptDesc.writeShortItem(main_output, ppData.u.caps[capsIdx].BitField);
                     }
                     // Write "Feature" main item
-                    else if (rt_idx == HidP_Feature.ordinal()) {
-                        rpt_desc.write_short_item(main_feature, pp_data.u.caps[caps_idx].BitField);
+                    else if (rtIdx == HidP_Feature.ordinal()) {
+                        rptDesc.writeShortItem(main_feature, ppData.u.caps[capsIdx].BitField);
                     }
-                    report_count = 0;
+                    reportCount = 0;
                 }
             } else {
 
-                if (last_report_id != pp_data.u.caps[caps_idx].ReportID) {
+                if (lastReportId != ppData.u.caps[capsIdx].ReportID) {
                     // Write "Report ID" if changed
-                    rpt_desc.write_short_item(global_report_id, pp_data.u.caps[caps_idx].ReportID);
-                    last_report_id = (byte) pp_data.u.caps[caps_idx].ReportID;
+                    rptDesc.writeShortItem(global_report_id, ppData.u.caps[capsIdx].ReportID);
+                    lastReportId = (byte) ppData.u.caps[capsIdx].ReportID;
                 }
 
                 // Write "Usage Page" if changed
-                if (pp_data.u.caps[caps_idx].UsagePage != last_usage_page) {
-                    rpt_desc.write_short_item(global_usage_page, pp_data.u.caps[caps_idx].UsagePage);
-                    last_usage_page = pp_data.u.caps[caps_idx].UsagePage;
+                if (ppData.u.caps[capsIdx].UsagePage != lastUsagePage) {
+                    rptDesc.writeShortItem(global_usage_page, ppData.u.caps[capsIdx].UsagePage);
+                    lastUsagePage = ppData.u.caps[capsIdx].UsagePage;
                 }
 
-                if (inhibit_write_of_usage) {
+                if (inhibitWriteOfUsage) {
                     // Inhibit only once after Delimiter - Reset flags
-                    inhibit_write_of_usage = false;
+                    inhibitWriteOfUsage = false;
                 } else {
-                    if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsRange) != 0) {
+                    if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsRange) != 0) {
                         // Write usage range from "Usage Minimum" to "Usage Maximum"
-                        rpt_desc.write_short_item(local_usage_minimum, pp_data.u.caps[caps_idx].u1.range.UsageMin);
-                        rpt_desc.write_short_item(local_usage_maximum, pp_data.u.caps[caps_idx].u1.range.UsageMax);
+                        rptDesc.writeShortItem(local_usage_minimum, ppData.u.caps[capsIdx].u1.range.UsageMin);
+                        rptDesc.writeShortItem(local_usage_maximum, ppData.u.caps[capsIdx].u1.range.UsageMax);
                     } else {
                         // Write single "Usage"
-                        rpt_desc.write_short_item(local_usage, pp_data.u.caps[caps_idx].u1.notRange.Usage);
+                        rptDesc.writeShortItem(local_usage, ppData.u.caps[capsIdx].u1.notRange.Usage);
                     }
                 }
 
-                if ((pp_data.u.caps[caps_idx].flags & IsDesignatorRange) != 0) {
+                if ((ppData.u.caps[capsIdx].flags & IsDesignatorRange) != 0) {
                     // Write physical descriptor indices range from "Designator Minimum" to "Designator Maximum"
-                    rpt_desc.write_short_item(local_designator_minimum, pp_data.u.caps[caps_idx].u1.range.DesignatorMin);
-                    rpt_desc.write_short_item(local_designator_maximum, pp_data.u.caps[caps_idx].u1.range.DesignatorMax);
-                } else if (pp_data.u.caps[caps_idx].u1.notRange.DesignatorIndex != 0) {
+                    rptDesc.writeShortItem(local_designator_minimum, ppData.u.caps[capsIdx].u1.range.DesignatorMin);
+                    rptDesc.writeShortItem(local_designator_maximum, ppData.u.caps[capsIdx].u1.range.DesignatorMax);
+                } else if (ppData.u.caps[capsIdx].u1.notRange.DesignatorIndex != 0) {
                     // Designator set 0 is a special descriptor set (of the HID Physical Descriptor),
                     // that specifies the number of additional descriptor sets.
                     // Therefore Designator Index 0 can never be a useful reference for a control and we can inhibit it.
                     // Write single "Designator Index"
-                    rpt_desc.write_short_item(local_designator_index, pp_data.u.caps[caps_idx].u1.notRange.DesignatorIndex);
+                    rptDesc.writeShortItem(local_designator_index, ppData.u.caps[capsIdx].u1.notRange.DesignatorIndex);
                 }
 
-                if ((pp_data.u.caps[caps_idx].flags & hid_pp_cap.IsStringRange) != 0) {
+                if ((ppData.u.caps[capsIdx].flags & hid_pp_cap.IsStringRange) != 0) {
                     // Write range of indices of the USB string descriptor, from "String Minimum" to "String Maximum"
-                    rpt_desc.write_short_item(local_string_minimum, pp_data.u.caps[caps_idx].u1.range.StringMin);
-                    rpt_desc.write_short_item(local_string_maximum, pp_data.u.caps[caps_idx].u1.range.StringMax);
-                } else if (pp_data.u.caps[caps_idx].u1.notRange.StringIndex != 0) {
+                    rptDesc.writeShortItem(local_string_minimum, ppData.u.caps[capsIdx].u1.range.StringMin);
+                    rptDesc.writeShortItem(local_string_maximum, ppData.u.caps[capsIdx].u1.range.StringMax);
+                } else if (ppData.u.caps[capsIdx].u1.notRange.StringIndex != 0) {
                     // String Index 0 is a special entry of the USB string descriptor, that contains a list of supported languages,
                     // therefore Designator Index 0 can never be a useful reference for a control and we can inhibit it.
                     // Write single "String Index"
-                    rpt_desc.write_short_item(local_string, pp_data.u.caps[caps_idx].u1.notRange.StringIndex);
+                    rptDesc.writeShortItem(local_string, ppData.u.caps[capsIdx].u1.notRange.StringIndex);
                 }
 
-                if ((pp_data.u.caps[caps_idx].BitField & 0x02) != 0x02) {
+                if ((ppData.u.caps[capsIdx].BitField & 0x02) != 0x02) {
                     // In case of a value array overwrite "Report Count"
-                    pp_data.u.caps[caps_idx].ReportCount = (short) (pp_data.u.caps[caps_idx].u1.range.DataIndexMax - pp_data.u.caps[caps_idx].u1.range.DataIndexMin + 1);
+                    ppData.u.caps[capsIdx].ReportCount = (short) (ppData.u.caps[capsIdx].u1.range.DataIndexMax - ppData.u.caps[capsIdx].u1.range.DataIndexMin + 1);
                 }
 
 
                 // Print only local report items for each cap, if ReportCount > 1
-                if ((main_item_list.get(i + 1).mainItemType.ordinal() == rt_idx) &&
-                        (main_item_list.get(i + 1).typeOfNode == item_node_cap) &&
-                        ((pp_data.u.caps[main_item_list.get(i + 1).capsIndex].flags & IsButtonCap) == 0) &&
-                        ((pp_data.u.caps[caps_idx].flags & IsRange) == 0) && // This node in list is no array
-                        ((pp_data.u.caps[main_item_list.get(i + 1).capsIndex].flags & IsRange) == 0) && // Next node in list is no array
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].UsagePage == pp_data.u.caps[caps_idx].UsagePage) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].u2.notButton.LogicalMin == pp_data.u.caps[caps_idx].u2.notButton.LogicalMin) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].u2.notButton.LogicalMax == pp_data.u.caps[caps_idx].u2.notButton.LogicalMax) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].u2.notButton.PhysicalMin == pp_data.u.caps[caps_idx].u2.notButton.PhysicalMin) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].u2.notButton.PhysicalMax == pp_data.u.caps[caps_idx].u2.notButton.PhysicalMax) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].UnitsExp == pp_data.u.caps[caps_idx].UnitsExp) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].Units == pp_data.u.caps[caps_idx].Units) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].ReportSize == pp_data.u.caps[caps_idx].ReportSize) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].ReportID == pp_data.u.caps[caps_idx].ReportID) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].BitField == pp_data.u.caps[caps_idx].BitField) &&
-                        (pp_data.u.caps[main_item_list.get(i + 1).capsIndex].ReportCount == 1) &&
-                        (pp_data.u.caps[caps_idx].ReportCount == 1)
+                if ((mainItemNodes.get(i + 1).mainItemType.ordinal() == rtIdx) &&
+                        (mainItemNodes.get(i + 1).typeOfNode == item_node_cap) &&
+                        ((ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].flags & IsButtonCap) == 0) &&
+                        ((ppData.u.caps[capsIdx].flags & IsRange) == 0) && // This node in list is no array
+                        ((ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].flags & IsRange) == 0) && // Next node in list is no array
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].UsagePage == ppData.u.caps[capsIdx].UsagePage) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].u2.notButton.LogicalMin == ppData.u.caps[capsIdx].u2.notButton.LogicalMin) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].u2.notButton.LogicalMax == ppData.u.caps[capsIdx].u2.notButton.LogicalMax) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].u2.notButton.PhysicalMin == ppData.u.caps[capsIdx].u2.notButton.PhysicalMin) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].u2.notButton.PhysicalMax == ppData.u.caps[capsIdx].u2.notButton.PhysicalMax) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].UnitsExp == ppData.u.caps[capsIdx].UnitsExp) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].Units == ppData.u.caps[capsIdx].Units) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].ReportSize == ppData.u.caps[capsIdx].ReportSize) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].ReportID == ppData.u.caps[capsIdx].ReportID) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].BitField == ppData.u.caps[capsIdx].BitField) &&
+                        (ppData.u.caps[mainItemNodes.get(i + 1).capsIndex].ReportCount == 1) &&
+                        (ppData.u.caps[capsIdx].ReportCount == 1)
                 ) {
                     // Skip global items until any of them changes, than use ReportCount item to write the count of identical report fields
-                    report_count++;
+                    reportCount++;
                 } else {
                     // Value
 
                     // Write logical range from "Logical Minimum" to "Logical Maximum"
-                    rpt_desc.write_short_item(global_logical_minimum, pp_data.u.caps[caps_idx].u2.notButton.LogicalMin);
-                    rpt_desc.write_short_item(global_logical_maximum, pp_data.u.caps[caps_idx].u2.notButton.LogicalMax);
+                    rptDesc.writeShortItem(global_logical_minimum, ppData.u.caps[capsIdx].u2.notButton.LogicalMin);
+                    rptDesc.writeShortItem(global_logical_maximum, ppData.u.caps[capsIdx].u2.notButton.LogicalMax);
 
-                    if ((last_physical_min != pp_data.u.caps[caps_idx].u2.notButton.PhysicalMin) ||
-                            (last_physical_max != pp_data.u.caps[caps_idx].u2.notButton.PhysicalMax)) {
+                    if ((lastPhysicalMin != ppData.u.caps[capsIdx].u2.notButton.PhysicalMin) ||
+                            (lastPhysicalMax != ppData.u.caps[capsIdx].u2.notButton.PhysicalMax)) {
                         // Write range from "Physical Minimum" to " Physical Maximum", but only if one of them changed
-                        rpt_desc.write_short_item(global_physical_minimum, pp_data.u.caps[caps_idx].u2.notButton.PhysicalMin);
-                        last_physical_min = pp_data.u.caps[caps_idx].u2.notButton.PhysicalMin;
-                        rpt_desc.write_short_item(global_physical_maximum, pp_data.u.caps[caps_idx].u2.notButton.PhysicalMax);
-                        last_physical_max = pp_data.u.caps[caps_idx].u2.notButton.PhysicalMax;
+                        rptDesc.writeShortItem(global_physical_minimum, ppData.u.caps[capsIdx].u2.notButton.PhysicalMin);
+                        lastPhysicalMin = ppData.u.caps[capsIdx].u2.notButton.PhysicalMin;
+                        rptDesc.writeShortItem(global_physical_maximum, ppData.u.caps[capsIdx].u2.notButton.PhysicalMax);
+                        lastPhysicalMax = ppData.u.caps[capsIdx].u2.notButton.PhysicalMax;
                     }
 
-                    if (last_unit_exponent != pp_data.u.caps[caps_idx].UnitsExp) {
+                    if (lastUnitExponent != ppData.u.caps[capsIdx].UnitsExp) {
                         // Write "Unit Exponent", but only if changed
-                        rpt_desc.write_short_item(global_unit_exponent, pp_data.u.caps[caps_idx].UnitsExp);
-                        last_unit_exponent = pp_data.u.caps[caps_idx].UnitsExp;
+                        rptDesc.writeShortItem(global_unit_exponent, ppData.u.caps[capsIdx].UnitsExp);
+                        lastUnitExponent = ppData.u.caps[capsIdx].UnitsExp;
                     }
 
-                    if (last_unit != pp_data.u.caps[caps_idx].Units) {
+                    if (lastUnit != ppData.u.caps[capsIdx].Units) {
                         // Write physical "Unit", but only if changed
-                        rpt_desc.write_short_item(global_unit, pp_data.u.caps[caps_idx].Units);
-                        last_unit = pp_data.u.caps[caps_idx].Units;
+                        rptDesc.writeShortItem(global_unit, ppData.u.caps[capsIdx].Units);
+                        lastUnit = ppData.u.caps[capsIdx].Units;
                     }
 
                     // Write "Report Size"
-                    rpt_desc.write_short_item(global_report_size, pp_data.u.caps[caps_idx].ReportSize);
+                    rptDesc.writeShortItem(global_report_size, ppData.u.caps[capsIdx].ReportSize);
 
                     // Write "Report Count"
-                    rpt_desc.write_short_item(global_report_count, pp_data.u.caps[caps_idx].ReportCount + report_count);
+                    rptDesc.writeShortItem(global_report_count, ppData.u.caps[capsIdx].ReportCount + reportCount);
 
-                    if (rt_idx == HidP_Input.ordinal()) {
+                    if (rtIdx == HidP_Input.ordinal()) {
                         // Write "Input" main item
-                        rpt_desc.write_short_item(main_input, pp_data.u.caps[caps_idx].BitField);
-                    } else if (rt_idx == HidP_Output.ordinal()) {
+                        rptDesc.writeShortItem(main_input, ppData.u.caps[capsIdx].BitField);
+                    } else if (rtIdx == HidP_Output.ordinal()) {
                         // Write "Output" main item
-                        rpt_desc.write_short_item(main_output, pp_data.u.caps[caps_idx].BitField);
-                    } else if (rt_idx == HidP_Feature.ordinal()) {
+                        rptDesc.writeShortItem(main_output, ppData.u.caps[capsIdx].BitField);
+                    } else if (rtIdx == HidP_Feature.ordinal()) {
                         // Write "Feature" main item
-                        rpt_desc.write_short_item(main_feature, pp_data.u.caps[caps_idx].BitField);
+                        rptDesc.writeShortItem(main_feature, ppData.u.caps[capsIdx].BitField);
                     }
-                    report_count = 0;
+                    reportCount = 0;
                 }
             }
         }
 
-        return rpt_desc.byteIdx;
+        return rptDesc.byteIdx;
     }
 }

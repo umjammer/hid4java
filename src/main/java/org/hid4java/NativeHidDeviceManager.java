@@ -21,7 +21,7 @@ public interface NativeHidDeviceManager {
     /**
      * As an initializer (this instance is used as a service provider, so the instance is reused)
      */
-    void open();
+    void open(HidServicesSpecification specification);
 
     /**
      * Finalize the HIDAPI library.

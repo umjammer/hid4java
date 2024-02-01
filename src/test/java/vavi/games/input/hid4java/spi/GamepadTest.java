@@ -1,5 +1,7 @@
-/**
- * @see "https://bard.google.com/chat/9665fdb38439eac5"
+/*
+ * Copyright (c) 2024 by Naohide Sano, All rights reserved.
+ *
+ * Programmed by Naohide Sano
  */
 
 package vavi.games.input.hid4java.spi;
@@ -23,6 +25,12 @@ import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
 
+/**
+ * GamepadTest.
+ *
+ * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
+ * @version 0.00 2024-01-28 nsano initial version <br>
+ */
 @PropsEntity(url = "file:local.properties")
 public class GamepadTest {
 

@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
-import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ShortByReference;
 import org.hid4java.HidDevice;
 import org.hid4java.HidException;
+import org.hid4java.HidServicesSpecification;
 import org.hid4java.NativeHidDeviceManager;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFDictionary;
@@ -69,14 +69,6 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     /** */
     private final Map<String, MacosHidDevice> devices = new HashMap<>();
 
-    /**
-     * When false - all devices will be opened in exclusive mode. (Default)
-     * When true - all devices will be opened in non-exclusive mode.
-     * <p>
-     * See {@link #hid_darwin_set_open_exclusive} for more information.
-     */
-    public static boolean darwinOpenDevicesNonExclusive = false;
-
     /** Run context */
     private Pointer /* IOHIDManagerRef */ manager;
 
@@ -84,7 +76,7 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     static final boolean is_macos_10_10_or_greater = kCFCoreFoundationVersionNumber >= 1151.16;
 
     /** */
-    private int /* IOOptionBits */ device_open_options = 0;
+    private int /* IOOptionBits */ deviceOpenOptions = 0;
 
     /**
      * Changes the behavior of all further calls to {@link #create(int, int, String)} or {@link NativeHidDeviceManager#create(HidDevice.Info)}.
@@ -92,28 +84,20 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
      * All devices opened by HIDAPI with {@link #create(int, int, String)} or {@link NativeHidDeviceManager#create(HidDevice.Info)}
      * are opened in exclusive mode per default.
      * <p>
-     * Calling this function before {@link #MacosHidDeviceManager()} or after {@link #close()} has no effect.
      *
      * @param openExclusive When set to true - all further devices will be opened in non-exclusive mode.
      *                      Otherwise - all further devices will be opened in exclusive mode.
-     * @since hidapi 0.12.0
      */
-    private void hid_darwin_set_open_exclusive(boolean openExclusive) {
-        device_open_options = !openExclusive ? kIOHIDOptionsTypeNone : kIOHIDOptionsTypeSeizeDevice;
-    }
-
-    /**
-     * Initialize all the HID Manager Objects
-     *
-     * @throws IllegalStateException when failed
-     */
-    public MacosHidDeviceManager() {
-logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
-        hid_darwin_set_open_exclusive(!darwinOpenDevicesNonExclusive); // Backward compatibility
+    private void hidDarwinSetOpenExclusive(boolean openExclusive) {
+        deviceOpenOptions = !openExclusive ? kIOHIDOptionsTypeNone : kIOHIDOptionsTypeSeizeDevice;
     }
 
     @Override
-    public void open() {
+    public void open(HidServicesSpecification specification) {
+logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
+        hidDarwinSetOpenExclusive(!specification.darwinOpenDevicesNonExclusive); // Backward compatibility
+
+        //
         manager = IOKitLib.INSTANCE.IOHIDManagerCreate(CFAllocator.kCFAllocatorDefault, kIOHIDOptionsTypeNone);
         if (manager != null) {
             IOKitLib.INSTANCE.IOHIDManagerSetDeviceMatching(manager, null);
@@ -248,7 +232,7 @@ logger.fine("device null: " + devices[i]);
             }
 
             IOHIDDevice nativeDevice = new IOHIDDevice(dev);
-            List<HidDevice.Info> infos = nativeDevice.create_device_info();
+            List<HidDevice.Info> infos = nativeDevice.createDeviceInfo();
             if (infos.isEmpty()) {
 logger.fine("empty");
                 continue;
@@ -280,7 +264,7 @@ logger.finest("here00.1: devices: cached: " + device);
             return device;
         }
 
-        device = new MacosHidDevice(device_open_options);
+        device = new MacosHidDevice(deviceOpenOptions);
         device.deviceInfo = info;
 
         device.closer = devices::remove;

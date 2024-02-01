@@ -55,7 +55,7 @@ class HidDeviceTest {
         mockStructure.serialNumber = "1234";
 
         // Act
-        HidDevice testObject = new HidDevice(mockStructure, manager, new HidServicesSpecification());
+        HidDevice testObject = new HidDevice(mockStructure, manager.open(mockStructure), null);
 
         // Assert
         assertTrue(testObject.isVidPidSerial(0x01, 0x02, "1234"));
@@ -73,7 +73,7 @@ class HidDeviceTest {
         mockStructure.serialNumber = "1234";
 
         // Act
-        HidDevice testObject = new HidDevice(mockStructure, manager, new HidServicesSpecification());
+        HidDevice testObject = new HidDevice(mockStructure, manager.open(mockStructure), null);
 
         // Assert
         assertTrue(testObject.isVidPidSerial(0x8001, 0x8002, "1234"));
@@ -97,7 +97,7 @@ class HidDeviceTest {
         mockStructure.interfaceNumber = 6;
 
         // Act
-        HidDevice testObject = new HidDevice(mockStructure, manager, new HidServicesSpecification());
+        HidDevice testObject = new HidDevice(mockStructure, manager.open(mockStructure), null);
 
         // Assert
         assertEquals("path", testObject.getPath());

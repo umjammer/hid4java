@@ -16,7 +16,7 @@ public interface NativeHidDevice {
     /** input report listeners */
     List<InputReportListener> inputReportListeners = new ArrayList<>();
 
-    /** adds ReportInputListener */
+    /** adds {@link InputReportListener} */
     default void addInputReportListener(InputReportListener listener) {
         inputReportListeners.add(listener);
     }
@@ -28,24 +28,21 @@ public interface NativeHidDevice {
     }
 
     /**
-     * Starts a HID device event system.
+     * Starts a HID input report event system.
      */
     void open() throws IOException;
 
     /**
-     * Close a HID device
+     * Stops a HID input report event system.
      */
     void close() throws IOException;
 
     /**
      * Write an Output report to a HID device.
      * <p>
-     * The first byte of data[] must contain the Report ID. For devices which only support a single report, this must be set to 0x0.
-     * The remaining bytes contain the report data.
-     * <p>
      * Since the Report ID is mandatory, calls to hid_write() will always contain one more byte than the report contains.
      * <p>
-     * For example, if a hid report is 16 bytes long, 17 bytes must be passed to hid_write(), the Report ID (or 0x0, for devices with
+     * For example, if a hid report is 16 bytes long, 17 bytes must be passed to #write(), the Report ID (or 0x0, for devices with
      * a single report), followed by the report data (16 bytes). In this example, the length passed in would be 17.
      * <p>
      * hid_write() will send the data on the first OUT endpoint, if one exists. If it does not, it will send the data through the
@@ -59,29 +56,27 @@ public interface NativeHidDevice {
     int write(byte[] data, int len, byte reportId) throws IOException;
 
     /**
-     * Get a feature report from a HID device.
+     * Gets a feature report from a HID device.
      * <p>
      * Set the first byte of data[] to the Report ID of the report to be read. Make sure to allow space for this extra byte in data[].
      * Upon return, the first byte will still contain the Report ID, and the report data will start in data[1].
      *
-     * @param data     A buffer to put the read data into, including the Report ID. Set the first byte of data[] to the Report ID of the report to be read, or set it to zero if your device does not use numbered reports.
+     * @param data     A buffer to put the read data into, including the Report ID. Set the first byte[] of data to the Report ID of the report to be read, or set it to zero if your device does not use numbered reports.
      * @param reportId The report ID (or (byte) 0x00)
      * @return The number of bytes read plus one for the report ID (which is still in the first byte)
      */
     int getFeatureReport(byte[] data, byte reportId) throws IOException;
 
     /**
-     * Send a Feature report to the device.
+     * Sends a Feature report to the device.
      * <p>
-     * Feature reports are sent over the Control endpoint as a Set_Report transfer.
-     * <p>
-     * The first byte of data[] must contain the Report ID. For devices which only support a single report, this must be set to 0x0.
+     * Feature reports are sent over the Control endpoint as a #setReport() transfer.
      * <p>
      * The remaining bytes contain the report data.
      * <p>
-     * Since the Report ID is mandatory, calls to hid_send_feature_report() will always contain one more byte than the report contains.
+     * Since the Report ID is mandatory, calls to #sendFeatureReport() will always contain one more byte than the report contains.
      * <p>
-     * For example, if a hid report is 16 bytes long, 17 bytes must be passed to hid_send_feature_report():
+     * For example, if a hid report is 16 bytes long, 17 bytes must be passed to sendFeatureReport:
      * the Report ID (or 0x0, for devices which do not use numbered reports), followed by the report data (16 bytes).
      * In this example, the length passed in would be 17.
      *
@@ -92,12 +87,12 @@ public interface NativeHidDevice {
     int sendFeatureReport(byte[] data, byte reportId) throws IOException;
 
     /**
-     * Get a report descriptor from a HID device.
+     * Gets a report descriptor from a HID device.
      * <p>
      * Since version 0.14.0, @ref HID_API_VERSION >= HID_API_MAKE_VERSION(0, 14, 0)
      * <p>
-     * User has to provide a preallocated buffer where descriptor will be copied to.
-     * The recommended size for preallocated buffer is @ref HID_API_MAX_REPORT_DESCRIPTOR_SIZE bytes.
+     * User has to provide a pre-allocated buffer where descriptor will be copied to.
+     * The recommended size for pre-allocated buffer is @ref HID_API_MAX_REPORT_DESCRIPTOR_SIZE bytes.
      *
      * @param report The buffer to copy descriptor into.
      * @return This function returns non-negative number of bytes actually copied, or -1 on error.
@@ -105,20 +100,20 @@ public interface NativeHidDevice {
     int getReportDescriptor(byte[] report) throws IOException;
 
     /**
-     * Get an input report from a HID device.
+     * Gets an input report from a HID device.
      * <p>
-     * Set the first byte of @p data[] to the Report ID of the
+     * Set the first byte[] of <cpde>data</cpde> to the Report ID of the
      * report to be read. Make sure to allow space for this
-     * extra byte in @p data[]. Upon return, the first byte will
+     * extra byte in <cpde>data</cpde>. Upon return, the first byte will
      * still contain the Report ID, and the report data will
      * start in data[1].
      *
-     * @param data   A buffer to put the read data into, including
-     *               the Report ID. Set the first byte of @p data[] to the
-     *               Report ID of the report to be read, or set it to zero
+     * @param data   A buffer to put the read data into, excluding
+     *               the Report ID at The first byte[] of <cpde>data</cpde>
+     * @param reportId the Report ID of the report to be read, or set it to zero
      *               if your device does not use numbered reports.
      * @return This function returns the number of bytes read plus one for the report ID
-     * (which is still in the first byte), or -1 on error. Call hid_error(dev) to get the failure reason.
+     * (which is still in the first byte), or -1 on error. or throws IOException to get the failure reason.
      * @since version 0.10.0
      */
     int getInputReport(byte[] data, byte reportId) throws IOException;

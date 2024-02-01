@@ -35,14 +35,59 @@ package org.hid4java;
  */
 public class HidServicesSpecification {
 
+    /**
+     * Provide a collection of different device enumeration scanning modes so that
+     * device attaches/detaches events can be generated.
+     */
+    public enum ScanMode {
+
+        /**
+         * Equivalent to scan interval of zero.
+         */
+        NO_SCAN,
+        /**
+         * Trigger continuous scan at given interval.
+         */
+        SCAN_AT_FIXED_INTERVAL,
+        /**
+         * Trigger continuous scan at given interval but introduce a pause after a write
+         * operation to allow the device time to process data without having to respond
+         * to further enumeration requests.
+         * <p>
+         * This can be a useful strategy for handling devices with constrained processing
+         * power and/or limited USB stacks.
+         * <p>
+         * Note this will affect the time to generate a device attach/detach event since
+         * scanning will be paused.
+         */
+        SCAN_AT_FIXED_INTERVAL_WITH_PAUSE_AFTER_WRITE,
+    }
+
     private ScanMode scanMode = ScanMode.SCAN_AT_FIXED_INTERVAL;
     private boolean autoShutdown = true;
     private int scanInterval = 500;
     private int pauseInterval = 5000;
     private boolean autoStart = true;
-    private boolean autoDataRead = false;
+    /** win & linux only (mac is no param for it) */
     private int dataReadInterval = 500;
 
+    /**
+     * When false - all devices will be opened in exclusive mode. (Default)
+     * When true - all devices will be opened in non-exclusive mode.
+     * <p>
+     * See org.hid4java.macos.MacosHidDeviceManager#hidDarwinSetOpenExclusive for more information.
+     */
+    public boolean darwinOpenDevicesNonExclusive = false;
+
+    /**
+     * Enables use of the libusb variant of the hidapi native library when running on a Linux platform.
+     * <p>
+     * The default is hidraw which enables Bluetooth devices but requires udev rules.
+     */
+    public boolean useLibUsbVariant = false;
+
+
+    /** */
     public ScanMode getScanMode() {
         return scanMode;
     }
@@ -54,6 +99,7 @@ public class HidServicesSpecification {
         this.scanMode = scanMode;
     }
 
+    /** */
     public int getScanInterval() {
         return scanInterval;
     }
@@ -69,6 +115,7 @@ public class HidServicesSpecification {
         this.scanInterval = scanInterval;
     }
 
+    /** */
     public int getPauseInterval() {
         return pauseInterval;
     }
@@ -83,6 +130,7 @@ public class HidServicesSpecification {
         this.pauseInterval = pauseInterval;
     }
 
+    /** */
     public boolean isAutoShutdown() {
 
         return autoShutdown;
@@ -95,7 +143,7 @@ public class HidServicesSpecification {
         this.autoShutdown = autoShutdown;
     }
 
-
+    /** */
     public boolean isAutoStart() {
         return autoStart;
     }
@@ -107,18 +155,7 @@ public class HidServicesSpecification {
         this.autoStart = autoStart;
     }
 
-    public boolean isAutoDataRead() {
-        return autoDataRead;
-    }
-
-    /**
-     * @param autoDataRead True if device input buffer should be automatically checked and read
-     * @since 0.8.0
-     */
-    public void setAutoDataRead(boolean autoDataRead) {
-        this.autoDataRead = autoDataRead;
-    }
-
+    /** */
     public int getDataReadInterval() {
         return dataReadInterval;
     }

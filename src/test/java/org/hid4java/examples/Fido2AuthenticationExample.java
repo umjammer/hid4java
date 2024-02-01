@@ -32,7 +32,7 @@ import org.hid4java.HidDevice;
 import org.hid4java.HidManager;
 import org.hid4java.HidServices;
 import org.hid4java.HidServicesSpecification;
-import org.hid4java.event.HidServicesEvent;
+import org.hid4java.InputReportEvent;
 import vavi.util.Debug;
 
 
@@ -150,7 +150,6 @@ public class Fido2AuthenticationExample extends BaseExample {
         hidServicesSpecification.setAutoStart(false);
 
         // Use data received events
-        hidServicesSpecification.setAutoDataRead(true);
         hidServicesSpecification.setDataReadInterval(500);
 
         // Get HID services using custom specification
@@ -200,6 +199,8 @@ public class Fido2AuthenticationExample extends BaseExample {
      */
     private boolean handleInitialise(HidDevice hidDevice) throws IOException {
 
+        hidDevice.addInputReportListener(this::hidDataReceived);
+
         // Ensure device is create
         if (!hidDevice.isOpen()) {
             hidDevice.open();
@@ -226,12 +227,11 @@ public class Fido2AuthenticationExample extends BaseExample {
         return true;
     }
 
-    @Override
-    public void hidDataReceived(HidServicesEvent event) {
-        super.hidDataReceived(event);
+    // TODO check initialiseResponse first byte is reportId or not
+    void hidDataReceived(InputReportEvent event) {
 
         // Analyse the response
-        byte[] initialiseResponse = event.getDataReceived();
+        byte[] initialiseResponse = event.getReport();
 
         // Decode the response
         System.out.println(ANSI_GREEN + "Response is:" + ANSI_RESET);
