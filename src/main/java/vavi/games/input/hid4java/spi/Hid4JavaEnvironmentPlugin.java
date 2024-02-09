@@ -16,7 +16,7 @@ import java.util.logging.Level;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
-import net.java.games.input.ControllerEnvironment;
+import net.java.games.input.ControllerListenerSupport;
 import net.java.games.input.DeviceSupportPlugin;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.GenericDesktopUsageId;
@@ -39,7 +39,7 @@ import vavi.util.Debug;
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 230927 nsano initial version <br>
  */
-public final class Hid4JavaEnvironmentPlugin extends ControllerEnvironment implements HidControllerEnvironment, Closeable {
+public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport implements HidControllerEnvironment, Closeable {
 
     /** */
     private List<Hid4JavaController> controllers;
