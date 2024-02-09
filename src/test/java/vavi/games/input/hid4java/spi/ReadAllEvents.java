@@ -5,6 +5,7 @@ import net.java.games.input.ControllerEnvironment;
 import net.java.games.input.osx.plugin.DualShock4Plugin;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 
 /**
@@ -23,6 +24,7 @@ public class ReadAllEvents {
 
     /** the most typical test for jinput */
     @Test
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
     @DisplayName("jinput sample powered by hid4java spi")
     void readAllEvents() throws Exception {
         /* Get the available controllers */

@@ -25,6 +25,8 @@
  * windows/linux not tested yet
  * dig into the difference between static and instance method reference
  * ~~spi attach/detach controller~~
+ * gyro
+   * https://github.com/keijiro/GyroInputTest
 
 ## LESSON
 
