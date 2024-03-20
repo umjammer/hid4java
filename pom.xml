@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.8v</version>
+  <version>0.14.9v</version>
 
   <name>hid4java</name>
   <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
