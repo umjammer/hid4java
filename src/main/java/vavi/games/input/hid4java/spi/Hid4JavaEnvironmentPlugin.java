@@ -52,7 +52,11 @@ public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport i
         hidServicesSpecification.setAutoShutdown(false);
 
         // Get HID services using custom specification
-        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
+        return hidServices = HidManager.getHidServices(hidServicesSpecification);
+    }
+
+    /** */
+    private void startListening() {
         hidServices.addHidServicesListener(new HidServicesListener() {
             @Override
             public void hidDeviceAttached(HidServicesEvent event) {
@@ -82,8 +86,6 @@ Debug.printStackTrace(Level.FINE, e);
                 }
             }
         });
-
-        return hidServices;
     }
 
     private void enumerate() throws IOException {
@@ -178,6 +180,7 @@ Debug.printf(Level.FINE, "@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManu
             try {
                 enumerate();
                 hidServices.start();
+                startListening();
             } catch (IOException e) {
 Debug.printStackTrace(e);
                 return new Hid4JavaController[0];
