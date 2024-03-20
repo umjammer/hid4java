@@ -2,8 +2,11 @@
 [![Java CI](https://github.com/umjammer/hid4java/actions/workflows/maven.yml/badge.svg)](https://github.com/umjammer/hid4java/actions/workflows/maven.yml)
 [![CodeQL](https://github.com/umjammer/hid4java/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/umjammer/hid4java/actions/workflows/codeql-analysis.yml)
 ![Java](https://img.shields.io/badge/Java-17-b07219)
+[![Parent](https://img.shields.io/badge/Parent-jinput-pink)](https://github.com/umjammer/jinput)
 
 # hid4java
+
+<img alt="logo" src="https://github.com/umjammer/hid4java/assets/493908/e27e2d01-0412-40ba-b4c6-600a65d6b9ad" width="120" />
 
 🎮 hid api for java
 
@@ -14,9 +17,18 @@
 
  * [maven](https://jitpack.io/#umjammer/hid4java)
 
+## Usage
+
+ * see [jinput](https://github.com/umjammer/jinput)
+
 ## References
 
  * https://github.com/nyholku/purejavahidapi
+
+### LESSON
+
+* `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type that should be `Pointer`
+* the context object for callback become wierd after a while ... [suspect data is garbage collected](https://github.com/umjammer/hid4java/issues/1#issuecomment-1783940125)
 
 ## TODO
 
@@ -27,15 +39,12 @@
  * ~~spi attach/detach controller~~
  * gyro
    * https://github.com/keijiro/GyroInputTest
-
-## LESSON
-
- * `sigabrt` `__pthread_kill+0x8` ... suspect using java heap as native memory, like using `byte[]` for a parameter type that should be `Pointer`
- * the context object for callback become wired after a while ... [suspect data is garbage collected](https://github.com/umjammer/hid4java/issues/1#issuecomment-1783940125)
+ * reduce classes. compare with purejavahidpai, there are too many classes
+ * deadzone
 
 ---
 
-## Original
+# [Original](https://github.com/gary-rowe/hid4java)
 
 The `hid4java` project supports USB HID devices through a common API which is provided here under the MIT license. The API is very simple but provides great flexibility such as support for feature reports and blocking reads with timeouts. Attach/detach events are provided to allow applications to respond instantly to device availability.
 
@@ -99,3 +108,6 @@ All trademarks and copyrights are acknowledged.
 Many thanks to `victorix` who provided the basis for this library. Please [see the inspiration on the mbed.org site](http://developer.mbed.org/cookbook/USBHID-bindings-).
 
 Thanks also go to everyone who has contributed their knowledge and advice during the creation and subsequent improvement of this library.
+
+---
+<sub>image by <a href="https://www.pngwing.com/en/free-png-nvjdb">pngwing.com</a></sub>

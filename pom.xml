@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.8v</version>
+  <version>0.14.9v</version>
 
   <name>hid4java</name>
   <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
@@ -189,7 +189,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>5.10.1</version>
+        <version>5.10.2</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -200,7 +200,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.9</version>
+      <version>1.1.11</version>
     </dependency>
 
     <dependency>
