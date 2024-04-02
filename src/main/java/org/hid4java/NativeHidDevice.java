@@ -14,16 +14,16 @@ import java.util.List;
 public interface NativeHidDevice {
 
     /** input report listeners */
-    List<InputReportListener> inputReportListeners = new ArrayList<>();
+    List<HidDeviceListener> HID_DEVICE_LISTENERS = new ArrayList<>();
 
-    /** adds {@link InputReportListener} */
-    default void addInputReportListener(InputReportListener listener) {
-        inputReportListeners.add(listener);
+    /** adds {@link HidDeviceListener} */
+    default void addInputReportListener(HidDeviceListener listener) {
+        HID_DEVICE_LISTENERS.add(listener);
     }
 
     /** */
-    default void fireOnInputReport(InputReportEvent event) {
-        for (InputReportListener listener : inputReportListeners)
+    default void fireOnInputReport(HidDeviceEvent event) {
+        for (HidDeviceListener listener : HID_DEVICE_LISTENERS)
             listener.onInputReport(event);
     }
 

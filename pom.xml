@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.9v</version>
+  <version>0.14.10v</version>
 
   <name>hid4java</name>
   <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
@@ -36,7 +36,7 @@
 
   <properties>
     <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.18v</jinput.version>
+    <jinput.version>2.0.19v</jinput.version>
   </properties>
 
   <profiles>
@@ -200,7 +200,7 @@
     <dependency>
       <groupId>com.github.umjammer</groupId>
       <artifactId>vavi-commons</artifactId>
-      <version>1.1.11</version>
+      <version>1.1.12</version>
     </dependency>
 
     <dependency>

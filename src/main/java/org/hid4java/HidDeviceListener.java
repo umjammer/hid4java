@@ -32,7 +32,7 @@ package org.hid4java;
 
 
 /**
- * An InputReportListener gets called from background thread attached to a {@link HidDevice}
+ * An HidDeviceListener gets called from background thread attached to a {@link HidDevice}
  * every time an input report is received from the tha associated USB device.
  * <p>
  * This is the only means of receiving input reports.
@@ -41,7 +41,7 @@ package org.hid4java;
  * @author nyholku
  * @see "https://github.com/nyholku/purejavahidapi/blob/f769fcddf62503cff554e646587c92350ca664e5/src/purejavahidapi/InputReportListener.java"
  */
-public interface InputReportListener {
+public interface HidDeviceListener {
 
     /**
      * This method gets called when an input report is received.
@@ -53,5 +53,5 @@ public interface InputReportListener {
      * keep a reference to it, instead process the data as quickly
      * as possible and inside this call.
      */
-    void onInputReport(InputReportEvent event);
+    void onInputReport(HidDeviceEvent event);
 }

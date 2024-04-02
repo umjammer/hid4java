@@ -36,19 +36,19 @@ import java.util.EventListener;
  *
  * @since 0.0.1
  */
-public interface HidServicesListener extends EventListener {
+public interface HidDevicesListener extends EventListener {
 
     /**
      * A HID was attached
      *
      * @param event The event
      */
-    void hidDeviceAttached(HidServicesEvent event);
+    void hidDeviceAttached(HidDevicesEvent event);
 
     /**
      * A HID was detached
      *
      * @param event The event
      */
-    void hidDeviceDetached(HidServicesEvent event);
+    void hidDeviceDetached(HidDevicesEvent event);
 }

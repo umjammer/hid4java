@@ -46,7 +46,7 @@ public class Hid4JavaTest {
     int vendorId;
     int productId;
 
-    HidServices hidServices;
+    HidDevices hidDevices;
 
     @BeforeEach
     void setup() throws Exception {
@@ -57,28 +57,28 @@ public class Hid4JavaTest {
             productId = Integer.decode(pid);
         }
 
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        HidSpecification hidSpecification = new HidSpecification();
         // Use the v0.7.0 manual start feature to get immediate attach events
-        hidServicesSpecification.setAutoStart(false);
-        hidServicesSpecification.setAutoShutdown(false);
+        hidSpecification.setAutoStart(false);
+        hidSpecification.setAutoShutdown(false);
 
         // Get HID services using custom specification
-        hidServices = HidManager.getHidServices(hidServicesSpecification);
+        hidDevices = new HidDevices(hidSpecification);
 
         // Manually start the services to get attachment event
-        hidServices.start();
+        hidDevices.start();
     }
 
     @AfterEach
     void teardown() throws Exception {
-        hidServices.shutdown();
+        hidDevices.shutdown();
     }
 
     @Test
     @DisplayName("hex dump REPORT descriptor")
     void test2() throws Exception {
 
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 
         byte[] d = new byte[4096];
         int r = device.getReportDescriptor(d);
@@ -89,7 +89,7 @@ Debug.println(device.getManufacturer() + ":" + device.getProduct() + "\n" + Stri
     @Test
     @DisplayName("dump REPORT descriptor by HidParser")
     void test5() throws Exception {
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 
         byte[] d = new byte[4096];
         int r = device.getReportDescriptor(d);
@@ -107,7 +107,7 @@ Debug.println("r: " + r);
     @Test
     @DisplayName("try to use parse result")
     void test6() throws Exception {
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 
         byte[] d = new byte[4096];
         int r = device.getReportDescriptor(d);
@@ -123,7 +123,7 @@ Debug.println("child: " + child + ", " + child.getUsagePair());
     @Test
     @DisplayName("write: led, rumbling")
     void test7() throws Exception {
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 
         byte[] d = new byte[31];
         d[0] = (byte) 255;
@@ -159,7 +159,7 @@ Debug.println("r: " + r);
 
     @Test
     void test8() throws Exception {
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 
         byte[] d = new byte[4096];
         int r = device.getReportDescriptor(d);

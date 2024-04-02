@@ -29,10 +29,9 @@ import java.io.IOException;
 import java.security.SecureRandom;
 
 import org.hid4java.HidDevice;
-import org.hid4java.HidManager;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesSpecification;
-import org.hid4java.InputReportEvent;
+import org.hid4java.HidDeviceEvent;
+import org.hid4java.HidDevices;
+import org.hid4java.HidSpecification;
 import vavi.util.Debug;
 
 
@@ -144,26 +143,26 @@ public class Fido2AuthenticationExample extends BaseExample {
         printPlatform();
 
         // Configure to use custom specification
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        HidSpecification hidSpecification = new HidSpecification();
 
         // Use manual start
-        hidServicesSpecification.setAutoStart(false);
+        hidSpecification.setAutoStart(false);
 
         // Use data received events
-        hidServicesSpecification.setDataReadInterval(500);
+        hidSpecification.setDataReadInterval(500);
 
         // Get HID services using custom specification
-        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
+        HidDevices hidDevices = new HidDevices(hidSpecification);
 
         // Register for service events
-        hidServices.addHidServicesListener(this);
+        hidDevices.addHidServicesListener(this);
 
         // Manually start HID services
-        hidServices.start();
+        hidDevices.start();
 
         // Enumerate devices looking for = 0xf1d0 usage page
         HidDevice fidoDevice = null;
-        for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
+        for (HidDevice hidDevice : hidDevices.getHidDevices()) {
             if (hidDevice.getUsage() == 0x01 && hidDevice.getUsagePage() == 0xf1d0) {
                 System.out.println(ANSI_GREEN + "Using FIDO device: " + hidDevice.getPath() + ANSI_RESET);
                 fidoDevice = hidDevice;
@@ -181,7 +180,7 @@ public class Fido2AuthenticationExample extends BaseExample {
             }
         }
 
-        waitAndShutdown(hidServices, 10);
+        waitAndShutdown(hidDevices, 10);
     }
 
     /**
@@ -228,7 +227,7 @@ public class Fido2AuthenticationExample extends BaseExample {
     }
 
     // TODO check initialiseResponse first byte is reportId or not
-    void hidDataReceived(InputReportEvent event) {
+    void hidDataReceived(HidDeviceEvent event) {
 
         // Analyse the response
         byte[] initialiseResponse = event.getReport();

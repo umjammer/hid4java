@@ -293,7 +293,7 @@ logger.finest("close native: " + nativeDevice);
     /**
      * Sets input report listener.
      */
-    public void addInputReportListener(InputReportListener l) {
+    public void addInputReportListener(HidDeviceListener l) {
         nativeDevice.addInputReportListener(l);
     }
 

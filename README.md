@@ -39,7 +39,7 @@
  * ~~spi attach/detach controller~~
  * gyro
    * https://github.com/keijiro/GyroInputTest
- * reduce classes. compare with purejavahidpai, there are too many classes
+ * ~~reduce classes. compare with purejavahidpai, there are too many classes~~
  * deadzone
 
 ---
@@ -73,20 +73,20 @@ provides more details.
 
 ```java
 // Configure to use custom specification
-HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+HidServicesSpecification hidSpecification = new HidServicesSpecification();
 
 // Use the v0.7.0 manual start feature to get immediate attach events
-hidServicesSpecification.setAutoStart(false);
+hidSpecification.setAutoStart(false);
 
 // Get HID services using custom specification
-HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
-hidServices.addHidServicesListener(this);
+HidServices hidDevices = HidManager.getHidServices(hidSpecification);
+hidDevices.addHidServicesListener(this);
 
 // Manually start the services to get attachment event
-hidServices.start();
+hidDevices.start();
 
 // Provide a list of attached devices
-for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
+for (HidDevice hidDevice : hidDevices.getAttachedHidDevices()) {
   System.out.println(hidDevice);
 }
     

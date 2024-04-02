@@ -36,9 +36,9 @@ import java.util.logging.Logger;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ShortByReference;
 import org.hid4java.HidDevice;
+import org.hid4java.HidSpecification;
 import org.hid4java.HidException;
-import org.hid4java.HidServicesSpecification;
-import org.hid4java.NativeHidDeviceManager;
+import org.hid4java.NativeHidDevices;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFDictionary;
 import vavix.rococoa.corefoundation.CFIndex;
@@ -62,9 +62,9 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeSeizeDevice;
  *
  * @since 0.0.1
  */
-public class MacosHidDeviceManager implements NativeHidDeviceManager {
+public class MacosHidDevices implements NativeHidDevices {
 
-    private static final Logger logger = Logger.getLogger(MacosHidDeviceManager.class.getName());
+    private static final Logger logger = Logger.getLogger(MacosHidDevices.class.getName());
 
     /** */
     private final Map<String, MacosHidDevice> devices = new HashMap<>();
@@ -79,9 +79,9 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     private int /* IOOptionBits */ deviceOpenOptions = 0;
 
     /**
-     * Changes the behavior of all further calls to {@link #create(int, int, String)} or {@link NativeHidDeviceManager#create(HidDevice.Info)}.
+     * Changes the behavior of all further calls to {@link #create(int, int, String)} or {@link NativeHidDevices#create(HidDevice.Info)}.
      * <p>
-     * All devices opened by HIDAPI with {@link #create(int, int, String)} or {@link NativeHidDeviceManager#create(HidDevice.Info)}
+     * All devices opened by HIDAPI with {@link #create(int, int, String)} or {@link NativeHidDevices#create(HidDevice.Info)}
      * are opened in exclusive mode per default.
      * <p>
      *
@@ -93,7 +93,7 @@ public class MacosHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void open(HidServicesSpecification specification) {
+    public void open(HidSpecification specification) {
 logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
         hidDarwinSetOpenExclusive(!specification.darwinOpenDevicesNonExclusive); // Backward compatibility
 

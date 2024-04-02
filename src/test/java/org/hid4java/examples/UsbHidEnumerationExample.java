@@ -26,16 +26,11 @@
 package org.hid4java.examples;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import net.java.games.input.osx.plugin.DualShock4Plugin;
-import net.java.games.input.plugin.DualShock4PluginBase;
 import org.hid4java.HidDevice;
-import org.hid4java.HidManager;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesSpecification;
-import org.junit.jupiter.api.BeforeEach;
+import org.hid4java.HidDevices;
+import org.hid4java.HidSpecification;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
 
@@ -69,32 +64,32 @@ public class UsbHidEnumerationExample extends BaseExample {
         printPlatform();
 
         // Configure to use custom specification
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        HidSpecification hidSpecification = new HidSpecification();
         // Use the v0.7.0 manual start feature to get immediate attach events
-        hidServicesSpecification.setAutoStart(false);
-        hidServicesSpecification.setAutoShutdown(false);
+        hidSpecification.setAutoStart(false);
+        hidSpecification.setAutoShutdown(false);
 
         // Get HID services using custom specification
-        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
-        hidServices.addHidServicesListener(this);
+        HidDevices hidDevices = new HidDevices(hidSpecification);
+        hidDevices.addHidServicesListener(this);
 
         // Manually start the services to get attachment event
         System.out.println(ANSI_GREEN + "Manually starting HID services." + ANSI_RESET);
-        hidServices.start();
+        hidDevices.start();
 
         System.out.println(ANSI_GREEN + "Enumerating attached devices..." + ANSI_RESET);
 
         // Provide a list of attached devices
-        for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
+        for (HidDevice hidDevice : hidDevices.getHidDevices()) {
             System.out.printf("%s/%s ... %x%n", hidDevice.getManufacturer(), hidDevice.getProduct(), hidDevice.getUsagePage());
         }
 
-        HidDevice device = hidServices.getHidDevice(vendorId, productId, null);
+        HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
         device.open();
 
         device.addInputReportListener(e -> display(e.getReport()));
 
-        waitAndShutdown(hidServices, 10);
+        waitAndShutdown(hidDevices, 10);
     }
 
     static void display(byte[] data) {
