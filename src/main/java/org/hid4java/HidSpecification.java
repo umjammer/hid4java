@@ -33,7 +33,7 @@ package org.hid4java;
  *
  * @since 0.5.0
  */
-public class HidServicesSpecification {
+public class HidSpecification {
 
     /**
      * Provide a collection of different device enumeration scanning modes so that
@@ -75,7 +75,7 @@ public class HidServicesSpecification {
      * When false - all devices will be opened in exclusive mode. (Default)
      * When true - all devices will be opened in non-exclusive mode.
      * <p>
-     * See org.hid4java.macos.MacosHidDeviceManager#hidDarwinSetOpenExclusive for more information.
+     * See org.hid4java.macos.MacosHidDevices#hidDarwinSetOpenExclusive for more information.
      */
     public boolean darwinOpenDevicesNonExclusive = false;
 
@@ -149,7 +149,7 @@ public class HidServicesSpecification {
     }
 
     /**
-     * @param autoStart True if the HidServices should start before any listeners are registered (default is backwards compatible to 0.6.0 and below)
+     * @param autoStart True if the HidDevices should start before any listeners are registered (default is backwards compatible to 0.6.0 and below)
      */
     public void setAutoStart(boolean autoStart) {
         this.autoStart = autoStart;

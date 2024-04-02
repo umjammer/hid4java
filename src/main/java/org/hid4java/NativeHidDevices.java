@@ -11,17 +11,17 @@ import java.util.List;
 
 
 /**
- * org.hid4java.NativeHidDeviceManager.
+ * org.hid4java.NativeHidDevices.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-06 nsano initial version <br>
  */
-public interface NativeHidDeviceManager {
+public interface NativeHidDevices {
 
     /**
      * As an initializer (this instance is used as a service provider, so the instance is reused)
      */
-    void open(HidServicesSpecification specification);
+    void open(HidSpecification specification);
 
     /**
      * Finalize the HIDAPI library.

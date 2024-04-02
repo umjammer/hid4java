@@ -39,8 +39,8 @@ import com.sun.jna.ptr.PointerByReference;
 import net.java.games.input.windows.WinAPI.Hid;
 import net.java.games.input.windows.WinAPI.Kernel32Ex;
 import org.hid4java.HidDevice;
-import org.hid4java.HidServicesSpecification;
-import org.hid4java.InputReportEvent;
+import org.hid4java.HidDeviceEvent;
+import org.hid4java.HidSpecification;
 import org.hid4java.NativeHidDevice;
 
 import static com.sun.jna.platform.win32.WinBase.INVALID_HANDLE_VALUE;
@@ -71,7 +71,7 @@ public class WindowsHidDevice implements NativeHidDevice {
     private OVERLAPPED writeOl;
     HidDevice.Info deviceInfo;
 
-    private final HidServicesSpecification specification;
+    private final HidSpecification specification;
 
     /** for input event */
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
@@ -79,7 +79,7 @@ public class WindowsHidDevice implements NativeHidDevice {
     /** for reuse */
     private final byte[] inputBuffer = new byte[64];
 
-    WindowsHidDevice(HidServicesSpecification specification) {
+    WindowsHidDevice(HidSpecification specification) {
         this.deviceHandle = INVALID_HANDLE_VALUE;
         this.blocking = true;
         this.outputReportLength = 0;
@@ -103,7 +103,7 @@ public class WindowsHidDevice implements NativeHidDevice {
         ses.schedule(() -> {
             try {
                 int r = read(inputBuffer, inputBuffer.length);
-                fireOnInputReport(new InputReportEvent(this, inputBuffer[0], inputBuffer, r));
+                fireOnInputReport(new HidDeviceEvent(this, inputBuffer[0], inputBuffer, r));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

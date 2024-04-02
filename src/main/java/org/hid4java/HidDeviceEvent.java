@@ -10,12 +10,12 @@ import java.util.EventObject;
 
 
 /**
- * InputReportEvent.
+ * HidDeviceEvent.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-08 nsano initial version <br>
  */
-public class InputReportEvent extends EventObject {
+public class HidDeviceEvent extends EventObject {
 
     /** the report id number if used or zero */
     private final int reportId;
@@ -25,7 +25,7 @@ public class InputReportEvent extends EventObject {
     private final int length;
 
     /** @param report a report data that contains first report id */
-    public InputReportEvent(Object source, int reportId, byte[] report, int length) {
+    public HidDeviceEvent(Object source, int reportId, byte[] report, int length) {
         super(source);
         this.reportId = reportId;
         this.report = report;

@@ -25,10 +25,6 @@
 
 package org.hid4java;
 
-import java.util.Arrays;
-
-import org.hid4java.HidDevice;
-
 
 /**
  * Event to provide the following to API consumers:
@@ -38,14 +34,14 @@ import org.hid4java.HidDevice;
  *
  * @since 0.0.1
  */
-public class HidServicesEvent {
+public class HidDevicesEvent {
 
     private final HidDevice hidDevice;
 
     /**
      * @param device The HidDevice involved in the event
      */
-    public HidServicesEvent(HidDevice device) {
+    public HidDevicesEvent(HidDevice device) {
         hidDevice = device;
     }
 
@@ -58,7 +54,7 @@ public class HidServicesEvent {
 
     @Override
     public String toString() {
-        return "HidServicesEvent{" +
+        return "HidDevicesEvent{" +
                 "hidDevice=" + hidDevice +
                 '}';
     }

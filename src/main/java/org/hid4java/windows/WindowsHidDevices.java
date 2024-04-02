@@ -41,9 +41,9 @@ import net.java.games.input.windows.WinAPI.HIDD_ATTRIBUTES;
 import net.java.games.input.windows.WinAPI.HIDP_CAPS;
 import net.java.games.input.windows.WinAPI.Hid;
 import org.hid4java.HidDevice;
-import org.hid4java.HidServicesSpecification;
+import org.hid4java.HidSpecification;
 import org.hid4java.NativeHidDevice;
-import org.hid4java.NativeHidDeviceManager;
+import org.hid4java.NativeHidDevices;
 
 import static com.sun.jna.platform.win32.Cfgmgr32.CR_BUFFER_SMALL;
 import static com.sun.jna.platform.win32.Cfgmgr32.CR_SUCCESS;
@@ -74,14 +74,14 @@ import static org.hid4java.HidDevice.Info.HidBusType.BUS_USB;
 
 
 /**
- * WindowsHidDeviceManager.
+ * WindowsHidDevices.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-31 nsano initial version <br>
  */
-public class WindowsHidDeviceManager implements NativeHidDeviceManager {
+public class WindowsHidDevices implements NativeHidDevices {
 
-    private HidServicesSpecification specification;
+    private HidSpecification specification;
 
     /** @return nullable */
     private static byte[] hidInternalGetDevnodeProperty(int /* DEVINST */ devNode, DEVPROPKEY propertyKey, int /* DEVPROPTYPE */ expectedPropertyType) {
@@ -380,7 +380,7 @@ public class WindowsHidDeviceManager implements NativeHidDeviceManager {
     }
 
     @Override
-    public void open(HidServicesSpecification specification) {
+    public void open(HidSpecification specification) {
         this.specification = specification;
     }
 

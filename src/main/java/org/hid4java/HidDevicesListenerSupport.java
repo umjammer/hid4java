@@ -34,17 +34,17 @@ import java.util.List;
  *
  * @since 0.0.1
  */
-public class HidServicesListenerSupport {
+public class HidDevicesListenerSupport {
 
     /**
      * The list with registered listeners
      */
-    private final List<HidServicesListener> listeners = new ArrayList<>();
+    private final List<HidDevicesListener> listeners = new ArrayList<>();
 
     /**
      * @param listener The listener to add (same instance are not duplicated)
      */
-    public final void add(HidServicesListener listener) {
+    public final void add(HidDevicesListener listener) {
         if (this.listeners.contains(listener)) {
             return;
         }
@@ -54,7 +54,7 @@ public class HidServicesListenerSupport {
     /**
      * @param listener The listener to remove
      */
-    public final void remove(HidServicesListener listener) {
+    public final void remove(HidDevicesListener listener) {
         this.listeners.remove(listener);
     }
 
@@ -71,9 +71,9 @@ public class HidServicesListenerSupport {
      * @param hidDevice The device that was attached
      */
     public void fireHidDeviceAttached(HidDevice hidDevice) {
-        HidServicesEvent event = new HidServicesEvent(hidDevice);
+        HidDevicesEvent event = new HidDevicesEvent(hidDevice);
 
-        for (HidServicesListener listener : listeners) {
+        for (HidDevicesListener listener : listeners) {
             listener.hidDeviceAttached(event);
         }
     }
@@ -84,9 +84,9 @@ public class HidServicesListenerSupport {
      * @param hidDevice The device that was detached
      */
     public void fireHidDeviceDetached(HidDevice hidDevice) {
-        HidServicesEvent event = new HidServicesEvent(hidDevice);
+        HidDevicesEvent event = new HidDevicesEvent(hidDevice);
 
-        for (HidServicesListener listener : listeners) {
+        for (HidDevicesListener listener : listeners) {
             listener.hidDeviceDetached(event);
         }
     }

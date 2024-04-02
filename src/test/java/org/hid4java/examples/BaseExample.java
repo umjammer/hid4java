@@ -28,15 +28,15 @@ package org.hid4java.examples;
 import java.util.concurrent.TimeUnit;
 
 import com.sun.jna.Platform;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesListener;
-import org.hid4java.HidServicesEvent;
+import org.hid4java.HidDevices;
+import org.hid4java.HidDevicesListener;
+import org.hid4java.HidDevicesEvent;
 import vavi.util.Debug;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 
-public abstract class BaseExample implements HidServicesListener {
+public abstract class BaseExample implements HidDevicesListener {
 
     public static final String ANSI_RESET = "\u001B[0m";
     public static final String ANSI_BLACK = "\u001B[30m";
@@ -55,7 +55,7 @@ Debug.println("Resource prefix: " + Platform.RESOURCE_PREFIX);
 Debug.println("Libusb activation: " + Platform.isLinux());
     }
 
-    public void waitAndShutdown(HidServices hidServices, int wait) {
+    public void waitAndShutdown(HidDevices hidDevices, int wait) {
 
 Debug.printf(ANSI_YELLOW + "Waiting " + wait + "s to demonstrate attach/detach handling. Watch for slow response after write if configured." + ANSI_RESET);
 
@@ -64,7 +64,7 @@ Debug.printf(ANSI_YELLOW + "Waiting " + wait + "s to demonstrate attach/detach h
 
         // Shut down and rely on auto-shutdown hook to clear HidApi resources
 Debug.printf(ANSI_YELLOW + "Triggering shutdown..." + ANSI_RESET);
-        hidServices.shutdown();
+        hidDevices.shutdown();
     }
 
     /**
@@ -94,12 +94,12 @@ Debug.printf(ANSI_YELLOW + "Triggering shutdown..." + ANSI_RESET);
     }
 
     @Override
-    public void hidDeviceAttached(HidServicesEvent event) {
+    public void hidDeviceAttached(HidDevicesEvent event) {
         System.out.println(ANSI_BLUE + "Device attached: " + event + ANSI_RESET);
     }
 
     @Override
-    public void hidDeviceDetached(HidServicesEvent event) {
+    public void hidDeviceDetached(HidDevicesEvent event) {
         System.out.println(ANSI_YELLOW + "Device detached: " + event + ANSI_RESET);
     }
 }

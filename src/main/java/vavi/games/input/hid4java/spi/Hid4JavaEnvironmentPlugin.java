@@ -25,11 +25,10 @@ import net.java.games.input.usb.UsageId;
 import net.java.games.input.usb.UsagePage;
 import net.java.games.input.usb.parser.HidParser;
 import org.hid4java.HidDevice;
-import org.hid4java.HidManager;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesEvent;
-import org.hid4java.HidServicesListener;
-import org.hid4java.HidServicesSpecification;
+import org.hid4java.HidDevices;
+import org.hid4java.HidDevicesEvent;
+import org.hid4java.HidDevicesListener;
+import org.hid4java.HidSpecification;
 import vavi.util.Debug;
 
 
@@ -45,21 +44,21 @@ public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport i
     private List<Hid4JavaController> controllers;
 
     /** */
-    private HidServices getHidService() throws IOException {
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+    private HidDevices getHidService() throws IOException {
+        HidSpecification hidSpecification = new HidSpecification();
         // Use the v0.7.0 manual start feature to get immediate attach events
-        hidServicesSpecification.setAutoStart(false);
-        hidServicesSpecification.setAutoShutdown(false);
+        hidSpecification.setAutoStart(false);
+        hidSpecification.setAutoShutdown(false);
 
         // Get HID services using custom specification
-        return hidServices = HidManager.getHidServices(hidServicesSpecification);
+        return hidDevices = new HidDevices(hidSpecification);
     }
 
     /** */
     private void startListening() {
-        hidServices.addHidServicesListener(new HidServicesListener() {
+        hidDevices.addHidServicesListener(new HidDevicesListener() {
             @Override
-            public void hidDeviceAttached(HidServicesEvent event) {
+            public void hidDeviceAttached(HidDevicesEvent event) {
                 try {
 Debug.println(Level.FINE, "+++ Device attached: " + event);
                     Hid4JavaController c = attach(event.getHidDevice());
@@ -74,7 +73,7 @@ Debug.printStackTrace(Level.FINE, e);
             }
 
             @Override
-            public void hidDeviceDetached(HidServicesEvent event) {
+            public void hidDeviceDetached(HidDevicesEvent event) {
                 try {
 Debug.println(Level.FINE, "--- Device detached: " + event);
                     Hid4JavaController c = detach(event.getHidDevice());
@@ -89,11 +88,11 @@ Debug.printStackTrace(Level.FINE, e);
     }
 
     private void enumerate() throws IOException {
-        boolean r = isSupported(); // don't touch, instantiates hidServices
+        boolean r = isSupported(); // don't touch, instantiates hidDevices
 Debug.println(Level.FINE, "isSupported: " + r);
         controllers = new ArrayList<>();
-Debug.println(Level.FINE, "devices: " + hidServices.getAttachedHidDevices().size());
-        hidServices.getAttachedHidDevices().forEach(hidDevice -> {
+Debug.println(Level.FINE, "devices: " + hidDevices.getHidDevices().size());
+        hidDevices.getHidDevices().forEach(hidDevice -> {
             try {
                 attach(hidDevice);
             } catch (IOException e) {
@@ -179,7 +178,7 @@ Debug.printf(Level.FINE, "@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManu
         if (controllers == null) {
             try {
                 enumerate();
-                hidServices.start();
+                hidDevices.start();
                 startListening();
             } catch (IOException e) {
 Debug.printStackTrace(e);
@@ -192,10 +191,10 @@ Debug.printStackTrace(e);
     @Override
     public boolean isSupported() {
         try {
-            if (hidServices == null) {
-                hidServices = getHidService();
+            if (hidDevices == null) {
+                hidDevices = getHidService();
 Debug.println(Level.FINE, "starting HID services.");
-                hidServices.start();
+                hidDevices.start();
             }
             return true;
         } catch (IOException e) {
@@ -205,11 +204,11 @@ Debug.println(e);
     }
 
     /** */
-    private HidServices hidServices;
+    private HidDevices hidDevices;
 
     @Override
     public void close() {
-        hidServices.shutdown();
+        hidDevices.shutdown();
     }
 
     /**
@@ -227,5 +226,3 @@ Debug.printf(Level.FINE, "%s: %4x, %4x%n", controller.getName(), controller.getV
         throw new NoSuchElementException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
     }
 }
-
-/* */

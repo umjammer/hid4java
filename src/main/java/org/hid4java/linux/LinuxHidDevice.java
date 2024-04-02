@@ -38,8 +38,8 @@ import net.java.games.input.linux.LinuxIO;
 import net.java.games.input.linux.LinuxIO.hidraw_report_descriptor;
 import net.java.games.input.linux.LinuxIO.stat;
 import org.hid4java.HidDevice;
-import org.hid4java.HidServicesSpecification;
-import org.hid4java.InputReportEvent;
+import org.hid4java.HidDeviceEvent;
+import org.hid4java.HidSpecification;
 import org.hid4java.NativeHidDevice;
 
 import static com.sun.jna.platform.linux.ErrNo.EAGAIN;
@@ -50,7 +50,7 @@ import static net.java.games.input.linux.LinuxIO.HIDIOCGINPUT;
 import static net.java.games.input.linux.LinuxIO.HIDIOCGRDESC;
 import static net.java.games.input.linux.LinuxIO.HIDIOCGRDESCSIZE;
 import static net.java.games.input.linux.LinuxIO.HIDIOCSFEATURE;
-import static org.hid4java.linux.LinuxHidDeviceManager.createDeviceInfoForDevice;
+import static org.hid4java.linux.LinuxHidDevices.createDeviceInfoForDevice;
 
 
 /**
@@ -64,7 +64,7 @@ public class LinuxHidDevice implements NativeHidDevice {
     int deviceHandle;
     private HidDevice.Info deviceInfo;
 
-    private final HidServicesSpecification specification;
+    private final HidSpecification specification;
 
     /** for reuse reading */
     private final Memory inputReportBuffer = new Memory(64);
@@ -75,7 +75,7 @@ public class LinuxHidDevice implements NativeHidDevice {
     /** for input event */
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
-    LinuxHidDevice(HidServicesSpecification specification) {
+    LinuxHidDevice(HidSpecification specification) {
         this.deviceHandle = -1;
         this.deviceInfo = null;
 
@@ -87,7 +87,7 @@ public class LinuxHidDevice implements NativeHidDevice {
         ses.schedule(() -> {
             try {
                 int r = read(inputBuffer, inputBuffer.length);
-                fireOnInputReport(new InputReportEvent(this, inputBuffer[0], inputBuffer, r));
+                fireOnInputReport(new HidDeviceEvent(this, inputBuffer[0], inputBuffer, r));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

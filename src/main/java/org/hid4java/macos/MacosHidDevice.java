@@ -35,8 +35,9 @@ import java.util.logging.Logger;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import org.hid4java.HidDevice;
+import org.hid4java.HidDeviceEvent;
+import org.hid4java.HidDeviceListener;
 import org.hid4java.HidException;
-import org.hid4java.InputReportEvent;
 import org.hid4java.NativeHidDevice;
 import vavix.rococoa.corefoundation.CFAllocator;
 import vavix.rococoa.corefoundation.CFIndex;
@@ -131,7 +132,7 @@ logger.finest("here3.3: stop run loop: @" + dev.runLoop.hashCode());
     /**
      * The Run Loop calls this function for each input report received.
      * This function puts the data into a linked list to be picked up by
-     * {@link org.hid4java.InputReportListener#onInputReport(InputReportEvent)}.
+     * {@link HidDeviceListener#onInputReport(HidDeviceEvent)}.
      *
      * @see IOKitLib.IOHIDReportCallback
      */
@@ -148,7 +149,7 @@ logger.finest("here4.2: report_callback: dev: " + dev.deviceInfo.product);
         report.read(0, dev.inputData, 0, length);
 
         // Signal a waiting thread that there is data.
-        dev.fireOnInputReport(new InputReportEvent(dev, report_id, dev.inputData, length));
+        dev.fireOnInputReport(new HidDeviceEvent(dev, report_id, dev.inputData, length));
 logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
     }
 
@@ -325,7 +326,7 @@ logger.finer("here20.0.1: source: " + this.source + ", thread: " + this.thread);
         if (this.thread != null) { // when not #open()
             // Disconnect the report callback before close.
             // See comment below.
-            if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
+            if (MacosHidDevices.is_macos_10_10_or_greater || !this.disconnected) {
 
 logger.finer("here20.1: removal callback null, unschedule run loop start: " + this.deviceHandle.device);
                 IOKitLib.INSTANCE.IOHIDDeviceRegisterInputReportCallback(
@@ -371,7 +372,7 @@ logger.finer("here20.6: join...: " + this.thread);
         // Not leaking a resource in all tested environments.
 
 logger.finer("here20.7.0: native device: " + this.deviceHandle.device);
-        if (MacosHidDeviceManager.is_macos_10_10_or_greater || !this.disconnected) {
+        if (MacosHidDevices.is_macos_10_10_or_greater || !this.disconnected) {
 logger.finer("here20.7.1: native device: " + this.deviceHandle.device);
             IOKitLib.INSTANCE.IOHIDDeviceClose(this.deviceHandle.device, kIOHIDOptionsTypeSeizeDevice);
 logger.finer("here20.7.2: native device close: @" + this.deviceHandle.device.hashCode());

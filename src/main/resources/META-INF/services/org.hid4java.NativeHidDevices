@@ -1,0 +1,3 @@
+org.hid4java.macos.MacosHidDevices
+org.hid4java.linux.LinuxHidDevices
+org.hid4java.windows.WindowsHidDevices

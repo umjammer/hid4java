@@ -28,10 +28,8 @@ package org.hid4java.examples;
 import java.io.IOException;
 
 import org.hid4java.HidDevice;
-import org.hid4java.HidDeviceManager;
-import org.hid4java.HidManager;
-import org.hid4java.HidServices;
-import org.hid4java.HidServicesSpecification;
+import org.hid4java.HidDevices;
+import org.hid4java.HidSpecification;
 import org.junit.jupiter.api.Test;
 
 
@@ -52,22 +50,22 @@ public class LibusbEnumerationExample extends BaseExample {
         printPlatform();
 
         // Configure to use default specification
-        HidServicesSpecification hidServicesSpecification = new HidServicesSpecification();
+        HidSpecification hidSpecification = new HidSpecification();
 
         // Set the libusb variant (only needed for older Linux platforms)
-        hidServicesSpecification.useLibUsbVariant = true;
+        hidSpecification.useLibUsbVariant = true;
 
         // Get HID services using custom specification
-        HidServices hidServices = HidManager.getHidServices(hidServicesSpecification);
-        hidServices.addHidServicesListener(this);
+        HidDevices hidDevices = new HidDevices(hidSpecification);
+        hidDevices.addHidServicesListener(this);
 
         System.out.println(ANSI_GREEN + "Enumerating attached devices..." + ANSI_RESET);
 
         // Provide a list of attached devices
-        for (HidDevice hidDevice : hidServices.getAttachedHidDevices()) {
+        for (HidDevice hidDevice : hidDevices.getHidDevices()) {
             System.out.println(hidDevice);
         }
 
-        waitAndShutdown(hidServices, 10);
+        waitAndShutdown(hidDevices, 10);
     }
 }
