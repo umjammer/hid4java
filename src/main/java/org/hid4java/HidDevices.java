@@ -26,19 +26,17 @@
 package org.hid4java;
 
 import java.io.IOException;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -57,6 +55,24 @@ import org.hid4java.HidSpecification.ScanMode;
 public class HidDevices {
 
     private static final Logger logger = Logger.getLogger(HidDevices.class.getName());
+
+    static {
+        try {
+            try (InputStream is = HidDevices.class.getResourceAsStream("/META-INF/maven/org.hid4java/hid4java/pom.properties")) {
+                if (is != null) {
+                    Properties props = new Properties();
+                    props.load(is);
+                    version = props.getProperty("version", "undefined in pom.properties");
+                } else {
+                    version = System.getProperty("vavi.test.version", "undefined");
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static final String version;
 
     /**
      * The native device provider.
@@ -92,7 +108,7 @@ public class HidDevices {
      * @param args Nothing required
      */
     public static void main(String[] args) {
-        System.out.println("Version: " + getVersion());
+        System.out.println("Version: " + version);
     }
 
     /**
@@ -318,32 +334,6 @@ logger.log(Level.FINE, "hid_enumerate", e);
         }
 
         return null;
-    }
-
-    /**
-     * TODO check
-     * @return The current library version from the manifest or 0.0.x if an error occurs
-     */
-    public static String getVersion() {
-
-        Class<HidDevices> clazz = HidDevices.class;
-        String className = clazz.getSimpleName() + ".class";
-        String classPath = clazz.getResource(className).toString();
-        if (!classPath.startsWith("jar")) {
-            // Class not from JAR
-            return "0.0.1";
-        }
-        String manifestPath = classPath.substring(0, classPath.lastIndexOf("!") + 1) +
-                "/META-INF/MANIFEST.MF";
-        Manifest manifest;
-        try {
-            manifest = new Manifest(new URL(manifestPath).openStream());
-        } catch (IOException e) {
-            return "0.0.2";
-        }
-        Attributes attr = manifest.getMainAttributes();
-        String value = attr.getValue("Implementation-Version");
-        return Objects.requireNonNullElse(value, "0.0.3");
     }
 
     /**
