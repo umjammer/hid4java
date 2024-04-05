@@ -75,6 +75,9 @@ public class LinuxHidDevice implements NativeHidDevice {
     /** for input event */
     private final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
+    /** for reuse */
+    private final HidDeviceEvent hidDeviceEvent = new HidDeviceEvent(this);
+
     LinuxHidDevice(HidSpecification specification) {
         this.deviceHandle = -1;
         this.deviceInfo = null;
@@ -87,7 +90,7 @@ public class LinuxHidDevice implements NativeHidDevice {
         ses.schedule(() -> {
             try {
                 int r = read(inputBuffer, inputBuffer.length);
-                fireOnInputReport(new HidDeviceEvent(this, inputBuffer[0], inputBuffer, r));
+                fireOnInputReport(hidDeviceEvent.set(inputBuffer[0], inputBuffer, r));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -10,7 +10,7 @@ import java.util.EventObject;
 
 
 /**
- * HidDeviceEvent.
+ * HidDeviceEvent. Assuming reuse.
  *
  * @author <a href="mailto:umjammer@gmail.com">Naohide Sano</a> (nsano)
  * @version 0.00 2023-10-08 nsano initial version <br>
@@ -18,18 +18,22 @@ import java.util.EventObject;
 public class HidDeviceEvent extends EventObject {
 
     /** the report id number if used or zero */
-    private final int reportId;
+    private int reportId;
 
     /** the report data that contains first report id */
-    private final byte[] report;
-    private final int length;
+    private byte[] report;
+    private int length;
+
+    public HidDeviceEvent(Object source) {
+        super(source);
+    }
 
     /** @param report a report data that contains first report id */
-    public HidDeviceEvent(Object source, int reportId, byte[] report, int length) {
-        super(source);
+    public HidDeviceEvent set(int reportId, byte[] report, int length) {
         this.reportId = reportId;
         this.report = report;
         this.length = length;
+        return this;
     }
 
     /** the report data that contains first report id */
