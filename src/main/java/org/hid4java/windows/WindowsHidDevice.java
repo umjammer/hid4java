@@ -79,6 +79,9 @@ public class WindowsHidDevice implements NativeHidDevice {
     /** for reuse */
     private final byte[] inputBuffer = new byte[64];
 
+    /** for reuse */
+    private final HidDeviceEvent hidDeviceEvent = new HidDeviceEvent(this);
+
     WindowsHidDevice(HidSpecification specification) {
         this.deviceHandle = INVALID_HANDLE_VALUE;
         this.blocking = true;
@@ -103,7 +106,7 @@ public class WindowsHidDevice implements NativeHidDevice {
         ses.schedule(() -> {
             try {
                 int r = read(inputBuffer, inputBuffer.length);
-                fireOnInputReport(new HidDeviceEvent(this, inputBuffer[0], inputBuffer, r));
+                fireOnInputReport(hidDeviceEvent.set(inputBuffer[0], inputBuffer, r));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

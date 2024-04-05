@@ -7,6 +7,7 @@
 package vavi.games.input.hid4java.spi;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.logging.Level;
 
 import net.java.games.input.AbstractController;
@@ -59,10 +60,13 @@ Debug.println("device: " + device + ", " + device.isOpen());
     public void open() throws IOException {
         super.open();
 
+        Hid4JavaComponent[] hid4JavaComponents = Arrays.stream(getComponents()).map(Hid4JavaComponent.class::cast).toArray(Hid4JavaComponent[]::new);
+        Hid4JavaInputEvent hid4JavaInputEvent = new Hid4JavaInputEvent(this);
+
         device.open();
         device.addInputReportListener(event -> {
             byte[] data = event.getReport();
-            fireOnInput(new Hid4JavaInputEvent(Hid4JavaController.this, getComponents(), data));
+            fireOnInput(hid4JavaInputEvent.set(hid4JavaComponents, data));
         });
     }
 

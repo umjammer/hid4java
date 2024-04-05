@@ -87,6 +87,9 @@ public class MacosHidDevice implements NativeHidDevice {
 
     Consumer<String> closer;
 
+    /** for reuse */
+    private final HidDeviceEvent hidDeviceEvent = new HidDeviceEvent(this);
+
     /**
      * Initialise the HID API library. Should always be called before using any other API calls.
      */
@@ -139,18 +142,18 @@ logger.finest("here3.3: stop run loop: @" + dev.runLoop.hashCode());
     private static void onReportCallback(Pointer context, int /* IOReturn */ result, Pointer sender, int /* IOHIDReportType */ report_type, int report_id, Pointer report, CFIndex reportLength) {
         MacosHidDevice dev = (MacosHidDevice) UserObjectContext.get(context);
         if (dev == null) {
-logger.fine("here4.1: dev is null: " + UserObjectContext.objectIDMaster);
+//logger.fine("here4.1: dev is null: " + UserObjectContext.objectIDMaster);
             return;
         }
-logger.finest("here4.2: report_callback: dev: " + dev.deviceInfo.product);
+//logger.finest("here4.2: report_callback: dev: " + dev.deviceInfo.product);
 
         // Make a new Input Report object
         int length = reportLength.intValue();
         report.read(0, dev.inputData, 0, length);
 
         // Signal a waiting thread that there is data.
-        dev.fireOnInputReport(new HidDeviceEvent(dev, report_id, dev.inputData, length));
-logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
+        dev.fireOnInputReport(dev.hidDeviceEvent.set(report_id, dev.inputData, length));
+//logger.finest("here4.3: report: " + length + ", " + Thread.currentThread());
     }
 
     /**
