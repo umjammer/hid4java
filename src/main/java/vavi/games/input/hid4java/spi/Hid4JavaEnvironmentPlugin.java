@@ -8,11 +8,12 @@ package vavi.games.input.hid4java.spi;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.logging.Level;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
@@ -29,7 +30,8 @@ import org.hid4java.HidDevices;
 import org.hid4java.HidDevicesEvent;
 import org.hid4java.HidDevicesListener;
 import org.hid4java.HidSpecification;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -39,6 +41,8 @@ import vavi.util.Debug;
  * @version 0.00 230927 nsano initial version <br>
  */
 public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport implements HidControllerEnvironment, Closeable {
+
+    private static final Logger logger = getLogger(Hid4JavaEnvironmentPlugin.class.getName());
 
     /** */
     private List<Hid4JavaController> controllers;
@@ -60,28 +64,28 @@ public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport i
             @Override
             public void hidDeviceAttached(HidDevicesEvent event) {
                 try {
-Debug.println(Level.FINE, "+++ Device attached: " + event);
+logger.log(Level.DEBUG, "+++ Device attached: " + event);
                     Hid4JavaController c = attach(event.getHidDevice());
                     if (c != null) {
-Debug.println(Level.FINE, "controllerListeners: " + controllerListeners.size());
+logger.log(Level.DEBUG, "controllerListeners: " + controllerListeners.size());
 
                         Hid4JavaEnvironmentPlugin.this.fireControllerAdded(c);
                     }
                 } catch (Exception e) {
-Debug.printStackTrace(Level.FINE, e);
+logger.log(Level.ERROR, e.getMessage(), e);
                 }
             }
 
             @Override
             public void hidDeviceDetached(HidDevicesEvent event) {
                 try {
-Debug.println(Level.FINE, "--- Device detached: " + event);
+logger.log(Level.DEBUG, "--- Device detached: " + event);
                     Hid4JavaController c = detach(event.getHidDevice());
                     if (c != null) {
                         Hid4JavaEnvironmentPlugin.this.fireControllerRemoved(c);
                     }
                 } catch (Exception e) {
-Debug.printStackTrace(Level.FINE, e);
+logger.log(Level.ERROR, e.getMessage(), e);
                 }
             }
         });
@@ -89,21 +93,21 @@ Debug.printStackTrace(Level.FINE, e);
 
     private void enumerate() throws IOException {
         boolean r = isSupported(); // don't touch, instantiates hidDevices
-Debug.println(Level.FINE, "isSupported: " + r);
+logger.log(Level.DEBUG, "isSupported: " + r);
         controllers = new ArrayList<>();
-Debug.println(Level.FINE, "devices: " + hidDevices.getHidDevices().size());
+logger.log(Level.DEBUG, "devices: " + hidDevices.getHidDevices().size());
         hidDevices.getHidDevices().forEach(hidDevice -> {
             try {
                 attach(hidDevice);
             } catch (IOException e) {
-                Debug.printStackTrace(e);
+                logger.log(Level.ERROR, e.getMessage(), e);
             }
         });
     }
 
     /** */
     private Hid4JavaController attach(HidDevice hidDevice) throws IOException {
-Debug.printf(Level.FINER, "usagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), pid: %5$d(0x%5$x)%n", hidDevice.getUsagePage() & 0xffff, GenericDesktopUsageId.map(hidDevice.getUsage()), hidDevice.getUsage(), hidDevice.getVendorId(), hidDevice.getProductId());
+logger.log(Level.TRACE, "usagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), pid: %5$d(0x%5$x)".formatted(hidDevice.getUsagePage() & 0xffff, GenericDesktopUsageId.map(hidDevice.getUsage()), hidDevice.getUsage(), hidDevice.getVendorId(), hidDevice.getProductId()));
         // TODO out source filter
         if ((hidDevice.getUsagePage() & 0xffff) == /* Generic Desktop Controls */ 0x01 &&
                 GenericDesktopUsageId.map(hidDevice.getUsage()) == GenericDesktopUsageId.GAME_PAD) {
@@ -116,16 +120,16 @@ Debug.printf(Level.FINER, "usagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), 
             int r = hidDevice.getReportDescriptor(desk);
 //UsbUtil.dump_report_desc(desk, r);
             HidParser parser = new HidParser();
-Debug.println(Level.FINER, "getFields: " + parser.parse(desk, r).enumerateFields().size());
+logger.log(Level.TRACE, "getFields: " + parser.parse(desk, r).enumerateFields().size());
             parser.parse(desk, r).enumerateFields().forEach(f -> {
-Debug.println(Level.FINER, "UsagePage: " + UsagePage.map(f.getUsagePage()) + ", " + f.getUsageId());
+logger.log(Level.TRACE, "UsagePage: " + UsagePage.map(f.getUsagePage()) + ", " + f.getUsageId());
                 if (UsagePage.map(f.getUsagePage()) != null) {
                     switch (UsagePage.map(f.getUsagePage())) {
                         case GENERIC_DESKTOP, BUTTON -> {
                             UsagePage usagePage = UsagePage.map(f.getUsagePage());
                             UsageId usageId = usagePage.mapUsage(f.getUsageId());
                             components.add(new Hid4JavaComponent(usageId.toString(), usageId.getIdentifier(), f));
-Debug.println(Level.FINER, "add: " + components.get(components.size() - 1));
+logger.log(Level.TRACE, "add: " + components.get(components.size() - 1));
                         }
                         default -> {
                         }
@@ -135,9 +139,9 @@ Debug.println(Level.FINER, "add: " + components.get(components.size() - 1));
 
             // extra elements by plugin
             for (DeviceSupportPlugin plugin : DeviceSupportPlugin.getPlugins()) {
-Debug.println(Level.FINER, "plugin: " + plugin + ", " + plugin.match(hidDevice));
+logger.log(Level.TRACE, "plugin: " + plugin + ", " + plugin.match(hidDevice));
                 if (plugin.match(hidDevice)) {
-Debug.println(Level.FINE, "@@@ plugin for extra: " + plugin.getClass().getName());
+logger.log(Level.DEBUG, "@@@ plugin for extra: " + plugin.getClass().getName());
                     components.addAll(plugin.getExtraComponents(hidDevice));
                     children.addAll(plugin.getExtraChildControllers(hidDevice));
                     rumblers.addAll(plugin.getExtraRumblers(hidDevice));
@@ -149,10 +153,10 @@ Debug.println(Level.FINE, "@@@ plugin for extra: " + plugin.getClass().getName()
                     children.toArray(Controller[]::new),
                     rumblers.toArray(Rumbler[]::new));
             controllers.add(controller);
-Debug.printf(Level.FINE, "@@@@@@@@@@@ add: %s/%s ... %d", hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size());
-Debug.printf(Level.FINE, "    components: %d, %s", components.size(), components);
-//Debug.printf(Level.FINE, "    children: %d", children.size());
-Debug.printf(Level.FINE, "    rumblers: %d, %s", rumblers.size(), rumblers);
+logger.log(Level.DEBUG, "@@@@@@@@@@@ add: %s/%s ... %d".formatted(hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size()));
+logger.log(Level.DEBUG, "    components: %d, %s".formatted(components.size(), components));
+//logger.log(Level.TRACE, "    children: %d".formatted(children.size()));
+logger.log(Level.DEBUG, "    rumblers: %d, %s".formatted(rumblers.size(), rumblers));
             return controller;
         }
         return null;
@@ -166,7 +170,7 @@ Debug.printf(Level.FINE, "    rumblers: %d, %s", rumblers.size(), rumblers);
             Hid4JavaController c = i.next();
             if (c.getProductId() == hidDevice.getProductId() && c.getVendorId() == hidDevice.getVendorId()) {
                 controllers.remove(c);
-Debug.printf(Level.FINE, "@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size());
+logger.log(Level.DEBUG, "@@@@@@@@@@@ remove: %s/%s ... %d".formatted(hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size()));
                 return c;
             }
         }
@@ -181,7 +185,7 @@ Debug.printf(Level.FINE, "@@@@@@@@@@@ remove: %s/%s ... %d%n", hidDevice.getManu
                 hidDevices.start();
                 startListening();
             } catch (IOException e) {
-Debug.printStackTrace(e);
+logger.log(Level.ERROR, e.getMessage(), e);
                 return new Hid4JavaController[0];
             }
         }
@@ -193,12 +197,12 @@ Debug.printStackTrace(e);
         try {
             if (hidDevices == null) {
                 hidDevices = getHidService();
-Debug.println(Level.FINE, "starting HID services.");
+logger.log(Level.DEBUG, "starting HID services.");
                 hidDevices.start();
             }
             return true;
         } catch (IOException e) {
-Debug.println(e);
+logger.log(Level.ERROR, e.getMessage(), e);
             return false;
         }
     }
@@ -216,13 +220,13 @@ Debug.println(e);
      */
     @Override
     public Hid4JavaController getController(int mid, int pid) {
-Debug.println(Level.FINE, "controllers: " + getControllers().length);
+logger.log(Level.DEBUG, "controllers: " + getControllers().length);
         for (Hid4JavaController controller : getControllers()) {
-Debug.printf(Level.FINE, "%s: %4x, %4x%n", controller.getName(), controller.getVendorId(), controller.getProductId());
+logger.log(Level.DEBUG, "%s: %4x, %4x".formatted(controller.getName(), controller.getVendorId(), controller.getProductId()));
             if (controller.getVendorId() == mid && controller.getProductId() == pid) {
                 return controller;
             }
         }
-        throw new NoSuchElementException(String.format("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))", mid, pid));
+        throw new NoSuchElementException("no device: mid: %1$d(0x%1$x), pid: %2$d(0x%2$x))".formatted(mid, pid));
     }
 }

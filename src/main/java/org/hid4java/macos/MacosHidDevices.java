@@ -26,12 +26,13 @@
 package org.hid4java.macos;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.ShortByReference;
@@ -47,6 +48,7 @@ import vavix.rococoa.corefoundation.CFNumber;
 import vavix.rococoa.corefoundation.CFType;
 import vavix.rococoa.iokit.IOKitLib;
 
+import static java.lang.System.getLogger;
 import static vavix.rococoa.corefoundation.CFLib.kCFCoreFoundationVersionNumber;
 import static vavix.rococoa.corefoundation.CFLib.kCFRunLoopDefaultMode;
 import static vavix.rococoa.corefoundation.CFString.CFSTR;
@@ -64,7 +66,7 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDOptionsTypeSeizeDevice;
  */
 public class MacosHidDevices implements NativeHidDevices {
 
-    private static final Logger logger = Logger.getLogger(MacosHidDevices.class.getName());
+    private static final Logger logger = getLogger(MacosHidDevices.class.getName());
 
     /** */
     private final Map<String, MacosHidDevice> devices = new HashMap<>();
@@ -94,7 +96,7 @@ public class MacosHidDevices implements NativeHidDevices {
 
     @Override
     public void open(HidSpecification specification) {
-logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
+logger.log(Level.TRACE, "is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
         hidDarwinSetOpenExclusive(!specification.darwinOpenDevicesNonExclusive); // Backward compatibility
 
         //
@@ -110,7 +112,7 @@ logger.finer("is_macos_10_10_or_greater: " + is_macos_10_10_or_greater);
     @Override
     @SuppressWarnings("WhileLoopReplaceableByForEach") // for ConcurrentModificationException
     public void close() {
-logger.finer("here10.0: hid_exit");
+logger.log(Level.TRACE, "here10.0: hid_exit");
         Iterator<MacosHidDevice> i = devices.values().iterator();
         while (i.hasNext()) {
             i.next().close();
@@ -118,11 +120,11 @@ logger.finer("here10.0: hid_exit");
 
         if (manager != null) {
             /* Close the HID manager. */
-logger.finer("here10.1: manager close");
+logger.log(Level.TRACE, "here10.1: manager close");
             IOKitLib.INSTANCE.IOHIDManagerClose(manager, kIOHIDOptionsTypeNone);
             CFLib.INSTANCE.CFRelease(manager);
             manager = null;
-logger.finer("here10.2: manager = null");
+logger.log(Level.TRACE, "here10.2: manager = null");
         }
     }
 
@@ -201,10 +203,10 @@ logger.finer("here10.2: manager = null");
                 CFLib.INSTANCE.CFRelease(p);
             }
         }
-logger.finest("here7.0: " + matching + ", " + Thread.currentThread() + ", " + manager);
+logger.log(Level.TRACE, "here7.0: " + matching + ", " + Thread.currentThread() + ", " + manager);
         IOKitLib.INSTANCE.IOHIDManagerSetDeviceMatching(manager, matching);
         if (matching != null) {
-logger.finer("here7.1: matching null");
+logger.log(Level.TRACE, "here7.1: matching null");
             CFLib.INSTANCE.CFRelease(matching);
         }
 
@@ -215,7 +217,7 @@ logger.finer("here7.1: matching null");
         if (deviceSet != null) {
             // Convert the list into a C array so we can iterate easily.
             numDevices = CFLib.INSTANCE.CFSetGetCount(deviceSet).intValue();
-logger.finest("num_devices: " + numDevices);
+logger.log(Level.TRACE, "num_devices: " + numDevices);
             devices = new Pointer[(int) numDevices];
             CFLib.INSTANCE.CFSetGetValues(deviceSet, devices);
         } else {
@@ -227,14 +229,14 @@ logger.finest("num_devices: " + numDevices);
 
             Pointer /* IOHIDDeviceRef */ dev = devices[i];
             if (dev == null) {
-logger.fine("device null: " + devices[i]);
+logger.log(Level.DEBUG, "device null: " + devices[i]);
                 continue;
             }
 
             IOHIDDevice nativeDevice = new IOHIDDevice(dev);
             List<HidDevice.Info> infos = nativeDevice.createDeviceInfo();
             if (infos.isEmpty()) {
-logger.fine("empty");
+logger.log(Level.DEBUG, "empty");
                 continue;
             }
 
@@ -256,10 +258,10 @@ logger.fine("empty");
 
     @Override
     public MacosHidDevice create(HidDevice.Info info) throws IOException {
-logger.finest("here00.0: path: " + info.path);
+logger.log(Level.TRACE, "here00.0: path: " + info.path);
         MacosHidDevice device = devices.get(info.path);
         if (device != null) {
-logger.finest("here00.1: devices: cached: " + device);
+logger.log(Level.TRACE, "here00.1: devices: cached: " + device);
             device.deviceInfo = info;
             return device;
         }
@@ -269,7 +271,7 @@ logger.finest("here00.1: devices: cached: " + device);
 
         device.closer = devices::remove;
         devices.put(device.deviceInfo.path, device);
-logger.finest("here00.E: devices: +: " + device.deviceInfo.path + " / " + devices.size());
+logger.log(Level.TRACE, "here00.E: devices: +: " + device.deviceInfo.path + " / " + devices.size());
         return device;
     }
 

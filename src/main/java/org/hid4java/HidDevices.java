@@ -27,6 +27,8 @@ package org.hid4java;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,10 +39,10 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.hid4java.HidSpecification.ScanMode;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -54,7 +56,7 @@ import org.hid4java.HidSpecification.ScanMode;
  */
 public class HidDevices {
 
-    private static final Logger logger = Logger.getLogger(HidDevices.class.getName());
+    private static final Logger logger = getLogger(HidDevices.class.getName());
 
     static {
         try {
@@ -132,7 +134,7 @@ public class HidDevices {
             for (NativeHidDevices manager : ServiceLoader.load(NativeHidDevices.class)) {
                 if (manager.isSupported()) {
                     nativeManager = manager;
-logger.finer("native device manager: " + nativeManager.getClass().getName());
+logger.log(Level.TRACE, "native device manager: " + nativeManager.getClass().getName());
                     // Check for automatic start (default behaviour for 0.6.0 and below)
                     // which will prevent an attachment event firing if the device is already
                     // attached since listeners will not have been registered at this point
@@ -158,21 +160,21 @@ logger.finer("native device manager: " + nativeManager.getClass().getName());
      * Stop all device threads and shut down the {@link NativeHidDevice}
      */
     public void shutdown() {
-logger.finer("shutdown: start shutdown...");
+logger.log(Level.TRACE, "shutdown: start shutdown...");
 //new Exception().printStackTrace();
         try {
             stop();
         } catch (Throwable e) {
             // Silently fail (user will already have been given an exception)
-logger.log(Level.FINER, e.getMessage(), e);
+logger.log(Level.TRACE, e.getMessage(), e);
         }
         try {
             nativeManager.close();
         } catch (Throwable e) {
             // Silently fail (user will already have been given an exception)
-logger.log(Level.FINER, e.getMessage(), e);
+logger.log(Level.TRACE, e.getMessage(), e);
         }
-if (logger.isLoggable(Level.FINER)) {
+if (logger.isLoggable(Level.TRACE)) {
  Thread.getAllStackTraces().keySet().forEach(System.err::println);
 }
     }
@@ -184,7 +186,7 @@ if (logger.isLoggable(Level.FINER)) {
      * Normally part of an application shutdown
      */
     public void stop() throws IOException {
-logger.finer("stop: start stopping...");
+logger.log(Level.TRACE, "stop: start stopping...");
         stopScanThread();
 
         // Close all attached devices
@@ -239,7 +241,7 @@ logger.finer("stop: start stopping...");
 
             if (!this.attachedDevices.containsKey(attachedDevice.getId())) {
 
-logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice);
+logger.log(Level.TRACE, "device: " + attachedDevice.getProductId() + "," + attachedDevice);
                 // Device has become attached so add it but do not create
                 attachedDevices.put(attachedDevice.getId(), attachedDevice);
 
@@ -281,7 +283,7 @@ logger.finest("device: " + attachedDevice.getProductId() + "," + attachedDevice)
             // This comes back as a linked list from hidapi
             infos = nativeManager.enumerate(0, 0);
         } catch (Throwable e) {
-logger.log(Level.FINE, "hid_enumerate", e);
+logger.log(Level.DEBUG, "hid_enumerate", e);
             // Could not initialise hidapi (possibly an unknown platform)
             // Trigger a general stop as something serious has happened
             stop();
@@ -394,7 +396,7 @@ logger.log(Level.FINE, "hid_enumerate", e);
                         try {
                             scan();
                         } catch (IOException e) {
-                            logger.fine(e.toString());
+                            logger.log(Level.DEBUG, e.toString());
                         }
                     }
                 };
@@ -419,7 +421,7 @@ logger.log(Level.FINE, "hid_enumerate", e);
                         try {
                             scan();
                         } catch (IOException e) {
-                            logger.fine(e.toString());
+                            logger.log(Level.DEBUG, e.toString());
                         }
                     }
                 };

@@ -81,11 +81,11 @@ public class GamepadTest {
             Event event = new Event();
             System.out.println("\033[2J");
             while (e.getNextEvent(event)) {
-                System.out.println(String.format("%30s:  % 10.3f  %s%s",
+                System.out.printf("%30s:  % 10.3f  %s%s%n",
                         event.getComponent().getName(),
                         event.getValue(),
                         ((WrappedComponent<Field>) event.getComponent()).getWrappedObject().getDump(((HidInputEvent) e).getData()),
-                        " ".repeat(50)));
+                        " ".repeat(50));
             }
             System.out.flush();
         }
