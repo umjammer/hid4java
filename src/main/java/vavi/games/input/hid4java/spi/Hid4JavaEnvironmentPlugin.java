@@ -36,6 +36,9 @@ import static java.lang.System.getLogger;
 
 /**
  * The Hid4Java ControllerEnvironment.
+ * <p>
+ * system property
+ * <li>{@code vavi.games.input.hid4java.darwinOpenDevicesNonExclusive} ... {@code false}</li>
  *
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 230927 nsano initial version <br>
@@ -53,6 +56,7 @@ public final class Hid4JavaEnvironmentPlugin extends ControllerListenerSupport i
         // Use the v0.7.0 manual start feature to get immediate attach events
         hidSpecification.setAutoStart(false);
         hidSpecification.setAutoShutdown(false);
+        hidSpecification.darwinOpenDevicesNonExclusive = Boolean.getBoolean("vavi.games.input.hid4java.darwinOpenDevicesNonExclusive");
 
         // Get HID services using custom specification
         return hidDevices = new HidDevices(hidSpecification);
