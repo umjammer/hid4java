@@ -104,6 +104,7 @@ logger.log(Level.DEBUG, "devices: " + hidDevices.getHidDevices().size());
             try {
                 attach(hidDevice);
             } catch (IOException e) {
+                logger.log(Level.INFO, "check system property vavi.games.input.hid4java.darwinOpenDevicesNonExclusive is true");
                 logger.log(Level.ERROR, e.getMessage(), e);
             }
         });

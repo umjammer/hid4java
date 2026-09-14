@@ -158,6 +158,7 @@ Debug.println("r: " + r);
     }
 
     @Test
+    @DisplayName("parsed report descriptor")
     void test8() throws Exception {
         HidDevice device = hidDevices.getHidDevice(vendorId, productId, null);
 

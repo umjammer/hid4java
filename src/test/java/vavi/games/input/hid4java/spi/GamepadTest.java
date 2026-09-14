@@ -63,14 +63,14 @@ public class GamepadTest {
 
     static class GamepadConsole {
 
-        /**  */
+        /** */
         private final HidController controller;
 
         public GamepadConsole(HidController controller) throws IOException {
             this.controller = controller;
         }
 
-        /**  */
+        /** */
         public void start() throws IOException {
             controller.addInputEventListener(GamepadConsole::print);
             controller.open();
