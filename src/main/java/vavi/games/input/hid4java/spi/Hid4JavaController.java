@@ -15,6 +15,7 @@ import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
+import net.java.games.input.usb.GenericDesktopUsageId;
 import net.java.games.input.usb.HidController;
 import org.hid4java.HidDevice;
 import vavi.util.StringUtil;
@@ -80,8 +81,24 @@ logger.log(Level.DEBUG,"device: " + device + ", " + device.isOpen());
         super.close();
     }
 
+    /** a composite device has same mid and pid for interfaces, this distinguishes them */
+    HidDevice getDevice() {
+        return device;
+    }
+
     @Override
     public Type getType() {
+        if ((device.getUsagePage() & 0xffff) == /* Generic Desktop Controls */ 0x01) {
+            GenericDesktopUsageId usageId = GenericDesktopUsageId.map(device.getUsage() & 0xffff);
+            if (usageId != null) {
+                return switch (usageId) {
+                    case KEYBOARD, KEYPAD -> Type.KEYBOARD;
+                    case MOUSE -> Type.MOUSE;
+                    case JOYSTICK -> Type.STICK;
+                    default -> Type.GAMEPAD;
+                };
+            }
+        }
         return Type.GAMEPAD;
     }
 

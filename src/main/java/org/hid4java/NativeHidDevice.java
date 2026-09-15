@@ -1,8 +1,11 @@
 package org.hid4java;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -13,17 +16,24 @@ import java.util.List;
  */
 public interface NativeHidDevice {
 
-    /** input report listeners */
-    List<HidDeviceListener> HID_DEVICE_LISTENERS = new ArrayList<>();
+    /**
+     * input report listeners per device.
+     * <p>
+     * an interface cannot have instance fields, so listeners are kept by device instance (identity).
+     * a single list shared by all devices delivers a report of a device to listeners of other devices.
+     */
+    Map<NativeHidDevice, List<HidDeviceListener>> HID_DEVICE_LISTENERS = Collections.synchronizedMap(new WeakHashMap<>());
 
     /** adds {@link HidDeviceListener} */
     default void addInputReportListener(HidDeviceListener listener) {
-        HID_DEVICE_LISTENERS.add(listener);
+        HID_DEVICE_LISTENERS.computeIfAbsent(this, k -> new CopyOnWriteArrayList<>()).add(listener);
     }
 
     /** */
     default void fireOnInputReport(HidDeviceEvent event) {
-        for (HidDeviceListener listener : HID_DEVICE_LISTENERS)
+        List<HidDeviceListener> listeners = HID_DEVICE_LISTENERS.get(this);
+        if (listeners == null) return;
+        for (HidDeviceListener listener : listeners)
             listener.onInputReport(event);
     }
 

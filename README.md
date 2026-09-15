@@ -23,7 +23,8 @@
 
 ### system property
 
-- `vavi.games.input.hid4java.darwinOpenDevicesNonExclusive` ... macos only, default `false`
+- `vavi.games.input.hid4java.darwinOpenDevicesNonExclusive` ... macos only, default `false`. even if `false`, devices which macos refuses seizing by a non-root process (e.g. keyboards) are opened non-exclusively
+- `vavi.games.input.hid4java.usages` ... comma separated `usagePage:usage` pairs of devices to be controllers, default `0x01:0x05` (game pad). e.g. `0x01:0x05,0x01:0x06` adds keyboards
 
 ## References
 
