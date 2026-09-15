@@ -39,6 +39,8 @@ import static java.lang.System.getLogger;
  * <p>
  * system property
  * <li>{@code vavi.games.input.hid4java.darwinOpenDevicesNonExclusive} ... {@code false}</li>
+ * <li>{@code vavi.games.input.hid4java.usages} ... comma separated "usagePage:usage" pairs of devices
+ *     to be controllers, default {@code 0x01:0x05} (game pad). e.g. {@code 0x01:0x05,0x01:0x06} adds keyboards</li>
  *
  * @author <a href="mailto:vavivavi@yahoo.co.jp">Naohide Sano</a> (nsano)
  * @version 0.00 230927 nsano initial version <br>
@@ -110,12 +112,41 @@ logger.log(Level.DEBUG, "devices: " + hidDevices.getHidDevices().size());
         });
     }
 
+    /** default target usages ... Generic Desktop Controls (0x01) : Game Pad (0x05) */
+    private static final String DEFAULT_USAGES = "0x01:0x05";
+
+    /** target usages, [usage page, usage] */
+    private static final List<int[]> usages = parseUsages(System.getProperty("vavi.games.input.hid4java.usages", DEFAULT_USAGES));
+
+    /**
+     * @param value comma separated "usagePage:usage" pairs, numbers are decoded by {@link Integer#decode(String)}
+     * @throws IllegalArgumentException wrong format
+     */
+    static List<int[]> parseUsages(String value) {
+        List<int[]> result = new ArrayList<>();
+        for (String pair : value.split(",")) {
+            if (pair.isBlank()) continue;
+            String[] pu = pair.trim().split(":");
+            if (pu.length != 2) {
+                throw new IllegalArgumentException("usage must be \"usagePage:usage\": " + pair);
+            }
+            result.add(new int[] {Integer.decode(pu[0].trim()), Integer.decode(pu[1].trim())});
+        }
+logger.log(Level.DEBUG, "usages: " + value);
+        return result;
+    }
+
+    /** whether the device is a target to be a controller */
+    private static boolean isTarget(HidDevice hidDevice) {
+        int usagePage = hidDevice.getUsagePage() & 0xffff;
+        int usage = hidDevice.getUsage() & 0xffff;
+        return usages.stream().anyMatch(u -> u[0] == usagePage && u[1] == usage);
+    }
+
     /** */
     private Hid4JavaController attach(HidDevice hidDevice) throws IOException {
 logger.log(Level.TRACE, "usagePage %4x, usage: %s(0x%02x), mid: %4$d(0x%4$x), pid: %5$d(0x%5$x)".formatted(hidDevice.getUsagePage() & 0xffff, GenericDesktopUsageId.map(hidDevice.getUsage()), hidDevice.getUsage(), hidDevice.getVendorId(), hidDevice.getProductId()));
-        // TODO out source filter
-        if ((hidDevice.getUsagePage() & 0xffff) == /* Generic Desktop Controls */ 0x01 &&
-                GenericDesktopUsageId.map(hidDevice.getUsage()) == GenericDesktopUsageId.GAME_PAD) {
+        if (isTarget(hidDevice)) {
 
             List<Component> components = new ArrayList<>();
             List<Controller> children = new ArrayList<>();
@@ -167,14 +198,13 @@ logger.log(Level.DEBUG, "    rumblers: %d, %s".formatted(rumblers.size(), rumble
         return null;
     }
 
-    /** */
-    @SuppressWarnings("WhileLoopReplaceableByForEach") // for remove
+    /** a composite device has same mid and pid for interfaces, so compare by the device (path) */
     private Hid4JavaController detach(HidDevice hidDevice) {
         Iterator<Hid4JavaController> i = controllers.iterator();
         while (i.hasNext()) {
             Hid4JavaController c = i.next();
-            if (c.getProductId() == hidDevice.getProductId() && c.getVendorId() == hidDevice.getVendorId()) {
-                controllers.remove(c);
+            if (c.getDevice().equals(hidDevice)) {
+                i.remove();
 logger.log(Level.DEBUG, "@@@@@@@@@@@ remove: %s/%s ... %d".formatted(hidDevice.getManufacturer(), hidDevice.getProduct(), controllers.size()));
                 return c;
             }
