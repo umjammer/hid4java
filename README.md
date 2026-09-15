@@ -10,7 +10,7 @@
 
 🎮 hid api for java
 
- - by jna directory instead of hidapi
+ - by jna directly instead of hidapi
  - with [jinput](https://github.com/umjammer/jinput) spi
 
 ## Install
@@ -21,9 +21,16 @@
 
  * see [jinput](https://github.com/umjammer/jinput)
 
+### system property
+
+- `vavi.games.input.hid4java.darwinOpenDevicesNonExclusive` ... macos only, default `false`
+
 ## References
 
- * https://github.com/nyholku/purejavahidapi
+ * https://github.com/umjammer/jinput (spi)
+ * https://github.com/nyholku/purejavahidapi (spi provider, using yet another jna impl)
+ * https://github.com/umjammer/gamepad4j (spi provider, using yet another jna impl)
+ * https://github.com/umjammer/vavi-awt-joystick (spi provider, using rococoa)
 
 ### LESSON
 
@@ -37,7 +44,7 @@
  * windows/linux not tested yet
  * dig into the difference between static and instance method reference
  * ~~spi attach/detach controller~~
- * gyro
+ * ~~gyro~~ ... [jinput](https://github.com/umjammer/jinput)
    * https://github.com/keijiro/GyroInputTest
  * ~~reduce classes. compare with purejavahidpai, there are too many classes~~
  * deadzone
