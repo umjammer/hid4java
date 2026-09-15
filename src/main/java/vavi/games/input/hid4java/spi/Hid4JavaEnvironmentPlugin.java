@@ -108,6 +108,9 @@ logger.log(Level.DEBUG, "devices: " + hidDevices.getHidDevices().size());
             } catch (IOException e) {
                 logger.log(Level.INFO, "check system property vavi.games.input.hid4java.darwinOpenDevicesNonExclusive is true");
                 logger.log(Level.ERROR, e.getMessage(), e);
+            } catch (RuntimeException e) {
+                // a device which cannot be a controller must not prevent others
+                logger.log(Level.WARNING, "skip device: %s/%s: %s".formatted(hidDevice.getManufacturer(), hidDevice.getProduct(), e), e);
             }
         });
     }
@@ -164,6 +167,10 @@ logger.log(Level.TRACE, "UsagePage: " + UsagePage.map(f.getUsagePage()) + ", " +
                         case GENERIC_DESKTOP, BUTTON -> {
                             UsagePage usagePage = UsagePage.map(f.getUsagePage());
                             UsageId usageId = usagePage.mapUsage(f.getUsageId());
+                            if (usageId == null) {
+logger.log(Level.DEBUG, "unknown usage: %s, 0x%02x, skip".formatted(usagePage, f.getUsageId()));
+                                return;
+                            }
                             components.add(new Hid4JavaComponent(usageId.toString(), usageId.getIdentifier(), f));
 logger.log(Level.TRACE, "add: " + components.get(components.size() - 1));
                         }
