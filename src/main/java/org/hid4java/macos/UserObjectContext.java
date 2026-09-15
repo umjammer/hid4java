@@ -65,7 +65,7 @@ public class UserObjectContext extends Structure {
         return object_context;
     }
 
-    /**  */
+    /** */
     public static Object get(Pointer context) {
         UserObjectContext object_context = new UserObjectContext(context);
         return objects.get(object_context.objectID);

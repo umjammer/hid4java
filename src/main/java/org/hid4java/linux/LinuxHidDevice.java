@@ -233,7 +233,7 @@ public class LinuxHidDevice implements NativeHidDevice {
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
         int res = LinuxIO.INSTANCE.ioctl(deviceHandle, HIDIOCGFEATURE(data.length), data);
         if (res < 0)
-            throw new IOException(String.format("ioctl(GFEATURE): %s", Native.getLastError()));
+            throw new IOException("ioctl(GFEATURE): %s".formatted(Native.getLastError()));
 
         return res;
     }
@@ -242,7 +242,7 @@ public class LinuxHidDevice implements NativeHidDevice {
     public int sendFeatureReport(byte[] data, byte reportId) throws IOException {
         int res = LinuxIO.INSTANCE.ioctl(deviceHandle, HIDIOCSFEATURE(data.length), data);
         if (res < 0)
-            throw new IOException(String.format("ioctl(SFEATURE): %s", Native.getLastError()));
+            throw new IOException("ioctl(SFEATURE): %s".formatted(Native.getLastError()));
 
         return res;
     }
@@ -254,14 +254,14 @@ public class LinuxHidDevice implements NativeHidDevice {
         // Get Report Descriptor Size
         int res = LinuxIO.INSTANCE.ioctl(this.deviceHandle, HIDIOCGRDESCSIZE, descSize);
         if (res < 0) {
-            throw new IOException(String.format("ioctl(GRDESCSIZE): %s", Native.getLastError()));
+            throw new IOException("ioctl(GRDESCSIZE): %s".formatted(Native.getLastError()));
         }
 
         // Get Report Descriptor
         rptDesc.size = descSize.getValue();
         res = LinuxIO.INSTANCE.ioctl(this.deviceHandle, HIDIOCGRDESC(rptDesc.size()), rptDesc.getPointer());
         if (res < 0) {
-            throw new IOException(String.format("ioctl(GRDESC): %s", Native.getLastError()));
+            throw new IOException("ioctl(GRDESC): %s".formatted(Native.getLastError()));
         }
 
         return res;
@@ -286,7 +286,7 @@ public class LinuxHidDevice implements NativeHidDevice {
     public int getInputReport(byte[] data, byte reportId) throws IOException {
         int res = LinuxIO.INSTANCE.ioctl(deviceHandle, HIDIOCGINPUT(data.length), data);
         if (res < 0)
-            throw new IOException(String.format("ioctl(GINPUT): %s", Native.getLastError()));
+            throw new IOException("ioctl(GINPUT): %s".formatted(Native.getLastError()));
 
         return res;
     }

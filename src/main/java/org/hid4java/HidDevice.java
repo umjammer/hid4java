@@ -26,9 +26,12 @@
 package org.hid4java;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Arrays;
 import java.util.StringJoiner;
-import java.util.logging.Logger;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -42,7 +45,7 @@ import java.util.logging.Logger;
  */
 public class HidDevice {
 
-    private static final Logger logger = Logger.getLogger(HidDevice.class.getName());
+    private static final Logger logger = getLogger(HidDevice.class.getName());
 
     private final Runnable afterWrite;
     private final Info info;
@@ -168,7 +171,7 @@ public class HidDevice {
         this.info.productId = this.info.productId & 0xffff;
 
         this.nativeDevice = nativeDevice;
-logger.finest(getPath() + "(@" + hashCode() + "): " + nativeDevice);
+logger.log(Level.TRACE, getPath() + "(@" + hashCode() + "): " + nativeDevice);
     }
 
     /**
@@ -284,7 +287,7 @@ logger.finest(getPath() + "(@" + hashCode() + "): " + nativeDevice);
      * @since 0.1.0
      */
     public void close() throws IOException {
-logger.finest("close native: " + nativeDevice);
+logger.log(Level.TRACE, "close native: " + nativeDevice);
         // Close the Hidapi reference
         nativeDevice.close();
         isOpen = false;
@@ -439,10 +442,10 @@ logger.finest("close native: " + nativeDevice);
     @Override
     public String toString() {
         return "HidDevice [path=" + info.path
-                + String.format(", usagePage=0x%04x", info.usagePage)
-                + String.format(", usage=0x%04x", info.usage)
-                + String.format(", vendorId=0x%04x", info.vendorId)
-                + String.format(", productId=0x%04x", info.productId)
+                + ", usagePage=0x%04x".formatted(info.usagePage)
+                + ", usage=0x%04x".formatted(info.usage)
+                + ", vendorId=0x%04x".formatted(info.vendorId)
+                + ", productId=0x%04x".formatted(info.productId)
                 + ", product=" + info.product
                 + ", manufacturer=" + info.manufacturer
                 + ", interfaceNumber=" + info.interfaceNumber
@@ -463,9 +466,9 @@ logger.finest("close native: " + nativeDevice);
             } else {
                 sb.append("< ");
             }
-            sb.append(String.format("[%02x]:", buffer.length));
+            sb.append("[%02x]:".formatted(buffer.length));
             for (byte b : buffer) {
-                sb.append(String.format(" %02x", b));
+                sb.append(" %02x".formatted(b));
             }
             sb.append('\n');
         }

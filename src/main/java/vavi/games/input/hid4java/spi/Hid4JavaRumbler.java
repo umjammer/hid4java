@@ -6,11 +6,13 @@
 
 package vavi.games.input.hid4java.spi;
 
-import java.util.logging.Level;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 
 import net.java.games.input.Component;
 import net.java.games.input.usb.HidRumbler;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -20,6 +22,8 @@ import vavi.util.Debug;
  * @version 0.00 2023-12-22 nsano initial version <br>
  */
 public class Hid4JavaRumbler implements HidRumbler {
+
+    private static final Logger logger = getLogger(Hid4JavaRumbler.class.getName());
 
     private final int reportId;
     private final Component.Identifier identifier;
@@ -64,7 +68,7 @@ public class Hid4JavaRumbler implements HidRumbler {
     @Override
     public void fill(byte[] data) {
         data[offset] = (byte) value;
-Debug.printf(Level.FINER, "data[%02d] = 0x%2$02x (%2$d)", offset, data[offset] & 0xff);
+logger.log(Level.TRACE, "data[%02d] = 0x%2$02x (%2$d)".formatted(offset, data[offset] & 0xff));
     }
 
     @Override

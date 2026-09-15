@@ -6,10 +6,11 @@
 
 package org.hid4java.macos;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -28,6 +29,7 @@ import vavix.rococoa.corefoundation.CFString;
 import vavix.rococoa.corefoundation.CFType;
 import vavix.rococoa.iokit.IOKitLib;
 
+import static java.lang.System.getLogger;
 import static vavix.rococoa.corefoundation.CFLib.CFNumberType.kCFNumberSInt32Type;
 import static vavix.rococoa.corefoundation.CFString.CFSTR;
 import static vavix.rococoa.iokit.IOKitLib.kIOHIDDeviceUsageKey;
@@ -53,7 +55,7 @@ import static vavix.rococoa.iokit.IOKitLib.kIOHIDVersionNumberKey;
  */
 class IOHIDDevice {
 
-    private static final Logger logger = Logger.getLogger(IOHIDDevice.class.getName());
+    private static final Logger logger = getLogger(IOHIDDevice.class.getName());
 
     /** */
     Pointer /* IOHIDDeviceRef */ device;
@@ -68,10 +70,10 @@ class IOHIDDevice {
         if (len == 0)
             throw new IllegalArgumentException("len is zero");
 
-//logger.fine("prop: " + prop.getString());
+//logger.log(Level.DEBUG, "prop: " + prop.getString());
         CFType ret = IOKitLib.INSTANCE.IOHIDDeviceGetProperty(this.device, prop);
         if (ret == null) {
-logger.finest("no prop value: " + prop.getString());
+logger.log(Level.TRACE, "no prop value: " + prop.getString());
             return -1;
         }
 
@@ -100,7 +102,7 @@ logger.finest("no prop value: " + prop.getString());
 
             return usedBufferLength.getValue().intValue();
         } else {
-logger.fine("not string: " + prop.getString());
+logger.log(Level.DEBUG, "not string: " + prop.getString());
             return -1;
         }
     }
@@ -205,7 +207,7 @@ logger.fine("not string: " + prop.getString());
             // max value of entryId(uint64_t) is 18446744073709551615 which is 20 characters long,
             // so for (max) "path" string 'DevSrvsID:18446744073709551615' we would need
             // 9+1+20+1=31 bytes buffer, but allocate 32 for simple alignment
-            path = String.format("DevSrvsID:%d", entryId.getValue());
+            path = "DevSrvsID:%d".formatted(entryId.getValue());
         }
 
         if (path == null) {
@@ -339,7 +341,7 @@ logger.fine("not string: " + prop.getString());
                 int usagePage = usagePageP.getValue();
                 int usage = usageP.getValue();
                 if (usagePage == primaryUsagePage && usage == primaryUsage) {
-logger.finest("same usagePage: " + usagePage + ", usage: " + usage);
+logger.log(Level.TRACE, "same usagePage: " + usagePage + ", usage: " + usage);
                     continue; // Already added.
                 }
 
@@ -348,7 +350,7 @@ logger.finest("same usagePage: " + usagePage + ", usage: " + usage);
             }
         }
 
-logger.finest("infos: " + deviceInfos.size());
+logger.log(Level.TRACE, "infos: " + deviceInfos.size());
         return deviceInfos;
     }
 

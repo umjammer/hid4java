@@ -6,10 +6,11 @@
 
 package vavi.games.input.hid4java.spi.plugin;
 
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
 
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
@@ -18,7 +19,8 @@ import net.java.games.input.plugin.DualShock4PluginBase;
 import org.hid4java.HidDevice;
 import vavi.games.input.hid4java.spi.Hid4JavaComponent;
 import vavi.games.input.hid4java.spi.Hid4JavaRumbler;
-import vavi.util.Debug;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -30,11 +32,13 @@ import vavi.util.Debug;
  */
 public class DualShock4Plugin extends DualShock4PluginBase {
 
+    private static final Logger logger = getLogger(DualShock4Plugin.class.getName());
+
     /** @param object HidDevice */
     @Override
     public boolean match(Object object) {
         if (object instanceof HidDevice device) {
-Debug.printf(Level.FINER, "%04x, %s, %04x, %s", device.getVendorId(), device.getVendorId() == 0x54c, device.getProductId(), device.getProductId() == 0x9cc);
+logger.log(Level.TRACE, "%04x, %s, %04x, %s".formatted(device.getVendorId(), device.getVendorId() == 0x54c, device.getProductId(), device.getProductId() == 0x9cc));
             return device.getVendorId() == 0x54c && device.getProductId() == 0x9cc;
         } else {
             return false;

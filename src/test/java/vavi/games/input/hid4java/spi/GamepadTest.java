@@ -63,14 +63,14 @@ public class GamepadTest {
 
     static class GamepadConsole {
 
-        /**  */
+        /** */
         private final HidController controller;
 
         public GamepadConsole(HidController controller) throws IOException {
             this.controller = controller;
         }
 
-        /**  */
+        /** */
         public void start() throws IOException {
             controller.addInputEventListener(GamepadConsole::print);
             controller.open();
@@ -81,11 +81,11 @@ public class GamepadTest {
             Event event = new Event();
             System.out.println("\033[2J");
             while (e.getNextEvent(event)) {
-                System.out.println(String.format("%30s:  % 10.3f  %s%s",
+                System.out.printf("%30s:  % 10.3f  %s%s%n",
                         event.getComponent().getName(),
                         event.getValue(),
                         ((WrappedComponent<Field>) event.getComponent()).getWrappedObject().getDump(((HidInputEvent) e).getData()),
-                        " ".repeat(50)));
+                        " ".repeat(50));
             }
             System.out.flush();
         }

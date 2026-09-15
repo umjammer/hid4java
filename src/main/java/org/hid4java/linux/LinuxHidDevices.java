@@ -278,7 +278,7 @@ public class LinuxHidDevices implements NativeHidDevices {
 
         rptHandle = LinuxIO.INSTANCE.open(rptPath, O_RDONLY | O_CLOEXEC);
         if (rptHandle < 0) {
-            throw new IOException(String.format("create failed (%s): %s", rptPath, Native.getLastError()));
+            throw new IOException("create failed (%s): %s".formatted(rptPath, Native.getLastError()));
         }
 
         // Read in the Report Descriptor
@@ -288,7 +288,7 @@ public class LinuxHidDevices implements NativeHidDevices {
         Memory memory = new Memory(HID_MAX_DESCRIPTOR_SIZE);
         res = LinuxIO.INSTANCE.read(rptHandle, memory, new NativeLong(HID_MAX_DESCRIPTOR_SIZE)).intValue();
         if (res < 0) {
-            throw new IOException(String.format("read failed (%s): %s", rptPath, Native.getLastError()));
+            throw new IOException("read failed (%s): %s".formatted(rptPath, Native.getLastError()));
         }
         memory.read(0, rptDesc.value, 0, res);
         rptDesc.size = res;
@@ -300,7 +300,7 @@ public class LinuxHidDevices implements NativeHidDevices {
     /* return size of the descriptor, or -1 on failure */
     private static int getHidReportDescriptorFromSysfs(String sysfsPath, hidraw_report_descriptor rptDesc) throws IOException {
         /* Con<sysfsPath>/device/report_descriptor */
-        String rptPath = String.format("%s/device/report_descriptor", sysfsPath);
+        String rptPath = "%s/device/report_descriptor".formatted(sysfsPath);
 
         return getHidReportDescriptor(rptPath, rptDesc);
     }
@@ -343,7 +343,7 @@ public class LinuxHidDevices implements NativeHidDevices {
 
         handle = LinuxIO.INSTANCE.open(ueventPath, O_RDONLY | O_CLOEXEC);
         if (handle < 0) {
-            throw new IOException(String.format("create failed (%s): %s", ueventPath, Native.getLastError()));
+            throw new IOException("create failed (%s): %s".formatted(ueventPath, Native.getLastError()));
         }
 
         Memory buf = new Memory(1024);
@@ -351,7 +351,7 @@ public class LinuxHidDevices implements NativeHidDevices {
         LinuxIO.INSTANCE.close(handle);
 
         if (res < 0) {
-            throw new IOException(String.format("read failed (%s): %s", ueventPath, Native.getLastError()));
+            throw new IOException("read failed (%s): %s".formatted(ueventPath, Native.getLastError()));
         }
 
         return parseHidVidPidFromUevent(new String(buf.getByteArray(0, res)), busType, vendorId, productId);
@@ -360,7 +360,7 @@ public class LinuxHidDevices implements NativeHidDevices {
     /** return non-zero if successfully read/parsed */
     private boolean parseHidVidPidFromSysfs(String sysfsPath, int[] busType, short[] vendorId, short[] productId) throws IOException {
         // Con<sysfsPath>/device/uevent
-        String ueventPath = String.format("%s/device/uevent", sysfsPath);
+        String ueventPath = "%s/device/uevent".formatted(sysfsPath);
 
         return parseHidVidPidFromUeventPath(ueventPath, busType, vendorId, productId);
     }
@@ -727,13 +727,13 @@ public class LinuxHidDevices implements NativeHidDevices {
             int res = LinuxIO.INSTANCE.ioctl(dev.deviceHandle, HIDIOCGRDESCSIZE, descSize);
             if (res < 0) {
                 dev.close();
-                throw new IOException(String.format("ioctl(GRDESCSIZE) error for '%s', not a HIDRAW device?: %s", info.path, Native.getLastError()));
+                throw new IOException("ioctl(GRDESCSIZE) error for '%s', not a HIDRAW device?: %s".formatted(info.path, Native.getLastError()));
             }
 
             return dev;
         } else {
             // Unable to create a device.
-            throw new IOException(String.format("Failed to create a device with path '%s': %s", info.path, Native.getLastError()));
+            throw new IOException("Failed to create a device with path '%s': %s".formatted(info.path, Native.getLastError()));
         }
     }
 

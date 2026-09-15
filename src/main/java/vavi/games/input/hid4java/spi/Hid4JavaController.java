@@ -7,8 +7,9 @@
 package vavi.games.input.hid4java.spi;
 
 import java.io.IOException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.Arrays;
-import java.util.logging.Level;
 
 import net.java.games.input.AbstractController;
 import net.java.games.input.Component;
@@ -16,8 +17,9 @@ import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.HidController;
 import org.hid4java.HidDevice;
-import vavi.util.Debug;
 import vavi.util.StringUtil;
+
+import static java.lang.System.getLogger;
 
 
 /**
@@ -27,6 +29,8 @@ import vavi.util.StringUtil;
  * @version 0.00 2023-09-18 nsano initial version <br>
  */
 public class Hid4JavaController extends AbstractController implements HidController {
+
+    private static final Logger logger = getLogger(Hid4JavaController.class.getName());
 
     /** */
     private final HidDevice device;
@@ -43,7 +47,7 @@ public class Hid4JavaController extends AbstractController implements HidControl
     protected Hid4JavaController(HidDevice device, Component[] components, Controller[] children, Rumbler[] rumblers) {
         super(device.getManufacturer() + "/" + device.getProduct(), components, children, rumblers);
         this.device = device;
-Debug.println("device: " + device + ", " + device.isOpen());
+logger.log(Level.DEBUG,"device: " + device + ", " + device.isOpen());
     }
 
     @Override
@@ -87,7 +91,7 @@ Debug.println("device: " + device + ", " + device.isOpen());
 
         int reportId = ((HidReport) report).getReportId();
         byte[] data = ((HidReport) report).getData();
-Debug.println(Level.FINER, "reportId: " + reportId + "\n" + StringUtil.getDump(data));
+logger.log(Level.TRACE, "reportId: " + reportId + "\n" + StringUtil.getDump(data));
         int r = device.write(data, data.length, reportId);
         if (r == -1) {
             throw new IOException("write returns -1");

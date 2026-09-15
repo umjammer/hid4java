@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
-
+import java.util.concurrent.TimeUnit;
 import net.java.games.input.Component;
 import net.java.games.input.Controller;
 import net.java.games.input.ControllerEnvironment;
@@ -27,6 +27,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import vavi.util.Debug;
 import vavi.util.properties.annotation.Property;
 import vavi.util.properties.annotation.PropsEntity;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 /**
@@ -168,6 +170,73 @@ Debug.println("➕ controllerAdded: " + ev.getController());
         controller.open();
 
         new CountDownLatch(1).await();
+    }
+
+    @Test
+    @DisplayName("device attach/detach")
+    @EnabledIfSystemProperty(named = "vavi.test", matches = "ide")
+    void test4() throws Exception {
+        System.setProperty("vavi.games.input.hid4java.darwinOpenDevicesNonExclusive", "true");
+
+        CountDownLatch cdl1 = new CountDownLatch(1);
+        CountDownLatch cdl2 = new CountDownLatch(1);
+        CountDownLatch cdl3 = new CountDownLatch(1);
+
+        ControllerEnvironment ce = new Hid4JavaEnvironmentPlugin();
+        ce.addControllerListener(new ControllerListener() {
+            @Override
+            public void controllerRemoved(ControllerEvent ev) {
+                Controller c = ev.getController();
+                if (c instanceof Hid4JavaController) {
+                    if (((Hid4JavaController) c).getVendorId() == vendorId && ((Hid4JavaController) c).getProductId() == productId) {
+Debug.println("➖ controllerRemoved: " + c.getName());
+                        cdl2.countDown();
+                    }
+                }
+            }
+
+            @Override
+            public void controllerAdded(ControllerEvent ev) {
+                Controller c = ev.getController();
+                if (c instanceof Hid4JavaController) {
+                    if (((Hid4JavaController) c).getVendorId() == vendorId && ((Hid4JavaController) c).getProductId() == productId) {
+Debug.println("➕ controllerAdded: " + c.getName());
+                        if (cdl1.getCount() > 0) {
+                            cdl1.countDown();
+                        } else {
+                            cdl3.countDown();
+                        }
+                    }
+                }
+            }
+        });
+
+        // 1. detect the device
+Debug.println("Please connect the device... (or wait for detecting)");
+        Arrays.stream(ce.getControllers())
+                .filter(c -> c instanceof Hid4JavaController)
+                .map(c -> (Hid4JavaController) c)
+                .filter(c -> c.getVendorId() == vendorId && c.getProductId() == productId)
+                .findFirst()
+                .ifPresent(c -> {
+                    Debug.println("➕ controller is already connected: " + c.getName());
+                    cdl1.countDown();
+                });
+
+        assertTrue(cdl1.await(10, TimeUnit.SECONDS), "connect a device");
+
+        // 2. let user disconnect the device
+Debug.println("Please disconnect the device...");
+        assertTrue(cdl2.await(10, TimeUnit.SECONDS), "disconnect the device");
+
+        // 3. then let user connect it again
+Debug.println("Please connect the device again...");
+        assertTrue(cdl3.await(10, TimeUnit.SECONDS), "re-connect the device");
+
+        // 4. re-detect reconnection
+Debug.println("Device re-connected. Test finished.");
+
+        System.setProperty("vavi.games.input.hid4java.darwinOpenDevicesNonExclusive", "false");
     }
 
     @Test

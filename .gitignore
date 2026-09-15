@@ -18,3 +18,4 @@ target/
 /pom.xml.releaseBackup
 tmp/
 local.properties
+AGENTS.md
