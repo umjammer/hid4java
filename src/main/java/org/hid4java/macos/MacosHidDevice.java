@@ -68,6 +68,11 @@ public class MacosHidDevice implements NativeHidDevice {
 
     private static final Logger logger = getLogger(MacosHidDevice.class.getName());
 
+    /** IOReturn: not permitted */
+    private static final int kIOReturnNotPermitted = 0xE00002E2;
+    /** IOReturn: privilege violation */
+    private static final int kIOReturnNotPrivileged = 0xE00002C1;
+
     private IOHIDDevice deviceHandle;
     private int /* IOOptionBits */ openOptions;
     private boolean disconnected;
@@ -208,6 +213,13 @@ logger.log(Level.TRACE, "here00.2: entry: " + entry + ", openOptions: " + this.o
 
             // Open the IOHIDDevice
             int /* IOReturn */ ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(deviceHandle, this.openOptions);
+            if ((ret == kIOReturnNotPermitted || ret == kIOReturnNotPrivileged) && (this.openOptions & kIOHIDOptionsTypeSeizeDevice) != 0) {
+                // macos refuses seizing some devices (e.g. keyboards) by a non-root process,
+                // those are opened non-exclusively, so other devices (e.g. gamepads) can still be seized
+logger.log(Level.DEBUG, "cannot seize (0x%08X), open non-exclusively: %s".formatted(ret, this.deviceInfo.path));
+                this.openOptions &= ~kIOHIDOptionsTypeSeizeDevice;
+                ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(deviceHandle, this.openOptions);
+            }
             if (ret != kIOReturnSuccess) {
 logger.log(Level.TRACE, "here00.3: " + this.deviceInfo.path);
                 throw new IOException("create: failed to open IOHIDDevice from mach entry: (0x%08X)".formatted(ret));
