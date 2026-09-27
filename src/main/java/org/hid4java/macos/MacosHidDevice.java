@@ -72,6 +72,8 @@ public class MacosHidDevice implements NativeHidDevice {
     private static final int kIOReturnNotPermitted = 0xE00002E2;
     /** IOReturn: privilege violation */
     private static final int kIOReturnNotPrivileged = 0xE00002C1;
+    /** IOReturn: exclusive access and device already open */
+    private static final int kIOReturnExclusiveAccess = 0xE00002C5;
 
     private IOHIDDevice deviceHandle;
     private int /* IOOptionBits */ openOptions;
@@ -213,8 +215,9 @@ logger.log(Level.TRACE, "here00.2: entry: " + entry + ", openOptions: " + this.o
 
             // Open the IOHIDDevice
             int /* IOReturn */ ret = IOKitLib.INSTANCE.IOHIDDeviceOpen(deviceHandle, this.openOptions);
-            if ((ret == kIOReturnNotPermitted || ret == kIOReturnNotPrivileged) && (this.openOptions & kIOHIDOptionsTypeSeizeDevice) != 0) {
+            if ((ret == kIOReturnNotPermitted || ret == kIOReturnNotPrivileged || ret == kIOReturnExclusiveAccess) && (this.openOptions & kIOHIDOptionsTypeSeizeDevice) != 0) {
                 // macos refuses seizing some devices (e.g. keyboards) by a non-root process,
+                // or if another process already opened the device,
                 // those are opened non-exclusively, so other devices (e.g. gamepads) can still be seized
 logger.log(Level.DEBUG, "cannot seize (0x%08X), open non-exclusively: %s".formatted(ret, this.deviceInfo.path));
                 this.openOptions &= ~kIOHIDOptionsTypeSeizeDevice;
@@ -546,9 +549,28 @@ logger.log(Level.TRACE, "here20.9: close done");
 
     @Override
     public int getReportDescriptor(byte[] report) throws IOException {
-        internalOpen(); // let it work w/o open
+        if (this.deviceHandle != null) {
+            return this.deviceHandle.hidGetReportDescriptor(report, report.length);
+        }
 
-        return this.deviceHandle.hidGetReportDescriptor(report, report.length);
+        Pointer/* io_registry_entry_t */ entry = openServiceRegistryFromPath(this.deviceInfo.path);
+        if (entry == MACH_PORT_NULL) {
+            throw new IOException("getReportDescriptor: device mach entry not found with the given path: " + this.deviceInfo.path);
+        }
+        try {
+            Pointer /* IOHIDDevice */ dev = IOKitLib.INSTANCE.IOHIDDeviceCreate(CFAllocator.kCFAllocatorDefault, entry);
+            if (dev == null) {
+                throw new IOException("getReportDescriptor: failed to create IOHIDDevice from the mach entry");
+            }
+            try {
+                IOHIDDevice nativeDevice = new IOHIDDevice(dev);
+                return nativeDevice.hidGetReportDescriptor(report, report.length);
+            } finally {
+                CFLib.INSTANCE.CFRelease(dev);
+            }
+        } finally {
+            IOKitLib.INSTANCE.IOObjectRelease(entry);
+        }
     }
 
     @Override
