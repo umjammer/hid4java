@@ -476,6 +476,7 @@ logger.log(Level.TRACE, "here20.9: close done");
         if (res != kIOReturnSuccess) {
             throw new HidException("IOHIDDeviceGetReport failed: (0x%08X): %s".formatted(res, this.deviceInfo.path));
         }
+        System.arraycopy(report, 0, data, dataP, Math.min(reportLength, data.length - dataP));
 
         if (reportId == 0x0) { // 0 report number still present at the beginning
             reportLength++;
@@ -516,15 +517,10 @@ logger.log(Level.TRACE, "here20.9: close done");
     public int getFeatureReport(byte[] data, byte reportId) throws IOException {
         internalOpen(); // let it work w/o open
 
-        // Create a large buffer
-        byte[] report = new byte[data.length + 1];
-        report[0] = reportId;
-        int res = getReport(kIOHIDReportTypeFeature, report, data.length + 1);
+        data[0] = reportId;
+        int res = getReport(kIOHIDReportTypeFeature, data, data.length);
 
-        // Avoid index out of bounds exception
-        System.arraycopy(report, 1, data, 0, Math.min(res, data.length));
-
-        logTraffic(report, false);
+        logTraffic(data, false);
 
         return res;
     }
@@ -537,14 +533,11 @@ logger.log(Level.TRACE, "here20.9: close done");
 
         internalOpen(); // let it work w/o open
 
-        byte[] report = new byte[data.length + 1];
-        report[0] = reportId;
+        data[0] = reportId;
 
-        System.arraycopy(data, 0, report, 1, data.length);
+        logTraffic(data, true);
 
-        logTraffic(report, true);
-
-        return setReport(kIOHIDReportTypeFeature, report, report.length);
+        return setReport(kIOHIDReportTypeFeature, data, data.length);
     }
 
     @Override
@@ -577,13 +570,10 @@ logger.log(Level.TRACE, "here20.9: close done");
     public int getInputReport(byte[] data, byte reportId) throws IOException {
         internalOpen(); // let it work w/o open
 
-        byte[] report = new byte[data.length + 1];
-        report[0] = reportId;
-        int res = getReport(kIOHIDReportTypeInput, report, data.length + 1);
+        data[0] = reportId;
+        int res = getReport(kIOHIDReportTypeInput, data, data.length);
 
-        System.arraycopy(report, 1, data, 0, Math.min(res, data.length));
-
-        logTraffic(report, false);
+        logTraffic(data, false);
 
         return res;
     }

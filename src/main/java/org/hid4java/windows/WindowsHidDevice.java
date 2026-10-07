@@ -319,6 +319,7 @@ public class WindowsHidDevice implements NativeHidDevice {
             // The operation failed.
             throw new IOException("Get Input/Feature Report GetOverLappedResult");
         }
+        m.read(0, data, 0, length);
 
         // When numbered reports aren't used,
 	    // bytesReturned seem to include only what is actually received from the device
