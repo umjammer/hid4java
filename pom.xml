@@ -4,7 +4,7 @@
 
   <groupId>org.hid4java</groupId>
   <artifactId>hid4java</artifactId>
-  <version>0.14.14v</version>
+  <version>0.14.15v-SNAPSHOT</version>
 
   <name>hid4java</name>
   <description>A cross-platform hidapi like library (depends on jna but hidapi native library)</description>
@@ -35,8 +35,8 @@
   </scm>
 
   <properties>
-    <jinput.groupId>com.github.umjammer.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
-    <jinput.version>2.0.20v</jinput.version>
+    <jinput.groupId>net.java.jinput</jinput.groupId> <!-- net.java.jinput / com.github.umjammer.jinput -->
+    <jinput.version>2.0.21v-SNAPSHOT</jinput.version>
   </properties>
 
   <profiles>
@@ -190,7 +190,7 @@
       <dependency>
         <groupId>org.junit</groupId>
         <artifactId>junit-bom</artifactId>
-        <version>6.1.1</version>
+        <version>6.1.3</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
