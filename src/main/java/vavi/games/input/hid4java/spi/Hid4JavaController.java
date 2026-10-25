@@ -17,6 +17,7 @@ import net.java.games.input.Controller;
 import net.java.games.input.Rumbler;
 import net.java.games.input.usb.GenericDesktopUsageId;
 import net.java.games.input.usb.HidController;
+import net.java.games.input.usb.HidReportType;
 import org.hid4java.HidDevice;
 import vavi.util.StringUtil;
 
@@ -113,5 +114,43 @@ logger.log(Level.TRACE, "reportId: " + reportId + "\n" + StringUtil.getDump(data
         if (r == -1) {
             throw new IOException("write returns -1");
         }
+    }
+
+    @Override
+    public byte[] getReportDescriptor() {
+        try {
+            byte[] descriptor = new byte[4096];
+            int r = device.getReportDescriptor(descriptor);
+            return r > 0 ? Arrays.copyOf(descriptor, r) : null;
+        } catch (IOException | IllegalStateException e) {
+logger.log(Level.DEBUG, "getReportDescriptor: " + e);
+            return null;
+        }
+    }
+
+    @Override
+    public void writeReport(HidReportType type, int reportId, byte[] data) throws IOException {
+        int r = switch (type) {
+            case OUTPUT -> device.write(data, data.length, reportId);
+            case FEATURE -> device.sendFeatureReport(data, reportId);
+            default -> throw new IllegalArgumentException("an input report cannot be written");
+        };
+        if (r == -1) {
+            throw new IOException("write %s report %d returns -1".formatted(type, reportId));
+        }
+    }
+
+    @Override
+    public int readReport(HidReportType type, int reportId, byte[] buffer) throws IOException {
+        int r = switch (type) {
+            case INPUT -> device.getInputReport(buffer, reportId);
+            case FEATURE -> device.getFeatureReport(buffer, reportId);
+            default -> throw new IllegalArgumentException("an output report cannot be read");
+        };
+        if (r == -1) {
+            throw new IOException("read %s report %d returns -1".formatted(type, reportId));
+        }
+        // the count includes the report id, which is not in the buffer
+        return Math.max(0, Math.min(r - 1, buffer.length));
     }
 }

@@ -303,20 +303,23 @@ logger.log(Level.TRACE, "close native: " + nativeDevice);
     /**
      * Get a feature report from a HID device
      * <p>
-     * Under the covers the HID library will set the first byte of data[] to the
-     * Report ID of the report to be read. Upon return, the first byte will
-     * still contain the Report ID, and the report data will start in data[1]
-     * <p>
-     * This method handles all the wide string and array manipulation for you
+     * The report id is taken care of here, data[] only gets the report body,
+     * data[0] being the first byte after the report id.
      *
-     * @param data     The buffer to contain the report
+     * @param data     The buffer to contain the report, without the report id
      * @param reportId The report ID (or (byte) 0x00)
      * @return The number of bytes read plus one for the report ID (which has
      * been removed from the first byte), or -1 on error.
      * @since 0.1.0
      */
     public int getFeatureReport(byte[] data, int reportId) throws IOException {
-        return nativeDevice.getFeatureReport(data, (byte) reportId);
+        byte[] report = new byte[data.length + 1];
+        report[0] = (byte) reportId;
+        int res = nativeDevice.getFeatureReport(report, (byte) reportId);
+        if (res > 1) {
+            System.arraycopy(report, 1, data, 0, Math.min(res - 1, data.length));
+        }
+        return res;
     }
 
     /**
@@ -344,7 +347,10 @@ logger.log(Level.TRACE, "close native: " + nativeDevice);
      * @since 0.1.0
      */
     public int sendFeatureReport(byte[] data, int reportId) throws IOException {
-        return nativeDevice.sendFeatureReport(data, (byte) reportId);
+        byte[] report = new byte[data.length + 1];
+        report[0] = (byte) reportId;
+        System.arraycopy(data, 0, report, 1, data.length);
+        return nativeDevice.sendFeatureReport(report, (byte) reportId);
     }
 
     /**
@@ -418,9 +424,27 @@ logger.log(Level.TRACE, "close native: " + nativeDevice);
         return nativeDevice.getReportDescriptor(report);
     }
 
-    /** */
+    /**
+     * Get an input report from a HID device on request, as {@link #getFeatureReport(byte[], int)}.
+     *
+     * @param data     The buffer to contain the report, without the report id
+     * @param reportId The report ID (or (byte) 0x00)
+     * @return The number of bytes read plus one for the report ID, or -1 on error.
+     */
+    public int getInputReport(byte[] data, int reportId) throws IOException {
+        byte[] report = new byte[data.length + 1];
+        report[0] = (byte) reportId;
+        int res = nativeDevice.getInputReport(report, (byte) reportId);
+        if (res > 1) {
+            System.arraycopy(report, 1, data, 0, Math.min(res - 1, data.length));
+        }
+        return res;
+    }
+
+    /** @deprecated misnamed, use {@link #getInputReport(byte[], int)} */
+    @Deprecated
     public int getInputDescriptor(byte[] report, int reportId) throws IOException {
-        return nativeDevice.getInputReport(report, (byte) reportId);
+        return getInputReport(report, reportId);
     }
 
     @Override
